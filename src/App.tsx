@@ -27,8 +27,7 @@ export const App: React.FC = () => {
       {state === 'DESTINATION_SELECT' && <ScreenDestinationSelect />}
       {state === 'ENVIRONMENT_LOADING' && <ScreenLoading />}
 
-      {state === 'EXHIBITION' && <ScreenExhibition />}
-      {state === 'ARTIFACT_DETAILS' && <ScreenArtifactDetails />}
+      {(state === 'EXHIBITION' || state === 'ARTIFACT_DETAILS') && <ScreenExhibition />}
 
       {(state === 'GUIDED_INTRO' ||
         state === 'FREE_EXPLORATION' ||

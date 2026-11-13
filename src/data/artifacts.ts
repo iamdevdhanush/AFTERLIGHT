@@ -87,6 +87,7 @@ export const ARTIFACTS: Record<string, ArtifactData> = {
           'This central octagonal body holds the empty fuel and oxidizer tanks along with the gold-coated Kapton foil that shielded electronics from 120°C sunlight.',
         voiceScript:
           "You are inspecting the octagonal chassis of Eagle's descent stage. Wrapped in shimmering gold Kapton and Mylar blankets, this aluminum frame housed four giant propellant tanks and shielded delicate guidance systems against extreme lunar temperature swings.",
+        hotspot: { x: 50, y: 52 },
       },
       {
         id: 'eagle-legs',
@@ -100,6 +101,7 @@ export const ARTIFACTS: Record<string, ArtifactData> = {
           'Each telescoping strut uses internal crushable aluminum honeycomb designed to deform once on contact, preventing the spacecraft from tipping on sloped craters.',
         voiceScript:
           'These four outrigger struts absorbed the kinetic shock of touchdown. Inside each telescoping aluminum cylinder was a crushable honeycomb cartridge that compressed on impact, stabilizing Eagle on the uneven lunar surface.',
+        hotspot: { x: 26, y: 68 },
       },
       {
         id: 'eagle-footpads',
@@ -113,6 +115,7 @@ export const ARTIFACTS: Record<string, ArtifactData> = {
           'Because engineers did not know how deeply spacecraft would sink into lunar soil, wide aluminum dish footpads spread the lander’s weight across loose dust.',
         voiceScript:
           "These thirty-seven-inch spun-aluminum dish footpads distributed Eagle's weight safely across powdery regolith, sinking only a few centimeters into the lunar dust during humanity's historic landing.",
+        hotspot: { x: 74, y: 84 },
       },
       {
         id: 'eagle-ladder',
@@ -126,6 +129,7 @@ export const ARTIFACTS: Record<string, ArtifactData> = {
           'Neil Armstrong climbed down these nine rungs before stepping onto the surface. The stainless plaque bolted between rungs bears the date July 1969 A.D.',
         voiceScript:
           'Neil Armstrong climbed down these nine ladder rungs before taking his giant leap for mankind. Bolted between the lower rungs is the stainless-steel commemorative plaque inscribed: We came in peace for all mankind.',
+        hotspot: { x: 64, y: 56 },
       },
       {
         id: 'eagle-dps',
@@ -139,6 +143,7 @@ export const ARTIFACTS: Record<string, ArtifactData> = {
           'Armstrong manually throttled this single gimbaled engine during the final minutes to skim past West Crater’s boulders with under 25 seconds of usable fuel.',
         voiceScript:
           'Centered beneath the lander is the Descent Propulsion Engine. The first deeply throttleable rocket engine built for space, it allowed Neil Armstrong to manually hover and navigate past boulder fields with under thirty seconds of fuel remaining.',
+        hotspot: { x: 50, y: 78 },
       },
       {
         id: 'eagle-ascent-note',
@@ -304,6 +309,7 @@ export const ARTIFACTS: Record<string, ArtifactData> = {
           'Rubber pneumatic tires would burst or turn brittle in lunar vacuum. Woven steel wire flexed softly over boulders while titanium cleats gripped fine dust.',
         voiceScript:
           'Unlike rubber tires which would burst in vacuum or turn brittle in the cold lunar night, these wheels were hand-woven from zinc-coated piano wire. Chevron titanium treads provided traction across soft regolith without sinking.',
+        hotspot: { x: 74, y: 64 },
       },
       {
         id: 'lrv-batteries',
@@ -317,6 +323,7 @@ export const ARTIFACTS: Record<string, ArtifactData> = {
           'Each rover ran solely on two non-rechargeable silver-zinc batteries engineered for 92 km of range—no solar panels were fitted.',
         voiceScript:
           'Housed in the forward chassis, dual non-rechargeable silver-zinc batteries delivered 36 volts of direct current to four quarter-horsepower hub motors, supplying power without bulky solar arrays.',
+        hotspot: { x: 52, y: 62 },
       },
       {
         id: 'lrv-antenna',
@@ -330,6 +337,7 @@ export const ARTIFACTS: Record<string, ArtifactData> = {
           'Astronauts aimed this umbrella dish toward Earth whenever parked so Mission Control could receive live geological commentary and video.',
         voiceScript:
           'This collapsible umbrella dish was woven from gold-plated molybdenum wire mesh. At each science stop, astronauts manually aligned its sight glass with Earth to transmit crystal-clear color television directly to Houston.',
+        hotspot: { x: 44, y: 38 },
       },
       {
         id: 'lrv-lcru',
@@ -343,6 +351,7 @@ export const ARTIFACTS: Record<string, ArtifactData> = {
           'After astronauts boarded the Lunar Module, controller Ed Fendell in Houston piloted this camera remotely to follow the ascent stage upward into lunar sky.',
         voiceScript:
           'Operated remotely from Mission Control in Houston with a four-second radio lag, this RCA color camera panned and tilted to broadcast astronaut explorations and captured the famous liftoff of the Lunar Module ascent stages.',
+        hotspot: { x: 62, y: 46 },
       },
     ],
     specs: {
@@ -636,6 +645,7 @@ export const ARTIFACTS: Record<string, ArtifactData> = {
           'Every sensor wired into this central computer hub via flat Kapton-coated ribbon cables, beaming continuous seismic waves to Earth for up to eight years.',
         voiceScript:
           'This is the Central Telemetry Station. Every peripheral instrument connected into this aluminum hub via flat Kapton-coated ribbon cables, routing seismic signals and temperature telemetry back to NASA ground stations.',
+        hotspot: { x: 33, y: 64 },
       },
       {
         id: 'alsep-rtg',
@@ -649,6 +659,7 @@ export const ARTIFACTS: Record<string, ArtifactData> = {
           'Unlike Apollo 11’s solar panels, SNAP-27 used heat from Plutonium-238 decay so science never paused during freezing two-week lunar nights.',
         voiceScript:
           'The SNAP-27 generator was fueled by a capsule of Plutonium-238. Producing seventy watts of continuous electrical power from radioactive decay heat, it kept ALSEP alive through two-week minus one-hundred-and-seventy degree lunar nights.',
+        hotspot: { x: 26, y: 58 },
       },
       {
         id: 'alsep-pse',
@@ -662,6 +673,7 @@ export const ARTIFACTS: Record<string, ArtifactData> = {
           'Spread beneath reflective thermal foil skirts to stop thermal expansion clicks, these seismometers proved the Moon rings like a bell when struck by meteorites.',
         voiceScript:
           'Spread beneath a reflective thermal skirt to prevent metal expansion clicks, this seismometer detected vibrations as faint as a human heartbeat, proving the Moon possesses a layered crust, mantle, and metallic core.',
+        hotspot: { x: 30, y: 68 },
       },
       {
         id: 'alsep-lrrr',
@@ -675,6 +687,7 @@ export const ARTIFACTS: Record<string, ArtifactData> = {
           'Requiring zero electricity, these glass corner-cube mirrors still tell astronomers that the Moon drifts away from Earth by roughly 3.8 centimeters every year.',
         voiceScript:
           'Requiring zero electrical power, this tray of one hundred fused-silica corner cube prisms reflects laser pulses directly back to Earth observatory telescopes, proving the Moon recedes from Earth by three point eight centimeters each year.',
+        hotspot: { x: 34, y: 60 },
       },
     ],
     specs: {
@@ -1175,6 +1188,7 @@ export const ARTIFACTS: Record<string, ArtifactData> = {
           'This is Opportunity’s rover chassis and solar array deck. Equipped with a rocker-bogie mobility suspension, six independently steered aluminum wheels, and triple-junction gallium-arsenide solar wings, it maintained power for fourteen years thanks to periodic atmospheric cleaning gusts.',
         guideExplanation:
           'Dust-cleaning Martian wind gusts periodically swept these solar panels clean, letting Opportunity survive 55 times longer than its original 90-sol guarantee.',
+        hotspot: { x: 50, y: 55 },
       },
       {
         id: 'opp-idd',
@@ -1188,6 +1202,7 @@ export const ARTIFACTS: Record<string, ArtifactData> = {
           'Here is the Instrument Deployment Device, a five-degree-of-freedom robotic arm. At the wrist, it carries a Rock Abrasion Tool to grind rock surfaces, a Microscopic Imager, and two spectrometers that detected gypsum veins formed by neutral-pH water.',
         guideExplanation:
           'At Endeavour Crater, this arm measured pure calcium sulfate gypsum veins—proof of neutral-pH, drinkable water passing through ancient fractures.',
+        hotspot: { x: 74, y: 68 },
       },
       {
         id: 'opp-heatshield',
@@ -1201,6 +1216,7 @@ export const ARTIFACTS: Record<string, ArtifactData> = {
           'This is the discarded entry heat shield wreckage. Cast off during descent, it struck Meridiani Planum kilometers back. When Opportunity inspected the wreckage on Sol 330, it uncovered Heat Shield Rock, the very first meteorite discovered by a rover on another planet.',
         guideExplanation:
           'Distinct from the rover’s resting spot: Opportunity’s heat shield crashed hundreds of meters from Eagle Crater. When Opportunity drove past it in 2004, it even found a basketball-sized iron meteorite nearby.',
+        hotspot: { x: 26, y: 76 },
       },
       {
         id: 'opp-lander',
@@ -1211,9 +1227,10 @@ export const ARTIFACTS: Record<string, ArtifactData> = {
         description:
           'Airbag-cushioned base platform left in Eagle Crater while parachute and backshell came down several hundred meters away.',
         voiceScript:
-          'This is the Challenger Memorial Station landing platform and airbag assembly. It absorbed the final impacts of arrival before Opportunity rolled off its petal ramps on Sol 7. The platform rests permanently over twenty kilometers away inside Eagle Crater.',
+          'This is Challenger Memorial Station, the tetrahedral airbag lander that cushioned Opportunity’s arrival on Mars. After bounding safely inside Eagle Crater, its petals unfolded to release the rover into the sands of Meridiani.',
         guideExplanation:
-          'Like Spirit, Opportunity rolled clear of its landing platform on Sol 7. The folded lander base and parachute stay preserved far behind at Eagle Crater.',
+          'Named for the fallen Challenger crew, this petal platform bounced inside Eagle Crater on airbags before unfolding to roll Opportunity out onto Martian sand.',
+        hotspot: { x: 42, y: 35 },
       },
     ],
     specs: {
@@ -1544,6 +1561,7 @@ export const ARTIFACTS: Record<string, ArtifactData> = {
           'This is Voyager’s 3.7-meter high-gain parabolic antenna. Made of lightweight honeycomb fiberglass, it continuously directs a focused radio beam back toward Earth, transmitting data over twenty-four billion kilometers on just twenty-three watts of power.',
         guideExplanation:
           'Even from beyond the Solar System, Voyager keeps this single white dish aligned tightly toward our distant Sun to reach Deep Space Network antennas.',
+        hotspot: { x: 50, y: 35 },
       },
       {
         id: 'voy-rtg',
@@ -1557,6 +1575,7 @@ export const ARTIFACTS: Record<string, ArtifactData> = {
           'These are the three Multi-Hundred-Watt Radioisotope Thermoelectric Generators. Powered by decaying Plutonium-238 spheres, their thermal heat is converted into electricity, sustaining Voyager’s systems deep in the interstellar void where sunlight is virtually nonexistent.',
         guideExplanation:
           'Too far from the Sun for solar arrays, Voyager relies on decaying Plutonium-238 spheres whose fading thermal wattage dictates remaining mission lifespan.',
+        hotspot: { x: 26, y: 68 },
       },
       {
         id: 'voy-record',
@@ -1570,6 +1589,7 @@ export const ARTIFACTS: Record<string, ArtifactData> = {
           'This is the Voyager Golden Record. Encased in a gold-anodized aluminum cover with symbolic instructions, this 12-inch gold-plated copper phonograph record carries our music, greetings, and cosmic coordinates across billions of years of space.',
         guideExplanation:
           'Protected behind an etched uranium-238 clock cover and stylus instructions, the Golden Record endures for billions of years in interstellar vacuum.',
+        hotspot: { x: 65, y: 62 },
       },
     ],
     specs: {

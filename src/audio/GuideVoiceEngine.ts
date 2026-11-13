@@ -388,6 +388,15 @@ class GuideVoiceEngine {
     }
     this.notify();
   }
+
+  public seekProgress(progress: number) {
+    const clamped = Math.max(0, Math.min(1, progress));
+    this.state.progress = clamped;
+    if (this.state.currentScript) {
+      this.state.currentCharIndex = Math.floor(clamped * this.state.currentScript.length);
+    }
+    this.notify();
+  }
 }
 
 export const guideVoiceEngine = new GuideVoiceEngine();

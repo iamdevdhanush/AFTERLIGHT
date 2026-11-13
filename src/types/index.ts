@@ -36,6 +36,7 @@ export interface ArtifactComponent {
   description: string;
   guideExplanation: string;
   voiceScript?: string;
+  hotspot?: { x: number; y: number }; // Percentage coordinates (0-100) on hero image
 }
 
 export interface ArtifactGuideContent {

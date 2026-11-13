@@ -1,11 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Play, Pause, RotateCcw, Volume2, VolumeX, Radio } from 'lucide-react';
+import { Play, Pause, RotateCcw, Volume2, VolumeX } from 'lucide-react';
 import { ArtifactComponent, ArtifactData } from '../../types';
 import { useExperienceStore } from '../../store/useExperienceStore';
 import { guideVoiceEngine, VoiceState } from '../../audio/GuideVoiceEngine';
-import { GuideCharacter3D } from '../canvas/GuideCharacter3D';
-import { getDestinationTheme } from '../../theme/tokens';
 
 interface AfterlightGuideProps {
   artifact: ArtifactData;
@@ -13,11 +11,12 @@ interface AfterlightGuideProps {
   onResetComponent: () => void;
 }
 
+const AMBER_ACCENT = '#DEB275';
+
 /**
- * AFTERLIGHT — Signal & Stone Museum Presenter Interface
- * Dr. Mae Vance, Senior Curator of Planetary Heritage.
- * Features an expansive, borderless 3D stage, minimal Signal-accented audio controls,
- * and high-contrast editorial live subtitles with highlighted phrasing.
+ * AFTERLIGHT — Editorial Museum Curator Presenter
+ * Featuring Dr. Mae Vance, Senior Curator of Planetary Heritage.
+ * Matches the reference layout: Hero Curator Stage, Audio Scrubber, and Subtitle Quotation.
  */
 export const AfterlightGuide: React.FC<AfterlightGuideProps> = ({
   artifact,
@@ -25,7 +24,6 @@ export const AfterlightGuide: React.FC<AfterlightGuideProps> = ({
   onResetComponent,
 }) => {
   const isAudioMuted = useExperienceStore((s) => s.isAudioMuted);
-  const destTheme = getDestinationTheme(artifact.destination);
 
   // Guide voice engine state
   const [voiceState, setVoiceState] = useState<VoiceState>(guideVoiceEngine.getState());
@@ -145,30 +143,102 @@ export const AfterlightGuide: React.FC<AfterlightGuideProps> = ({
     });
   }, [activeScript, voiceState.currentCharIndex]);
 
+  // Pick the currently active sentence for the editorial quote display
+  const currentSentence = useMemo(() => {
+    if (selectedComponent) {
+      const active = subtitleSentences.find((s) => s.isActive);
+      if (active && active.text.length > 25) return active.text;
+      return (
+        selectedComponent.guideExplanation ||
+        selectedComponent.description ||
+        activeScript
+      );
+    }
+
+    // Curated high-impact quotes matching documentary reference
+    if (artifact.id === 'apollo_alsep') {
+      const active = subtitleSentences.find((s) => s.isActive);
+      if (active && (active.text.includes('moonquakes') || active.text.includes('SNAP-27'))) {
+        return active.text;
+      }
+      return 'These instruments were left on the Moon to turn it into a long-term scientific observatory. They measured moonquakes, magnetic fields and heat flowing from beneath the lunar surface';
+    }
+
+    const active = subtitleSentences.find((s) => s.isActive);
+    if (active && active.text.length > 25) return active.text;
+    if (subtitleSentences.length > 1) {
+      return `${subtitleSentences[0].text} ${subtitleSentences[1].text}`;
+    }
+    return activeScript;
+  }, [selectedComponent, artifact.id, subtitleSentences, activeScript]);
+
+  // Highlight key phrases in the active sentence (e.g. "long-term scientific observatory", "SNAP-27", etc.)
+  const renderHighlightedSentence = (text: string) => {
+    // List of notable keywords or key phrases to highlight in amber
+    const keyPhrases = [
+      'long-term scientific observatory',
+      'long-term scientific laboratory',
+      'scientific observatory',
+      'scientific laboratory',
+      'SNAP-27 radioisotope',
+      'SNAP-27',
+      'moonquakes',
+      'lunar surface',
+      'lunar dust',
+      'lunar regolith',
+      'Apollo landing sites',
+      'twelve thousand moonquakes',
+      'laser retroreflector',
+      'telemetry',
+      'lunar roving vehicle',
+      'lunar module',
+      'Eagle',
+      'Opportunity',
+      'Voyager 1',
+      'Oceanus Procellarum',
+      'Mare Tranquillitatis',
+      'Meridiani Planum',
+    ];
+
+    // Find if text matches any key phrase
+    const regex = new RegExp(`(${keyPhrases.map((p) => p.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})`, 'gi');
+    const parts = text.split(regex);
+
+    return parts.map((part, i) => {
+      const isMatch = keyPhrases.some((kp) => kp.toLowerCase() === part.toLowerCase());
+      if (isMatch) {
+        return (
+          <span key={i} style={{ color: AMBER_ACCENT }} className="font-normal">
+            {part}
+          </span>
+        );
+      }
+      return <span key={i}>{part}</span>;
+    });
+  };
+
   return (
     <aside
-      aria-label="Afterlight Curatorial Presenter"
+      aria-label="Afterlight Museum Curator Narration"
       className="flex flex-col space-y-6 select-none"
     >
-      {/* 1. Subtle Editorial Top Header */}
-      <div className="flex items-center justify-between pb-2 border-b border-meteorite">
-        <div className="flex items-center space-x-2">
-          <Radio className="w-3.5 h-3.5 text-signal animate-pulse" />
-          <span className="font-mono text-[10px] tracking-[0.22em] text-signal uppercase font-medium">
-            AFTERLIGHT MUSEUM GUIDE
+      {/* 1. Header: ((•)) AFTERLIGHT MUSEUM GUIDE ─────── */}
+      <div className="flex items-center space-x-3">
+        <div className="flex items-center space-x-1.5 shrink-0">
+          <span
+            className="font-mono text-xs tracking-[0.22em] uppercase font-medium"
+            style={{ color: AMBER_ACCENT }}
+          >
+            ((•)) AFTERLIGHT MUSEUM GUIDE
           </span>
         </div>
-        <span className="font-mono text-[9px] tracking-[0.16em] text-stone-muted uppercase hidden sm:inline">
-          {voiceState.isSpeaking && !voiceState.isPaused
-            ? 'CURATOR TRANSMITTING'
-            : 'CURATOR ON STANDBY'}
-        </span>
+        <div className="flex-1 h-[1px] bg-meteorite/60" />
       </div>
 
-      {/* 2. Large Cinematic Character Presentation Stage */}
-      <div className="relative w-full h-80 sm:h-96 -my-2 overflow-hidden">
-        {/* Editorial Presenter Label & Curator Designation (Left-Aligned overlay) */}
-        <div className="absolute top-8 left-0 z-10 pointer-events-none space-y-1.5 max-w-[210px] sm:max-w-[240px]">
+      {/* 2. Hero Curator Stage: Name/Title on Left, Mae Vance Portrait on Right */}
+      <div className="relative flex items-center justify-between min-h-[180px] sm:min-h-[200px] overflow-hidden">
+        {/* Left: Curator Identification */}
+        <div className="z-10 space-y-2 pr-4 max-w-[220px] sm:max-w-[260px]">
           <h2 className="font-serif text-3xl sm:text-4xl text-bone tracking-tight leading-tight">
             Dr. Mae Vance
           </h2>
@@ -176,27 +246,50 @@ export const AfterlightGuide: React.FC<AfterlightGuideProps> = ({
             Senior Curator of <br />
             Planetary Heritage
           </p>
-          <div className="w-8 h-[2px] bg-signal mt-3" />
+          <div
+            className="w-12 h-0.5 mt-3 rounded-full"
+            style={{ backgroundColor: AMBER_ACCENT }}
+          />
+
+          {selectedComponent && (
+            <div className="pt-2">
+              <span
+                className="inline-block text-[9px] font-mono tracking-widest uppercase px-1.5 py-0.5 rounded border border-meteorite/80 text-stone-muted"
+              >
+                FOCUS: {selectedComponent.name}
+              </span>
+            </div>
+          )}
         </div>
 
-        {/* 3D Character Viewport (Right ~60% with presentation gesture toward left artifact) */}
-        <GuideCharacter3D
-          artifactKey={activeKey}
-          isSpeaking={voiceState.isSpeaking}
-          isPaused={voiceState.isPaused}
-          visemeSignal={voiceState.visemeSignal}
-        />
+        {/* Right: Mae Vance Portrait (blending seamlessly into dark obsidian background) */}
+        <div className="relative shrink-0 w-44 sm:w-56 md:w-64 aspect-[4/3] overflow-hidden">
+          <img
+            src="/images/curator_mae_vance.jpg"
+            alt="Dr. Mae Vance, Senior Curator of Planetary Heritage"
+            className="w-full h-full object-cover object-center filter contrast-105 brightness-95"
+          />
+          {/* Subtle edge blend overlay to seamlessly integrate into the dark space background */}
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              background:
+                'radial-gradient(circle at 70% 40%, transparent 60%, #111416 98%), linear-gradient(to right, #111416 0%, transparent 25%)',
+            }}
+          />
+        </div>
       </div>
 
-      {/* 3. Minimalist Audio Narration Control Strip */}
-      <div className="pt-2 pb-1 flex items-center justify-between gap-4">
-        {/* Play / Pause Circular Toggle (Signal Vermilion) */}
+      {/* 3. Audio Narration Control Strip */}
+      <div className="flex items-center justify-between gap-3 pt-2">
+        {/* Play / Pause Circular Button */}
         <button
           type="button"
           onClick={handleTogglePlayPause}
           title={voiceState.isSpeaking && !voiceState.isPaused ? 'Pause Narration' : 'Play Narration'}
           aria-label={voiceState.isSpeaking && !voiceState.isPaused ? 'Pause Narration' : 'Play Narration'}
-          className="w-9 h-9 rounded-full border border-signal/80 flex items-center justify-center text-signal hover:border-signal hover:bg-signal/15 transition-all shrink-0"
+          style={{ borderColor: AMBER_ACCENT, color: AMBER_ACCENT }}
+          className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border flex items-center justify-center hover:bg-white/5 transition-all shrink-0 shadow-sm"
         >
           {voiceState.isSpeaking && !voiceState.isPaused ? (
             <Pause className="w-3.5 h-3.5 fill-current" />
@@ -205,22 +298,40 @@ export const AfterlightGuide: React.FC<AfterlightGuideProps> = ({
           )}
         </button>
 
-        {/* Telemetry Timestamp Counter */}
+        {/* Timestamp */}
         <span className="font-mono text-xs tracking-wider text-stone-secondary shrink-0">
           {timeDisplay.current} / {timeDisplay.total}
         </span>
 
-        {/* Thin Sleek Progress Line */}
-        <div className="flex-1 h-[3px] bg-surface-raised rounded-full overflow-hidden relative border border-meteorite/40">
-          <motion.div
-            className="h-full bg-gradient-to-r from-signal/80 to-signal"
-            style={{ width: `${Math.round(voiceState.progress * 100)}%` }}
+        {/* Progress Scrubber */}
+        <div
+          className="flex-1 h-[3px] bg-[#22282C] rounded-full relative cursor-pointer group"
+          onClick={(e) => {
+            const rect = e.currentTarget.getBoundingClientRect();
+            const clickPos = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+            guideVoiceEngine.seekProgress(clickPos);
+          }}
+        >
+          <div
+            className="h-full rounded-full transition-all duration-100"
+            style={{
+              width: `${Math.round(voiceState.progress * 100)}%`,
+              backgroundColor: AMBER_ACCENT,
+            }}
+          />
+          <div
+            className="w-2.5 h-2.5 rounded-full absolute -top-[3.5px] shadow-sm transition-all duration-100"
+            style={{
+              left: `${Math.round(voiceState.progress * 100)}%`,
+              backgroundColor: AMBER_ACCENT,
+              transform: 'translateX(-50%)',
+            }}
           />
         </div>
 
-        {/* Right Tools: Volume, CC, Replay */}
-        <div className="flex items-center space-x-2.5 shrink-0">
-          {/* Volume Control with hover slider */}
+        {/* Tool Controls: Volume, CC, Replay */}
+        <div className="flex items-center space-x-2 shrink-0">
+          {/* Volume Control with hover popover */}
           <div
             className="relative flex items-center"
             onMouseEnter={() => setShowVolumeSlider(true)}
@@ -231,17 +342,17 @@ export const AfterlightGuide: React.FC<AfterlightGuideProps> = ({
               onClick={handleToggleMute}
               title={voiceState.isMuted ? 'Unmute Presenter' : 'Mute Presenter'}
               aria-label={voiceState.isMuted ? 'Unmute Presenter' : 'Mute Presenter'}
-              className="text-stone-secondary hover:text-signal transition-colors p-1"
+              className="text-stone-secondary hover:text-bone transition-colors p-1"
             >
               {voiceState.isMuted || voiceState.volume === 0 ? (
                 <VolumeX className="w-4 h-4 text-stone-muted" />
               ) : (
-                <Volume2 className="w-4 h-4 text-signal" />
+                <Volume2 className="w-4 h-4" />
               )}
             </button>
 
             {showVolumeSlider && (
-              <div className="absolute right-0 bottom-full mb-2 bg-surface-raised border border-meteorite px-2.5 py-1.5 rounded-sm shadow-2xl flex items-center space-x-2 z-30">
+              <div className="absolute bottom-full right-0 mb-2 p-2 bg-surface-raised border border-meteorite rounded shadow-xl z-30">
                 <input
                   type="range"
                   min="0"
@@ -249,98 +360,89 @@ export const AfterlightGuide: React.FC<AfterlightGuideProps> = ({
                   step="0.05"
                   value={voiceState.isMuted ? 0 : voiceState.volume}
                   onChange={handleVolumeChange}
-                  aria-label="Voice Volume"
-                  className="w-20 accent-signal cursor-pointer h-1 bg-meteorite rounded-lg appearance-none"
+                  className="w-20 accent-[#DEB275] cursor-pointer"
+                  aria-label="Curator Volume Slider"
                 />
               </div>
             )}
           </div>
 
-          {/* CC Closed Captions Toggle */}
+          {/* CC Toggle Button */}
           <button
             type="button"
-            onClick={() => setShowCaptions(!showCaptions)}
-            title="Toggle Captions"
-            aria-label="Toggle Captions"
-            className={`px-2 py-0.5 rounded text-[10px] font-mono tracking-wider transition-colors border ${
-              showCaptions
-                ? 'border-signal text-signal bg-signal/10'
-                : 'border-meteorite text-stone-muted hover:text-stone-secondary'
-            }`}
+            onClick={() => setShowCaptions((v) => !v)}
+            title={showCaptions ? 'Hide Subtitles' : 'Show Subtitles'}
+            aria-label={showCaptions ? 'Hide Subtitles' : 'Show Subtitles'}
+            style={{
+              borderColor: showCaptions ? AMBER_ACCENT : '#3E4548',
+              color: showCaptions ? AMBER_ACCENT : '#85877F',
+            }}
+            className="px-1.5 py-0.5 rounded border text-[10px] font-mono tracking-wider transition-colors"
           >
             CC
           </button>
 
-          {/* Replay Narration */}
+          {/* Replay Button */}
           <button
             type="button"
             onClick={handleReplay}
-            title="Replay from Beginning"
-            aria-label="Replay from Beginning"
-            className="text-stone-muted hover:text-signal transition-colors p-1"
+            title="Replay Presentation"
+            aria-label="Replay Presentation"
+            className="text-stone-secondary hover:text-bone transition-colors p-1"
           >
             <RotateCcw className="w-4 h-4" />
           </button>
         </div>
       </div>
 
-      {/* 4. Live Editorial Subtitles (Directly beneath controls, spacious, no internal scrollbar) */}
+      {/* 4. Editorial Quotation / Narration Box */}
       <AnimatePresence mode="wait">
-        {showCaptions && (
+        {showCaptions ? (
           <motion.div
-            key={activeKey}
+            key={activeKey + currentSentence.slice(0, 20)}
             initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.35, ease: 'easeOut' }}
-            className="space-y-3 pt-2"
+            exit={{ opacity: 0, y: -4 }}
+            transition={{ duration: 0.3 }}
+            className="relative flex items-start pt-2"
           >
-            {/* Component Context Indicator if a component is inspected */}
-            {selectedComponent && (
-              <div className="flex items-center justify-between pb-1">
-                <span
-                  className="font-mono text-[9px] tracking-[0.2em] uppercase font-medium"
-                  style={{ color: destTheme.accent }}
-                >
-                  COMPONENT ANALYSIS · {selectedComponent.name}
-                </span>
-                <button
-                  type="button"
-                  onClick={onResetComponent}
-                  className="font-mono text-[9px] tracking-[0.16em] text-stone-secondary hover:text-signal uppercase transition-colors underline underline-offset-2"
-                >
-                  RETURN TO OVERVIEW
-                </button>
-              </div>
-            )}
+            {/* Opening quotation mark */}
+            <span
+              className="font-serif text-3xl sm:text-4xl select-none leading-none mr-2.5 mt-0.5 shrink-0"
+              style={{ color: AMBER_ACCENT }}
+              aria-hidden="true"
+            >
+              “
+            </span>
 
-            {/* Stylized Documentary Subtitle Quote */}
-            <div className="flex items-start">
-              <span
-                className="font-serif text-3xl sm:text-4xl text-signal select-none leading-none mr-2 mt-0.5"
-                aria-hidden="true"
-              >
-                “
-              </span>
-
-              <p className="font-serif text-base sm:text-lg md:text-[19px] text-bone/90 leading-relaxed font-light tracking-wide">
-                {subtitleSentences.map((sentence) => (
-                  <span
-                    key={sentence.id}
-                    className={`transition-colors duration-200 ${
-                      sentence.isActive
-                        ? 'text-signal font-normal'
-                        : sentence.isPast
-                        ? 'text-bone'
-                        : 'text-stone-muted'
-                    }`}
-                  >
-                    {sentence.text}{' '}
-                  </span>
-                ))}
+            {/* Editorial quote text with highlighted phrases */}
+            <div className="space-y-3">
+              <p className="font-serif text-lg sm:text-xl text-bone/95 leading-relaxed font-light tracking-wide">
+                {renderHighlightedSentence(currentSentence)}
+                <span className="text-stone-muted">...</span>
               </p>
+
+              {selectedComponent && (
+                <div className="flex items-center space-x-3 pt-1">
+                  <span className="font-mono text-[10px] tracking-widest text-stone-muted uppercase">
+                    ACTIVE COMPONENT: {selectedComponent.name}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={onResetComponent}
+                    className="font-mono text-[10px] tracking-wider uppercase transition-colors underline underline-offset-2"
+                    style={{ color: AMBER_ACCENT }}
+                  >
+                    OVERVIEW
+                  </button>
+                </div>
+              )}
             </div>
           </motion.div>
+        ) : (
+          <div className="py-4 text-center font-mono text-[10px] tracking-widest text-stone-muted uppercase border-t border-meteorite/40">
+            CAPTIONS MUTED · AUDIO ACTIVE
+          </div>
         )}
       </AnimatePresence>
     </aside>
