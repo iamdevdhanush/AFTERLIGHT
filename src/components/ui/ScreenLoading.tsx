@@ -2,11 +2,13 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { useExperienceStore } from '../../store/useExperienceStore';
 import { DESTINATIONS } from '../../data/destinations';
+import { getDestinationTheme } from '../../theme/tokens';
 
 export const ScreenLoading: React.FC = () => {
   const currentDestination = useExperienceStore((s) => s.currentDestination);
   const reducedMotion = useExperienceStore((s) => s.reducedMotion);
   const destData = DESTINATIONS[currentDestination];
+  const destTheme = getDestinationTheme(currentDestination);
 
   const isOrbitalDescent = currentDestination === 'moon' || currentDestination === 'mars';
   const subtitle =
@@ -28,7 +30,7 @@ export const ScreenLoading: React.FC = () => {
           duration: isOrbitalDescent && !reducedMotion ? 0.75 : 0.4,
           ease: 'easeInOut',
         }}
-        className="absolute inset-0 bg-[#080B10]"
+        className="absolute inset-0 bg-obsidian"
       />
 
       {/* Restrained orbital approach caption kept out of center frame */}
@@ -41,15 +43,21 @@ export const ScreenLoading: React.FC = () => {
       >
         <div className="max-w-sm space-y-2.5">
           <div className="flex items-center space-x-2.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-gold animate-pulse" />
-            <span className="font-mono text-[10px] tracking-[0.22em] text-gold uppercase">
+            <span
+              className="w-1.5 h-1.5 rounded-full animate-pulse"
+              style={{ backgroundColor: destTheme.accent }}
+            />
+            <span
+              className="font-mono text-[10px] tracking-[0.22em] uppercase font-medium"
+              style={{ color: destTheme.accent }}
+            >
               {subtitle}
             </span>
           </div>
-          <h2 className="font-serif text-3xl md:text-4xl text-starlight tracking-tight">
+          <h2 className="font-serif text-3xl md:text-4xl text-bone tracking-tight">
             {destData.name}
           </h2>
-          <div className="w-40 h-px bg-starlight/15 overflow-hidden">
+          <div className="w-40 h-px bg-meteorite overflow-hidden">
             <motion.div
               initial={{ scaleX: 0 }}
               animate={{ scaleX: 1 }}
@@ -57,8 +65,8 @@ export const ScreenLoading: React.FC = () => {
                 duration: isOrbitalDescent && !reducedMotion ? 1.1 : 0.55,
                 ease: [0.22, 1, 0.36, 1],
               }}
-              style={{ transformOrigin: 'left' }}
-              className="h-full bg-gold"
+              style={{ transformOrigin: 'left', backgroundColor: destTheme.accent }}
+              className="h-full"
             />
           </div>
         </div>

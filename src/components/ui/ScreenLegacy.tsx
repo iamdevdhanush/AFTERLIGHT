@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { ArrowLeft, ExternalLink } from 'lucide-react';
 import { useExperienceStore } from '../../store/useExperienceStore';
 import { ARTIFACTS } from '../../data/artifacts';
+import { getDestinationTheme } from '../../theme/tokens';
 
 export const ScreenLegacy: React.FC = () => {
   const selectedArtifactId = useExperienceStore((s) => s.selectedArtifactId);
@@ -11,6 +12,8 @@ export const ScreenLegacy: React.FC = () => {
 
   const artifact = selectedArtifactId ? ARTIFACTS[selectedArtifactId] : null;
   if (!artifact) return null;
+
+  const destTheme = getDestinationTheme(artifact.destination);
 
   const headlines: Record<string, string> = {
     apollo11_eagle: 'Still Standing in the Sea of Tranquility.',
@@ -31,7 +34,7 @@ export const ScreenLegacy: React.FC = () => {
       : artifact.legacy.whatRemainsToday;
 
   return (
-    <div className="fixed inset-0 z-40 bg-void text-starlight overflow-y-auto overflow-x-hidden select-none flex flex-col justify-between">
+    <div className="fixed inset-0 z-40 bg-obsidian text-bone overflow-y-auto overflow-x-hidden select-none flex flex-col justify-between">
       {/* 1. FULL-BLEED ARCHIVAL NASA BACKDROP */}
       <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
         <motion.div
@@ -46,22 +49,25 @@ export const ScreenLegacy: React.FC = () => {
             className="w-full h-full object-cover filter contrast-110 brightness-75"
           />
         </motion.div>
-        <div className="absolute inset-0 bg-gradient-to-t from-void via-void/80 to-void/45" />
+        <div className="absolute inset-0 bg-gradient-to-t from-obsidian via-obsidian/80 to-obsidian/45" />
       </div>
 
       {/* 2. TOP BAR */}
-      <div className="relative z-10 p-6 md:px-14 md:py-8 flex items-center justify-between border-b border-starlight/10">
+      <div className="relative z-10 p-6 md:px-14 md:py-8 flex items-center justify-between border-b border-meteorite">
         <div className="flex items-center space-x-3">
           <button
             type="button"
             onClick={returnToArtifactDetails}
-            className="inline-flex items-center space-x-2 text-starlight/75 hover:text-gold text-xs font-mono tracking-wider transition-colors uppercase"
+            className="inline-flex items-center space-x-2 text-stone-secondary hover:text-bone text-xs font-mono tracking-[0.16em] transition-colors uppercase"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
             <span>ARTIFACT</span>
           </button>
-          <span className="text-starlight/30">/</span>
-          <span className="font-mono text-xs tracking-wider text-gold">
+          <span className="text-meteorite font-mono text-xs">/</span>
+          <span
+            style={{ color: destTheme.accent }}
+            className="font-mono text-xs tracking-[0.16em] uppercase font-medium"
+          >
             {artifact.name}
           </span>
         </div>
@@ -69,7 +75,7 @@ export const ScreenLegacy: React.FC = () => {
         <button
           type="button"
           onClick={returnToExhibition}
-          className="group inline-flex items-center space-x-2 text-starlight hover:text-gold text-xs font-mono tracking-wider transition-colors duration-300"
+          className="group inline-flex items-center space-x-2 text-stone-secondary hover:text-bone text-xs font-mono tracking-[0.16em] transition-colors duration-300 uppercase"
         >
           <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
           <span>RETURN TO EXHIBITION</span>
@@ -84,11 +90,14 @@ export const ScreenLegacy: React.FC = () => {
           transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
           className="space-y-4"
         >
-          <span className="font-mono text-xs tracking-wider text-gold block uppercase">
+          <span
+            style={{ color: destTheme.accent }}
+            className="font-mono text-xs tracking-[0.2em] block uppercase font-medium"
+          >
             {artifact.statusLabel}
           </span>
 
-          <h1 className="font-serif text-4xl sm:text-5xl md:text-6xl lg:text-7xl text-starlight tracking-tight leading-[1.04]">
+          <h1 className="font-serif text-4xl sm:text-5xl md:text-6xl lg:text-7xl text-bone tracking-tight leading-[1.04]">
             {headline}
           </h1>
         </motion.div>
@@ -100,13 +109,16 @@ export const ScreenLegacy: React.FC = () => {
           transition={{ duration: 0.9, delay: 0.15 }}
           className="space-y-6"
         >
-          <p className="font-sans text-base md:text-lg text-starlight/90 leading-relaxed font-light max-w-2xl">
+          <p className="font-sans text-base md:text-lg text-stone-secondary leading-relaxed font-light max-w-2xl">
             {conclusionNarrative}
           </p>
 
-          <ul className="space-y-2 border-l border-gold/40 pl-4 max-w-2xl">
+          <ul
+            className="space-y-2 border-l pl-4 max-w-2xl"
+            style={{ borderColor: destTheme.accent }}
+          >
             {artifact.legacy.scientificImpact.map((impact) => (
-              <li key={impact} className="font-sans text-xs md:text-sm text-starlight/75 font-light">
+              <li key={impact} className="font-sans text-xs md:text-sm text-stone-secondary font-light">
                 {impact}
               </li>
             ))}
@@ -118,7 +130,7 @@ export const ScreenLegacy: React.FC = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.9, delay: 0.25 }}
-          className="pt-2 font-mono text-xs text-starlight/60 tracking-wider"
+          className="pt-2 font-mono text-xs text-stone-muted tracking-[0.14em]"
         >
           {artifact.locationName} • {artifact.coordinates.latitude}, {artifact.coordinates.longitude}
         </motion.div>
@@ -133,10 +145,10 @@ export const ScreenLegacy: React.FC = () => {
           <button
             type="button"
             onClick={returnToExhibition}
-            className="group inline-flex items-center space-x-3.5 px-8 py-4 bg-starlight text-void hover:bg-gold transition-colors duration-300"
+            className="group inline-flex items-center space-x-3.5 px-8 py-4 bg-signal text-obsidian hover:bg-bone transition-colors duration-300 font-semibold shadow-lg shadow-signal/15"
           >
-            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-            <span className="font-mono text-xs uppercase tracking-wider font-semibold">
+            <ArrowLeft className="w-4 h-4 text-obsidian group-hover:-translate-x-1 transition-transform" />
+            <span className="font-mono text-xs uppercase tracking-[0.18em] font-semibold text-obsidian">
               RETURN TO EXHIBITION
             </span>
           </button>
@@ -144,7 +156,7 @@ export const ScreenLegacy: React.FC = () => {
           <button
             type="button"
             onClick={returnToArtifactDetails}
-            className="px-6 py-4 border border-starlight/20 text-starlight/80 hover:border-gold hover:text-gold font-mono text-xs uppercase tracking-wider transition-colors"
+            className="px-6 py-4 border border-meteorite text-stone-secondary hover:border-signal hover:text-signal font-mono text-xs uppercase tracking-[0.16em] transition-colors"
           >
             BACK TO ARTIFACT DETAILS
           </button>
@@ -152,10 +164,10 @@ export const ScreenLegacy: React.FC = () => {
       </div>
 
       {/* 4. VISUALLY RESTRAINED SOURCE CREDIT FOOTER */}
-      <div className="relative z-10 p-6 md:px-14 md:py-8 border-t border-starlight/10 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs font-mono text-starlight/45 tracking-wider">
+      <div className="relative z-10 p-6 md:px-14 md:py-8 border-t border-meteorite flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs font-mono text-stone-muted tracking-[0.14em]">
         <div>
           ARCHIVE SOURCE:{' '}
-          <span className="text-starlight/75">
+          <span className="text-stone-secondary">
             {artifact.legacy.sources[0]?.title || 'NASA Mission Archives'}
           </span>
         </div>
@@ -163,7 +175,7 @@ export const ScreenLegacy: React.FC = () => {
           href={artifact.legacy.sources[0]?.url || 'https://www.nasa.gov'}
           target="_blank"
           rel="noopener noreferrer"
-          className="hover:text-gold transition-colors flex items-center space-x-1"
+          className="hover:text-signal transition-colors flex items-center space-x-1"
         >
           <span>OFFICIAL MISSION RECORD</span>
           <ExternalLink className="w-3 h-3" />

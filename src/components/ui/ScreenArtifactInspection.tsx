@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { useExperienceStore } from '../../store/useExperienceStore';
 import { ARTIFACTS } from '../../data/artifacts';
+import { getDestinationTheme } from '../../theme/tokens';
 
 export const ScreenArtifactInspection: React.FC = () => {
   const selectedArtifactId = useExperienceStore((s) => s.selectedArtifactId);
@@ -13,19 +14,21 @@ export const ScreenArtifactInspection: React.FC = () => {
   const artifact = ARTIFACTS[selectedArtifactId];
   if (!artifact) return null;
 
+  const destTheme = getDestinationTheme(artifact.destination);
+
   return (
     <div className="relative z-10 w-full h-full flex flex-col justify-between p-8 md:p-16 pointer-events-none select-none">
       {/* Top Header: Simple Minimal Return Button */}
       <div className="flex items-center justify-between">
         <button
           onClick={returnToExploration}
-          className="pointer-events-auto group inline-flex items-center space-x-2 text-starlight hover:text-gold text-xs font-mono tracking-wider transition-colors duration-300"
+          className="pointer-events-auto group inline-flex items-center space-x-2 text-stone-secondary hover:text-bone text-xs font-mono tracking-[0.16em] transition-colors duration-300 uppercase"
         >
           <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
           <span>RETURN TO TERRAIN</span>
         </button>
 
-        <span className="font-mono text-xs tracking-wider text-starlight/40 hidden sm:inline">
+        <span className="font-mono text-xs tracking-[0.16em] text-stone-muted hidden sm:inline uppercase">
           IN-SITU HARDWARE INSPECTION
         </span>
       </div>
@@ -38,15 +41,18 @@ export const ScreenArtifactInspection: React.FC = () => {
           transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
           className="space-y-3"
         >
-          <span className="font-mono text-xs text-gold uppercase tracking-wider block">
+          <span
+            style={{ color: destTheme.accent }}
+            className="font-mono text-xs uppercase tracking-[0.18em] block font-medium"
+          >
             {artifact.mission}
           </span>
 
-          <h1 className="font-serif text-5xl md:text-6xl lg:text-7xl text-starlight tracking-tight leading-none">
+          <h1 className="font-serif text-5xl md:text-6xl lg:text-7xl text-bone tracking-tight leading-none">
             {artifact.name}
           </h1>
 
-          <p className="font-serif text-2xl md:text-3xl italic text-starlight/90 leading-tight">
+          <p className="font-serif text-2xl md:text-3xl italic text-bone/90 leading-tight">
             {artifact.brief}
           </p>
         </motion.div>
@@ -56,7 +62,7 @@ export const ScreenArtifactInspection: React.FC = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.8, delay: 0.2 }}
-          className="font-sans text-sm md:text-base text-starlight/80 leading-relaxed font-light"
+          className="font-sans text-sm md:text-base text-stone-secondary leading-relaxed font-light"
         >
           {artifact.tagline}
         </motion.p>
@@ -66,9 +72,9 @@ export const ScreenArtifactInspection: React.FC = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.8, delay: 0.3 }}
-          className="pt-2 font-mono text-xs text-starlight/60 space-y-1"
+          className="pt-2 font-mono text-xs text-stone-muted space-y-1"
         >
-          <div className="text-starlight/90 font-medium">
+          <div className="text-stone-secondary font-medium">
             {artifact.landingDate} • {artifact.locationName}
           </div>
           <div>STATUS: {artifact.statusLabel.toUpperCase()}</div>
@@ -83,18 +89,18 @@ export const ScreenArtifactInspection: React.FC = () => {
         >
           <button
             onClick={enterStory}
-            className="pointer-events-auto group inline-flex items-center space-x-3 px-8 py-4 bg-starlight text-void hover:bg-gold transition-colors duration-300"
+            className="pointer-events-auto group inline-flex items-center space-x-3 px-8 py-4 bg-signal text-obsidian hover:bg-bone transition-colors duration-300 font-semibold shadow-lg shadow-signal/15"
           >
-            <span className="font-mono text-xs uppercase tracking-wider font-semibold">
+            <span className="font-mono text-xs uppercase tracking-[0.18em] font-semibold text-obsidian">
               EXPLORE ITS STORY
             </span>
-            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            <ArrowRight className="w-4 h-4 text-obsidian group-hover:translate-x-1 transition-transform" />
           </button>
         </motion.div>
       </div>
 
       {/* Bottom Minimal Line */}
-      <div className="font-mono text-xs tracking-wider text-starlight/40">
+      <div className="font-mono text-xs tracking-[0.16em] text-stone-muted">
         REF: {artifact.callsign}
       </div>
     </div>

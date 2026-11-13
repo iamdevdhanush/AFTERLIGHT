@@ -11,7 +11,7 @@ interface Artifact3DStageProps {
 
 /**
  * Isolated museum hardware 3D turntable for verified models (Eagle, MER rovers, Voyager 1).
- * Uses studio three-point lighting against pure #06080D without terrain clutter.
+ * Uses studio three-point lighting against Obsidian (#111416) background.
  */
 export const Artifact3DStage: React.FC<Artifact3DStageProps> = ({ artifactId }) => {
   const camConfig: { pos: [number, number, number]; target: [number, number, number] } =
@@ -22,18 +22,18 @@ export const Artifact3DStage: React.FC<Artifact3DStageProps> = ({ artifactId }) 
       : { pos: [2.8, 1.8, 3.6], target: [0, 0.55, 0] };
 
   return (
-    <div className="relative w-full h-full min-h-[340px] bg-[#06080D]">
+    <div className="relative w-full h-full min-h-[340px] bg-obsidian">
       <Canvas
         shadows
         dpr={[1, 2]}
         camera={{ position: camConfig.pos, fov: 38, near: 0.1, far: 120 }}
         gl={{ antialias: true, powerPreference: 'high-performance' }}
       >
-        <color attach="background" args={['#06080D']} />
-        <ambientLight intensity={0.35} color="#DCE4F0" />
-        <directionalLight position={[8, 10, 6]} intensity={2.6} color="#FFF7EC" castShadow />
-        <directionalLight position={[-6, 3, -5]} intensity={0.75} color="#7D96B2" />
-        <directionalLight position={[0, -5, 4]} intensity={0.25} color="#D99A63" />
+        <color attach="background" args={['#111416']} />
+        <ambientLight intensity={0.4} color="#EEE7D9" />
+        <directionalLight position={[8, 10, 6]} intensity={2.6} color="#EEE7D9" castShadow />
+        <directionalLight position={[-6, 3, -5]} intensity={0.75} color="#343A39" />
+        <directionalLight position={[0, -5, 4]} intensity={0.25} color="#F05A38" />
 
         <Suspense fallback={null}>
           {artifactId === 'apollo11_eagle' && (
@@ -64,7 +64,7 @@ export const Artifact3DStage: React.FC<Artifact3DStageProps> = ({ artifactId }) 
         />
       </Canvas>
 
-      <div className="pointer-events-none absolute bottom-3 left-4 font-mono text-[10px] tracking-[0.18em] text-starlight/45 uppercase">
+      <div className="pointer-events-none absolute bottom-3 left-4 font-mono text-[10px] tracking-[0.18em] text-stone-muted uppercase">
         DRAG TO ORBIT · SCROLL TO ZOOM
       </div>
     </div>

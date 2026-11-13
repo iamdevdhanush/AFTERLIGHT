@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight, X, Play, Pause, ArrowRight, ShieldCheck } fr
 import { useExperienceStore } from '../../store/useExperienceStore';
 import { ARTIFACTS } from '../../data/artifacts';
 import { soundManager } from '../../audio/SoundManager';
+import { getDestinationTheme } from '../../theme/tokens';
 
 export const ScreenDocumentary: React.FC = () => {
   const selectedArtifactId = useExperienceStore((s) => s.selectedArtifactId);
@@ -20,6 +21,7 @@ export const ScreenDocumentary: React.FC = () => {
   const artifact = selectedArtifactId ? ARTIFACTS[selectedArtifactId] : null;
   const chapters = artifact ? artifact.storyChapters : [];
   const currentChapter = chapters[activeChapterIndex] || chapters[0];
+  const destTheme = artifact ? getDestinationTheme(artifact.destination) : getDestinationTheme('moon');
 
   const isLastChapter = activeChapterIndex === chapters.length - 1;
 
@@ -60,14 +62,14 @@ export const ScreenDocumentary: React.FC = () => {
   if (!artifact || !currentChapter) return null;
 
   return (
-    <div className="fixed inset-0 z-40 bg-void text-starlight overflow-hidden select-none flex flex-col justify-between">
+    <div className="fixed inset-0 z-40 bg-obsidian text-bone overflow-hidden select-none flex flex-col justify-between">
       {/* 1. FULL-SCREEN DOCUMENTARY BACKDROP (ARCHIVAL NASA PHOTOGRAPHY) */}
       <div className="absolute inset-0 z-0 overflow-hidden">
         <AnimatePresence mode="wait">
           <motion.div
             key={currentChapter.id}
             initial={{ opacity: 0, scale: 1.05 }}
-            animate={{ opacity: 0.55, scale: 1 }}
+            animate={{ opacity: 0.5, scale: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 1.4, ease: [0.16, 1, 0.3, 1] }}
             className="w-full h-full"
@@ -81,31 +83,31 @@ export const ScreenDocumentary: React.FC = () => {
         </AnimatePresence>
 
         {/* Cinematic Vignette & Readability Gradient Overlays */}
-        <div className="absolute inset-0 bg-gradient-to-t from-void via-void/60 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-r from-void/90 via-void/50 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-obsidian via-obsidian/60 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-r from-obsidian/95 via-obsidian/60 to-transparent" />
       </div>
 
       {/* 2. TOP DOCUMENTARY HEADER */}
-      <div className="relative z-10 p-6 md:px-14 md:py-8 flex items-center justify-between border-b border-starlight/10">
+      <div className="relative z-10 p-6 md:px-14 md:py-8 flex items-center justify-between border-b border-meteorite bg-obsidian/60 backdrop-blur-md">
         <div className="flex items-center space-x-4 md:space-x-5">
           <button
             type="button"
             onClick={returnToArtifactDetails}
-            className="inline-flex items-center space-x-2 text-xs font-mono tracking-[0.16em] text-starlight/75 hover:text-gold transition-colors uppercase"
+            className="inline-flex items-center space-x-2 text-xs font-mono tracking-[0.16em] text-stone-secondary hover:text-bone transition-colors uppercase"
           >
             <ChevronLeft className="w-4 h-4" />
             <span>ARTIFACT</span>
           </button>
 
-          <span className="text-starlight/25 font-mono text-xs">/</span>
+          <span className="text-meteorite font-mono text-xs">/</span>
 
           <div className="flex items-center space-x-3">
-            <span className="font-mono text-xs uppercase tracking-wider text-gold font-medium">
+            <span style={{ color: destTheme.accent }} className="font-mono text-xs uppercase tracking-wider font-semibold">
               {artifact.name}
             </span>
-            <span className="text-starlight/30 hidden sm:inline">•</span>
-            <span className="font-mono text-xs tracking-wider text-starlight/70 hidden sm:inline">
-              DOCUMENTARY STORY
+            <span className="text-meteorite hidden sm:inline">•</span>
+            <span className="font-mono text-xs tracking-wider text-stone-muted hidden sm:inline">
+              DOCUMENTARY CHAPTER
             </span>
           </div>
         </div>
@@ -115,16 +117,16 @@ export const ScreenDocumentary: React.FC = () => {
           <button
             type="button"
             onClick={() => setIsAutoPlaying(!isAutoPlaying)}
-            className="flex items-center space-x-2 px-3 py-1.5 bg-space-800/90 hover:bg-space-700 border border-starlight/15 text-xs font-mono tracking-wider text-starlight transition-colors"
+            className="flex items-center space-x-2 px-3 py-1.5 bg-surface-raised hover:bg-surface border border-meteorite text-xs font-mono tracking-wider text-bone transition-colors"
           >
-            {isAutoPlaying ? <Pause className="w-3 h-3 text-gold" /> : <Play className="w-3 h-3 text-gold" />}
+            {isAutoPlaying ? <Pause className="w-3 h-3 text-signal" /> : <Play className="w-3 h-3 text-signal" />}
             <span className="hidden sm:inline font-medium">{isAutoPlaying ? 'PAUSE' : 'AUTO-PLAY'}</span>
           </button>
 
           <button
             type="button"
             onClick={returnToExhibition}
-            className="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-space-800/90 hover:bg-space-700 border border-starlight/15 text-xs font-mono tracking-wider text-starlight transition-colors"
+            className="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-surface-raised hover:bg-surface border border-meteorite text-xs font-mono tracking-wider text-stone-secondary hover:text-bone transition-colors"
             title="Return to Exhibition"
           >
             <X className="w-3.5 h-3.5" />
@@ -144,38 +146,38 @@ export const ScreenDocumentary: React.FC = () => {
             transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
             className="space-y-6"
           >
-            {/* Chapter Header */}
-            <div className="flex items-center space-x-3 text-xs font-mono tracking-wider text-gold">
+            {/* Chapter Header (Signal-coloured marker) */}
+            <div className="flex items-center space-x-3 text-xs font-mono tracking-wider text-signal font-medium">
               <span>CHAPTER {currentChapter.chapterNumber}</span>
-              <span className="text-starlight/40">—</span>
-              <span>{currentChapter.chapterTitle}</span>
+              <span className="text-meteorite">—</span>
+              <span className="text-bone">{currentChapter.chapterTitle}</span>
             </div>
 
             {/* Headline */}
-            <h2 className="font-serif text-4xl sm:text-5xl lg:text-6xl text-starlight tracking-tight leading-tight">
+            <h2 className="font-serif text-4xl sm:text-5xl lg:text-6xl text-bone tracking-tight leading-tight">
               {currentChapter.headline}
             </h2>
 
             {/* Narrative text */}
-            <p className="font-sans text-base sm:text-lg text-starlight/90 leading-relaxed font-light max-w-3xl">
+            <p className="font-sans text-base sm:text-lg text-bone/90 leading-relaxed font-light max-w-3xl">
               {currentChapter.narrative}
             </p>
 
             {/* Historical Context Callout */}
-            <div className="p-4 bg-space-800/80 border-l-2 border-gold max-w-2xl">
-              <span className="block font-mono text-xs tracking-wider text-gold mb-1">
-                HISTORICAL CONTEXT
+            <div className="p-4 bg-surface/90 border-l-2 border-signal max-w-2xl border border-meteorite/40">
+              <span className="block font-mono text-[10px] tracking-wider text-signal uppercase font-medium mb-1">
+                HISTORICAL RECORD
               </span>
-              <p className="font-sans text-xs sm:text-sm text-starlight/80 italic font-light">
+              <p className="font-sans text-xs sm:text-sm text-stone-secondary italic font-light">
                 {currentChapter.historicalContext}
               </p>
             </div>
 
             {/* Key Metric Tag if present */}
             {currentChapter.keyMetric && (
-              <div className="inline-flex items-center space-x-3 px-4 py-2 bg-space-800/90 border border-starlight/15 font-mono text-xs">
-                <span className="text-starlight/60">{currentChapter.keyMetric.label}:</span>
-                <span className="text-gold font-bold">{currentChapter.keyMetric.value}</span>
+              <div className="inline-flex items-center space-x-3 px-4 py-2 bg-surface-raised border border-meteorite font-mono text-xs">
+                <span className="text-stone-muted">{currentChapter.keyMetric.label}:</span>
+                <span className="text-signal font-bold">{currentChapter.keyMetric.value}</span>
               </div>
             )}
           </motion.div>
@@ -183,10 +185,10 @@ export const ScreenDocumentary: React.FC = () => {
       </div>
 
       {/* 4. BOTTOM BAR: CAPTION, CHAPTER NAVIGATION & PROGRESS */}
-      <div className="relative z-10 p-8 md:p-12 border-t border-starlight/10 bg-void/90 backdrop-blur-sm space-y-4">
+      <div className="relative z-10 p-8 md:p-12 border-t border-meteorite bg-obsidian/90 backdrop-blur-sm space-y-4">
         {/* Archival Photo Caption */}
-        <div className="text-xs font-mono text-starlight/70 flex items-center space-x-2">
-          <ShieldCheck className="w-3.5 h-3.5 text-gold flex-shrink-0" />
+        <div className="text-xs font-mono text-stone-muted flex items-center space-x-2">
+          <ShieldCheck className="w-3.5 h-3.5 text-lunar flex-shrink-0" />
           <span className="line-clamp-1">ARCHIVAL RECORD: {currentChapter.imageCaption}</span>
         </div>
 
@@ -203,15 +205,15 @@ export const ScreenDocumentary: React.FC = () => {
                 <div
                   className={`h-1 transition-all duration-300 ${
                     idx === activeChapterIndex
-                      ? 'w-10 bg-gold'
+                      ? 'w-10 bg-signal'
                       : idx < activeChapterIndex
-                      ? 'w-6 bg-starlight/80'
-                      : 'w-6 bg-space-600 group-hover:bg-space-500'
+                      ? 'w-6 bg-bone'
+                      : 'w-6 bg-meteorite group-hover:bg-stone-muted'
                   }`}
                 />
               </button>
             ))}
-            <span className="font-mono text-xs text-starlight/70 ml-2 font-medium">
+            <span className="font-mono text-xs text-stone-muted ml-2 font-medium">
               0{activeChapterIndex + 1} / 0{chapters.length}
             </span>
           </div>
@@ -219,32 +221,36 @@ export const ScreenDocumentary: React.FC = () => {
           {/* Navigation Controls */}
           <div className="flex items-center space-x-3">
             <button
+              type="button"
               onClick={prevStoryChapter}
               disabled={activeChapterIndex === 0}
-              className={`p-3 bg-space-800 border border-starlight/15 transition-colors ${
+              className={`p-3 border border-meteorite transition-colors ${
                 activeChapterIndex === 0
-                  ? 'opacity-30 cursor-not-allowed text-starlight/40'
-                  : 'hover:bg-space-700 text-starlight'
+                  ? 'opacity-30 cursor-not-allowed text-stone-muted'
+                  : 'hover:bg-surface-raised text-bone'
               }`}
+              title="Previous Chapter"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
 
             {isLastChapter ? (
               <button
+                type="button"
                 onClick={enterLegacy}
-                className="px-6 py-3 bg-gold text-void font-mono text-xs uppercase tracking-wider font-bold hover:bg-gold-light transition-colors flex items-center space-x-2"
+                className="group flex items-center space-x-3 px-6 py-3 bg-signal text-obsidian hover:bg-bone transition-colors font-semibold font-mono text-xs uppercase tracking-wider shadow-lg shadow-signal/15"
               >
-                <span>PROCEED TO LEGACY</span>
-                <ArrowRight className="w-4 h-4" />
+                <span>HISTORICAL LEGACY</span>
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </button>
             ) : (
               <button
+                type="button"
                 onClick={nextStoryChapter}
-                className="px-6 py-3 bg-starlight text-void font-mono text-xs uppercase tracking-wider font-semibold hover:bg-gold transition-colors flex items-center space-x-2"
+                className="group flex items-center space-x-3 px-6 py-3 bg-signal text-obsidian hover:bg-bone transition-colors font-semibold font-mono text-xs uppercase tracking-wider shadow-lg shadow-signal/15"
               >
                 <span>NEXT CHAPTER</span>
-                <ChevronRight className="w-4 h-4" />
+                <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </button>
             )}
           </div>

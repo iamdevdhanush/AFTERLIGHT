@@ -2,6 +2,20 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  /* SIGNAL & STONE CORE TOKENS */
+  --color-background: #111416;
+  --color-surface: #1B2020;
+  --color-surface-raised: #252B29;
+  --color-surface-border: #343A39;
+  --color-text-primary: #EEE7D9;
+  --color-text-secondary: #B8B3A8;
+  --color-text-muted: #85877F;
+  --color-accent-primary: #F05A38;
+  --color-accent-secondary: #B9C96A;
+  --color-accent-tertiary: #28645F;
+}
+
 @layer base {
   * {
     box-sizing: border-box;
@@ -14,19 +28,20 @@
     width: 100%;
     height: 100%;
     overflow: hidden;
-    background-color: #080B10;
-    color: #E8E3D9;
+    background-color: var(--color-background);
+    color: var(--color-text-primary);
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   ::selection {
-    background-color: #D99A63;
-    color: #080B10;
+    background-color: var(--color-accent-primary);
+    color: var(--color-background);
   }
 }
 
-/* Custom Film Grain Animation Effect */
+/* Restrained Film Texture for Documentary Depth */
 .film-grain {
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.04'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.035'/%3E%3C/svg%3E");
 }
-

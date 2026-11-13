@@ -4,6 +4,7 @@ import { ArrowLeft, ArrowRight, Volume2, VolumeX } from 'lucide-react';
 import { useExperienceStore } from '../../store/useExperienceStore';
 import { ARTIFACTS, EXHIBITION_COLLECTIONS } from '../../data/artifacts';
 import { DESTINATIONS } from '../../data/destinations';
+import { getDestinationTheme } from '../../theme/tokens';
 
 export const ScreenExhibition: React.FC = () => {
   const currentDestination = useExperienceStore((s) => s.currentDestination);
@@ -14,6 +15,7 @@ export const ScreenExhibition: React.FC = () => {
   const reducedMotion = useExperienceStore((s) => s.reducedMotion);
 
   const dest = DESTINATIONS[currentDestination] || DESTINATIONS.moon;
+  const destTheme = getDestinationTheme(currentDestination);
   const artifactIds = EXHIBITION_COLLECTIONS[currentDestination] || EXHIBITION_COLLECTIONS.moon;
   const exhibits = artifactIds.map((id) => ARTIFACTS[id]).filter(Boolean);
 
@@ -26,12 +28,12 @@ export const ScreenExhibition: React.FC = () => {
 
   const supportingText =
     currentDestination === 'moon'
-      ? 'Explore the machines, instruments and engineering hardware that remain on the lunar surface.'
+      ? 'Explore the rovers, landers, and scientific hardware preserved in the undisturbed lunar vacuum.'
       : currentDestination === 'mars'
-      ? 'Discover the machines that explored Mars and the engineering components that remain on its surface.'
-      : 'Track the distant probes carrying humanity’s instruments and memories into interstellar space.';
+      ? 'Discover the mobile geological laboratories that braved dust storms and traversed craters across the Red Planet.'
+      : 'Track humanity’s farthest emissaries carrying our scientific sensors and memories into the interstellar deep.';
 
-  // Asymmetric 12-column spans matching editorial rhythm (zero uniform card grid)
+  // Asymmetric 12-column spans matching editorial rhythm
   const getAsymmetricLayout = (index: number) => {
     const pattern = index % 4;
     if (pattern === 0) return 'lg:col-span-7';
@@ -46,25 +48,25 @@ export const ScreenExhibition: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-30 bg-void text-starlight overflow-y-auto overflow-x-hidden select-none">
+    <div className="fixed inset-0 z-30 bg-obsidian text-bone overflow-y-auto overflow-x-hidden select-none">
       {/* Minimal Sticky Top Navigation */}
-      <header className="sticky top-0 z-20 bg-void/90 backdrop-blur-sm border-b border-starlight/10 px-6 md:px-14 py-5 flex items-center justify-between">
+      <header className="sticky top-0 z-20 bg-obsidian/90 backdrop-blur-sm border-b border-meteorite px-6 md:px-14 py-5 flex items-center justify-between">
         <div className="flex items-center space-x-4 md:space-x-6">
           <button
             type="button"
             onClick={returnToDestinations}
-            className="group inline-flex items-center space-x-2 text-xs font-mono tracking-[0.16em] text-starlight/70 hover:text-gold transition-colors uppercase"
+            className="group inline-flex items-center space-x-2 text-xs font-mono tracking-[0.16em] text-stone-secondary hover:text-bone transition-colors uppercase"
           >
             <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />
             <span>DESTINATIONS</span>
           </button>
 
-          <span className="text-starlight/25 font-mono text-xs">/</span>
+          <span className="text-meteorite font-mono text-xs">/</span>
 
           <div className="flex items-center space-x-2 font-mono text-xs tracking-[0.18em] uppercase">
-            <span className="text-starlight/90">AFTERLIGHT</span>
-            <span className="text-starlight/30">/</span>
-            <span className="text-gold">{dest.name}</span>
+            <span className="text-stone-secondary">AFTERLIGHT</span>
+            <span className="text-meteorite">/</span>
+            <span style={{ color: destTheme.accent }}>{dest.name}</span>
           </div>
         </div>
 
@@ -72,12 +74,12 @@ export const ScreenExhibition: React.FC = () => {
           type="button"
           onClick={toggleAudio}
           aria-label={isAudioMuted ? 'Unmute Ambient Audio' : 'Mute Ambient Audio'}
-          className="text-starlight/55 hover:text-gold transition-colors p-1.5"
+          className="text-stone-secondary hover:text-bone transition-colors p-1.5"
         >
           {isAudioMuted ? (
-            <VolumeX className="w-4 h-4" />
+            <VolumeX className="w-4 h-4 text-stone-muted" />
           ) : (
-            <Volume2 className="w-4 h-4 text-gold" />
+            <Volume2 className="w-4 h-4" style={{ color: destTheme.accent }} />
           )}
         </button>
       </header>
@@ -90,15 +92,18 @@ export const ScreenExhibition: React.FC = () => {
           transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
           className="max-w-3xl space-y-4"
         >
-          <span className="font-mono text-[11px] tracking-[0.22em] text-gold uppercase block">
-            CURATED EXHIBITION · 0{exhibits.length} ARTIFACTS
+          <span
+            className="font-mono text-[11px] tracking-[0.22em] uppercase block font-medium"
+            style={{ color: destTheme.accent }}
+          >
+            CURATED ARCHIVE · 0{exhibits.length} ARTIFACTS · {destTheme.character}
           </span>
 
-          <h1 className="font-serif text-4xl sm:text-5xl md:text-6xl text-starlight tracking-tight leading-[1.02]">
+          <h1 className="font-serif text-4xl sm:text-5xl md:text-6xl text-bone tracking-tight leading-[1.02]">
             {headline}
           </h1>
 
-          <p className="font-sans text-sm md:text-base text-starlight/70 leading-relaxed max-w-2xl font-light">
+          <p className="font-sans text-sm md:text-base text-stone-secondary leading-relaxed max-w-2xl font-light">
             {supportingText}
           </p>
         </motion.section>
@@ -125,9 +130,12 @@ export const ScreenExhibition: React.FC = () => {
                 onClick={() => selectArtifact(artifact.id)}
                 className="w-full text-left block focus:outline-none"
               >
-                {/* Photograph Frame (Clean museum plate without bulky box borders or neon effects) */}
+                {/* Photograph Plate (Clean museum crop with Meteorite hairline border) */}
                 <div
-                  className={`relative w-full ${getAspectClass(index)} overflow-hidden bg-[#0D1117]`}
+                  className={`relative w-full ${getAspectClass(index)} overflow-hidden bg-surface border border-meteorite/60 group-hover:border-opacity-100 transition-colors duration-500`}
+                  style={{
+                    borderColor: undefined,
+                  }}
                 >
                   <img
                     src={artifact.heroImage}
@@ -135,29 +143,39 @@ export const ScreenExhibition: React.FC = () => {
                     className="w-full h-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-[1.03] brightness-95 group-hover:brightness-100"
                     loading={index < 2 ? 'eager' : 'lazy'}
                   />
-                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-void/70 via-transparent to-transparent" />
-                  <span className="pointer-events-none absolute top-4 left-4 font-mono text-[10px] tracking-[0.2em] text-starlight/80 bg-void/75 px-2.5 py-1">
+                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-obsidian/75 via-transparent to-transparent" />
+                  
+                  {/* Plate Index Badge */}
+                  <span className="pointer-events-none absolute top-4 left-4 font-mono text-[10px] tracking-[0.2em] text-bone bg-obsidian/85 px-2.5 py-1 border border-meteorite/70">
                     0{index + 1}
+                  </span>
+
+                  {/* Category Pill */}
+                  <span className="pointer-events-none absolute bottom-4 left-4 font-mono text-[9px] tracking-[0.16em] uppercase text-stone-secondary bg-surface/90 px-2 py-0.5 border border-meteorite/50">
+                    {artifact.category}
                   </span>
                 </div>
 
                 {/* Exhibit Caption Strip */}
-                <div className="pt-5 space-y-2.5 border-b border-starlight/10 pb-6 group-hover:border-gold/50 transition-colors duration-300">
+                <div className="pt-5 space-y-2.5 border-b border-meteorite pb-6 group-hover:border-stone-secondary transition-colors duration-300">
                   <div className="flex items-center justify-between font-mono text-[11px] tracking-[0.18em] uppercase">
-                    <span className="text-gold">{artifact.mission}</span>
-                    <span className="text-starlight/50">{artifact.year}</span>
+                    <span style={{ color: destTheme.accent }}>{artifact.mission}</span>
+                    <span className="text-stone-muted">{artifact.year}</span>
                   </div>
 
-                  <h2 className="font-serif text-2xl sm:text-3xl text-starlight tracking-tight group-hover:text-gold transition-colors duration-300">
+                  <h2 className="font-serif text-2xl sm:text-3xl text-bone tracking-tight transition-colors duration-300">
                     {artifact.name}
                   </h2>
 
-                  <p className="font-sans text-xs sm:text-sm text-starlight/70 leading-relaxed font-light max-w-xl">
+                  <p className="font-sans text-xs sm:text-sm text-stone-secondary leading-relaxed font-light max-w-xl">
                     {artifact.shortDescription}
                   </p>
 
-                  <div className="pt-2 inline-flex items-center space-x-2.5 font-mono text-[11px] tracking-[0.2em] text-starlight/85 group-hover:text-gold uppercase transition-colors">
-                    <span>EXPLORE</span>
+                  <div
+                    className="pt-2 inline-flex items-center space-x-2.5 font-mono text-[11px] tracking-[0.2em] uppercase transition-colors"
+                    style={{ color: destTheme.accent }}
+                  >
+                    <span>EXAMINE ARTIFACT</span>
                     <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1.5 transition-transform duration-200" />
                   </div>
                 </div>
@@ -169,4 +187,3 @@ export const ScreenExhibition: React.FC = () => {
     </div>
   );
 };
-

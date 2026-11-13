@@ -7,24 +7,43 @@ export default {
   theme: {
     extend: {
       colors: {
-        void: '#080B10',
-        space: {
-          900: '#080B10',
-          800: '#0E131B',
-          700: '#171E28',
-          600: '#232C3A',
-          500: '#344155',
+        // SIGNAL & STONE PALETTE
+        obsidian: '#111416',
+        meteorite: '#343A39',
+        bone: '#EEE7D9',
+        surface: {
+          DEFAULT: '#1B2020',
+          raised: '#252B29',
+          border: '#343A39',
         },
-        starlight: '#E8E3D9',
-        dust: '#A5A7A9',
+        stone: {
+          primary: '#EEE7D9',
+          secondary: '#B8B3A8',
+          muted: '#85877F',
+        },
+        signal: {
+          DEFAULT: '#F05A38',
+          vermilion: '#F05A38',
+          hover: '#D94928',
+        },
+        lunar: {
+          DEFAULT: '#B9C96A',
+          lichen: '#B9C96A',
+        },
+        oxidized: {
+          DEFAULT: '#28645F',
+          teal: '#28645F',
+        },
+
+        // Backward-compatible mappings seamlessly re-anchored to Signal & Stone
+        void: '#111416', // Now mapped to Obsidian
+        starlight: '#EEE7D9', // Now mapped to Archive Bone
+        dust: '#85877F', // Now mapped to Text Muted
         gold: {
-          DEFAULT: '#D99A63',
-          light: '#E5B183',
-          dark: '#B87A44',
+          DEFAULT: '#F05A38', // Re-anchored to Signal Vermilion for primary actions
+          light: '#F87A5E',
+          dark: '#D94928',
         },
-        emerald: {
-          accent: '#63F0C8',
-        }
       },
       fontFamily: {
         serif: ['"Instrument Serif"', 'Georgia', 'serif'],
@@ -32,11 +51,10 @@ export default {
         mono: ['"JetBrains Mono"', 'monospace'],
       },
       letterSpacing: {
-        widest: '0.25em',
-        ultra: '0.35em',
+        widest: '0.22em',
+        ultra: '0.3em',
       }
     },
   },
   plugins: [],
 }
-

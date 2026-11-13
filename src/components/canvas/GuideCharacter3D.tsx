@@ -76,9 +76,9 @@ const GuideCharacterModel: React.FC<GuideCharacterSceneProps> = ({
     });
 
     const goldMat = new THREE.MeshStandardMaterial({
-      color: '#D99A63',
-      roughness: 0.32,
-      metalness: 0.88,
+      color: '#F05A38',
+      roughness: 0.35,
+      metalness: 0.75,
     });
 
     const headsetMat = new THREE.MeshStandardMaterial({
@@ -93,8 +93,8 @@ const GuideCharacterModel: React.FC<GuideCharacterSceneProps> = ({
     const mouthInteriorMat = new THREE.MeshBasicMaterial({ color: '#2A1316' });
 
     const micLedMat = new THREE.MeshStandardMaterial({
-      color: '#D99A63',
-      emissive: '#D99A63',
+      color: '#F05A38',
+      emissive: '#F05A38',
       emissiveIntensity: 0.8,
       roughness: 0.2,
     });
@@ -238,7 +238,7 @@ const GuideCharacterModel: React.FC<GuideCharacterSceneProps> = ({
   });
 
   return (
-    <group position={[0, -1.05, 0]}>
+    <group position={[0.34, -1.05, 0]}>
       {/* Upper Torso & Space Suit Chest */}
       <group ref={chestGroupRef}>
         {/* Main Composite Flight Tunic */}
@@ -458,21 +458,9 @@ export const GuideCharacter3D: React.FC<{
   visemeSignal: number;
 }> = ({ artifactKey, isSpeaking, isPaused, visemeSignal }) => {
   return (
-    <div className="relative w-full h-full bg-gradient-to-b from-[#0D121B] via-[#090D14] to-[#06080D] overflow-hidden select-none">
-      {/* Subtle telemetry radial grid background */}
-      <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_center,rgba(217,154,99,0.06)_0%,transparent_70%)]" />
-
-      {/* Header Presenter Title Badge */}
-      <div className="absolute top-3 left-4 z-10 flex items-center space-x-2 pointer-events-none">
-        <span
-          className={`w-2 h-2 rounded-full transition-colors ${
-            isSpeaking && !isPaused ? 'bg-gold animate-pulse' : 'bg-starlight/30'
-          }`}
-        />
-        <span className="font-mono text-[9px] tracking-[0.2em] uppercase text-starlight/75">
-          {isSpeaking && !isPaused ? 'CURATOR TRANSMITTING' : 'CURATOR ON STANDBY'}
-        </span>
-      </div>
+    <div className="relative w-full h-full bg-transparent overflow-hidden select-none">
+      {/* Subtle telemetry radial grid background aligned behind character */}
+      <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_70%_40%,rgba(240,90,56,0.06)_0%,transparent_70%)]" />
 
       <Canvas
         shadows={false}
@@ -482,13 +470,13 @@ export const GuideCharacter3D: React.FC<{
           powerPreference: 'high-performance',
         }}
         dpr={[1, Math.min(2, typeof window !== 'undefined' ? window.devicePixelRatio : 1)]}
-        camera={{ position: [0, 0.22, 1.85], fov: 34 }}
+        camera={{ position: [0, 0.2, 1.9], fov: 33 }}
       >
         {/* Museum Key & Rim Lighting */}
-        <ambientLight intensity={0.65} color="#1C2330" />
-        <directionalLight position={[-1.8, 2.2, 1.8]} intensity={2.8} color="#FFF5EB" />
+        <ambientLight intensity={0.65} color="#252B29" />
+        <directionalLight position={[-1.8, 2.2, 1.8]} intensity={2.8} color="#EEE7D9" />
         <directionalLight position={[1.8, 1.4, -1.5]} intensity={1.6} color="#75A3D9" />
-        <directionalLight position={[0, -1.2, 1.2]} intensity={0.4} color="#D99A63" />
+        <directionalLight position={[0, -1.2, 1.2]} intensity={0.4} color="#F05A38" />
 
         <GuideCharacterModel
           artifactKey={artifactKey}
