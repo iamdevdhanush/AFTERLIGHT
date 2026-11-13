@@ -263,3 +263,8 @@ export const useExperienceStore = create<ExperienceStore>((set, get) => ({
   },
 }));
 
+if (typeof window !== 'undefined') {
+  (window as any).__EXPERIENCE_STORE__ = useExperienceStore;
+}
+
+

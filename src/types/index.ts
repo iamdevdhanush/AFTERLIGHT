@@ -35,6 +35,7 @@ export interface ArtifactComponent {
   siteNote: string;
   description: string;
   guideExplanation: string;
+  voiceScript?: string;
 }
 
 export interface ArtifactGuideContent {
@@ -43,6 +44,9 @@ export interface ArtifactGuideContent {
   missionUsed: string;
   whyLeftBehind: string;
   presentStatus: string;
+  spokenIntro?: string;
+  voiceScript?: string;
+  keyFacts?: string[];
 }
 
 export interface GalleryImage {

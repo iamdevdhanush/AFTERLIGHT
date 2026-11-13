@@ -64,6 +64,15 @@ export const ARTIFACTS: Record<string, ArtifactData> = {
         'The Lunar Module operated in two stages to conserve mass: once surface exploration concluded, the ascent stage fired off the top of the descent stage, leaving the heavier lower section behind.',
       presentStatus:
         'Non-operational and permanently preserved intact on Mare Tranquillitatis; its ascent stage separated into lunar orbit after rendezvous with Columbia and later impacted elsewhere on the Moon.',
+      spokenIntro:
+        'Welcome to the Apollo 11 exhibition. Standing before you is the lower descent stage of the Lunar Module Eagle.',
+      voiceScript:
+        "This is the descent stage of the Apollo 11 Lunar Module Eagle, which carried Neil Armstrong and Buzz Aldrin to the Moon's surface on July 20th, 1969. Engineered strictly for the vacuum of space, its primary purpose was to decelerate the spacecraft from lunar orbit and achieve a safe, powered touchdown. It housed throttleable rocket engines, hypergolic propellants, and outrigger landing legs with crushable honeycomb shock absorbers. During surface operations, it served as humanity's first lunar habitat and science station. Once exploration concluded, the upper ascent stage fired directly off this lower chassis to carry the astronauts back to orbit. The descent stage remained behind as their stationary launch pad. Today, it stands intact at Tranquility Base as a permanent historical monument, guarded by silence in the lunar dust.",
+      keyFacts: [
+        'Landed at Mare Tranquillitatis on July 20, 1969',
+        'Served as the launch platform for Neil Armstrong and Buzz Aldrin',
+        'Permanently preserved in situ at Tranquility Base',
+      ],
     },
     components: [
       {
@@ -76,6 +85,8 @@ export const ARTIFACTS: Record<string, ArtifactData> = {
           'Lightweight aluminum cruciform and octagonal structure wrapped in gold-tinted Kapton thermal foil, housing four spherical propellant tanks and the Quadrant storage bays.',
         guideExplanation:
           'This central octagonal body holds the empty fuel and oxidizer tanks along with the gold-coated Kapton foil that shielded electronics from 120°C sunlight.',
+        voiceScript:
+          "You are inspecting the octagonal chassis of Eagle's descent stage. Wrapped in shimmering gold Kapton and Mylar blankets, this aluminum frame housed four giant propellant tanks and shielded delicate guidance systems against extreme lunar temperature swings.",
       },
       {
         id: 'eagle-legs',
@@ -87,6 +98,8 @@ export const ARTIFACTS: Record<string, ArtifactData> = {
           'Outrigger aluminum struts incorporating crushable honeycomb cartridges engineered to absorb vertical and lateral touchdown shock without rebounding.',
         guideExplanation:
           'Each telescoping strut uses internal crushable aluminum honeycomb designed to deform once on contact, preventing the spacecraft from tipping on sloped craters.',
+        voiceScript:
+          'These four outrigger struts absorbed the kinetic shock of touchdown. Inside each telescoping aluminum cylinder was a crushable honeycomb cartridge that compressed on impact, stabilizing Eagle on the uneven lunar surface.',
       },
       {
         id: 'eagle-footpads',
@@ -98,6 +111,8 @@ export const ARTIFACTS: Record<string, ArtifactData> = {
           'Spun-aluminum 0.91-meter concave dishes attached to ball-joint swivels to distribute 15 metric tons of Earth-weight load safely across loose lunar dust.',
         guideExplanation:
           'Because engineers did not know how deeply spacecraft would sink into lunar soil, wide aluminum dish footpads spread the lander’s weight across loose dust.',
+        voiceScript:
+          "These thirty-seven-inch spun-aluminum dish footpads distributed Eagle's weight safely across powdery regolith, sinking only a few centimeters into the lunar dust during humanity's historic landing.",
       },
       {
         id: 'eagle-ladder',
@@ -109,6 +124,8 @@ export const ARTIFACTS: Record<string, ArtifactData> = {
           'Tubular aluminum ladder descending from the forward porch, carrying the etched stainless-steel plaque inscribed for Tranquility Base.',
         guideExplanation:
           'Neil Armstrong climbed down these nine rungs before stepping onto the surface. The stainless plaque bolted between rungs bears the date July 1969 A.D.',
+        voiceScript:
+          'Neil Armstrong climbed down these nine ladder rungs before taking his giant leap for mankind. Bolted between the lower rungs is the stainless-steel commemorative plaque inscribed: We came in peace for all mankind.',
       },
       {
         id: 'eagle-dps',
@@ -120,6 +137,8 @@ export const ARTIFACTS: Record<string, ArtifactData> = {
           'The first deeply throttleable crewed rocket engine (10% to 100% thrust), burning Aerozine 50 and nitrogen tetroxide for precision hovering.',
         guideExplanation:
           'Armstrong manually throttled this single gimbaled engine during the final minutes to skim past West Crater’s boulders with under 25 seconds of usable fuel.',
+        voiceScript:
+          'Centered beneath the lander is the Descent Propulsion Engine. The first deeply throttleable rocket engine built for space, it allowed Neil Armstrong to manually hover and navigate past boulder fields with under thirty seconds of fuel remaining.',
       },
       {
         id: 'eagle-ascent-note',
@@ -131,6 +150,8 @@ export const ARTIFACTS: Record<string, ArtifactData> = {
           'Pressurized crew cabin that lifted off from atop the descent stage to dock with Command Module Columbia in lunar orbit.',
         guideExplanation:
           'Important distinction: only the lower descent stage sits at Tranquility Base today. The crew cabin separated on July 21 and later crashed into an unmapped site on the Moon.',
+        voiceScript:
+          'Notice that the upper crew cabin is absent. The ascent stage served as the crew compartment and fired off this lower stage to rendezvous with Michael Collins aboard Columbia, leaving only the descent stage standing at Tranquility Base.',
       },
     ],
     specs: {
@@ -260,6 +281,15 @@ export const ARTIFACTS: Record<string, ArtifactData> = {
         'Ascent stages lacked the payload capacity to return surface vehicles, and astronauts parked each rover roughly 100 meters east of its Lunar Module so Earth controllers could aim the rover’s TV camera to broadcast ascent liftoff.',
       presentStatus:
         'All three LRVs remain inactive and parked at their final observation points in Hadley-Apennine, Descartes, and Taurus-Littrow.',
+      spokenIntro:
+        'Welcome! You are exploring the Apollo Lunar Roving Vehicle, the celebrated electric vehicle that transformed lunar geology.',
+      voiceScript:
+        "The Lunar Roving Vehicle was an electric, four-wheeled exploration vehicle deployed during Apollo missions 15, 16, and 17. Its purpose was to dramatically extend the traverse range of astronauts across rugged lunar valleys and mountains. Developed by Boeing and General Motors, each rover featured an articulated aluminum chassis, spun-steel mesh tires with titanium chevrons, and independent electric drive motors on all four wheels. It enabled crews to travel up to thirty-six kilometers on a single mission, carrying geology tools, television systems, and hundreds of kilograms of lunar core samples. Because the rovers were too heavy to return in the Apollo ascent stage, all three vehicles were intentionally parked at safe distances from the landers to televise liftoff back to Earth. Today, three complete rovers remain parked on the Moon at Hadley Rille, the Descartes Highlands, and the Taurus-Littrow valley.",
+      keyFacts: [
+        'Deployed on Apollo 15, 16, and 17 J-series missions',
+        'Powered by four independent 0.25-horsepower electric drive motors',
+        'All three rovers remain intact at their final lunar parking sites',
+      ],
     },
     components: [
       {
@@ -272,6 +302,8 @@ export const ARTIFACTS: Record<string, ArtifactData> = {
           'Elastic 81 cm hoops woven from zinc-coated spring steel piano wire and ringed with titanium chevron treads to prevent tire blowouts or sinking in regolith.',
         guideExplanation:
           'Rubber pneumatic tires would burst or turn brittle in lunar vacuum. Woven steel wire flexed softly over boulders while titanium cleats gripped fine dust.',
+        voiceScript:
+          'Unlike rubber tires which would burst in vacuum or turn brittle in the cold lunar night, these wheels were hand-woven from zinc-coated piano wire. Chevron titanium treads provided traction across soft regolith without sinking.',
       },
       {
         id: 'lrv-batteries',
@@ -283,6 +315,8 @@ export const ARTIFACTS: Record<string, ArtifactData> = {
           'Two non-rechargeable 121-amp-hour potassium hydroxide batteries powering four 0.25-horsepower DC hub motors and Earth telemetry.',
         guideExplanation:
           'Each rover ran solely on two non-rechargeable silver-zinc batteries engineered for 92 km of range—no solar panels were fitted.',
+        voiceScript:
+          'Housed in the forward chassis, dual non-rechargeable silver-zinc batteries delivered 36 volts of direct current to four quarter-horsepower hub motors, supplying power without bulky solar arrays.',
       },
       {
         id: 'lrv-antenna',
@@ -294,6 +328,8 @@ export const ARTIFACTS: Record<string, ArtifactData> = {
           'Collapsible parabolic umbrella dish folded from gold-plated molybdenum wire mesh to beam live color video directly from the Moon.',
         guideExplanation:
           'Astronauts aimed this umbrella dish toward Earth whenever parked so Mission Control could receive live geological commentary and video.',
+        voiceScript:
+          'This collapsible umbrella dish was woven from gold-plated molybdenum wire mesh. At each science stop, astronauts manually aligned its sight glass with Earth to transmit crystal-clear color television directly to Houston.',
       },
       {
         id: 'lrv-lcru',
@@ -305,6 +341,8 @@ export const ARTIFACTS: Record<string, ArtifactData> = {
           'Steerable color television camera controlled remotely via radio command from Houston—capturing Apollo 17’s famous ascent liftoff.',
         guideExplanation:
           'After astronauts boarded the Lunar Module, controller Ed Fendell in Houston piloted this camera remotely to follow the ascent stage upward into lunar sky.',
+        voiceScript:
+          'Operated remotely from Mission Control in Houston with a four-second radio lag, this RCA color camera panned and tilted to broadcast astronaut explorations and captured the famous liftoff of the Lunar Module ascent stages.',
       },
     ],
     specs: {
@@ -409,6 +447,15 @@ export const ARTIFACTS: Record<string, ArtifactData> = {
         'Surveyor 3 was a one-way robotic probe designed without ascent capability; Apollo 12 astronauts deliberately detached only its TV camera and sampler scoop to return to Earth.',
       presentStatus:
         'Inactive lander tripod frame remains tilted inside Surveyor Crater; its television camera and soil scoop now reside on Earth at the Smithsonian National Air and Space Museum.',
+      spokenIntro:
+        'Welcome. This is Surveyor 3, an uncrewed robotic lander that proved spacecraft could survive landing in lunar dust.',
+      voiceScript:
+        "Surveyor 3 was an automated robotic lander launched by NASA in April 1967 to explore Oceanus Procellarum, the Ocean of Storms. Its mission was to test soft-landing dynamics and sample the mechanical properties of lunar regolith prior to the Apollo crewed landings. Equipped with a high-resolution scanning television camera and a motorized surface sampler scoop, Surveyor 3 dug four trenches into the soil, proving the lunar surface had adequate bearing strength to support a human lander. Thirty-one months later, Apollo 12 astronauts Pete Conrad and Alan Bean landed within one hundred and sixty-three meters of Surveyor 3, inspecting the hardware and retrieving its camera and scoop to analyze the effects of long-term cosmic radiation. Surveyor 3 remains seated on the slope of Surveyor Crater, an enduring robotic pioneer that paved the way for human boots on the Moon.",
+      keyFacts: [
+        'Soft-landed in Oceanus Procellarum in April 1967',
+        'Dug four exploratory soil trenches with a remote scoop',
+        'Inspected and sampled in person by Apollo 12 astronauts in 1969',
+      ],
     },
     components: [
       {
@@ -421,6 +468,8 @@ export const ARTIFACTS: Record<string, ArtifactData> = {
           'Lightweight open-truss spaceframe originally painted white; astronauts observed it had darkened to tan-brown from solar radiation and dust blasting during Apollo 12’s touchdown.',
         guideExplanation:
           'This tubular frame stayed anchored inside the crater. Even its paint noticeably tanned after 31 months of unfiltered solar ultraviolet exposure and Apollo 12 exhaust dust.',
+        voiceScript:
+          'This tubular aluminum tripod frame remains resting at a twelve-degree tilt inside Surveyor Crater. Astronauts observed that its white thermal paint had turned tan-brown after thirty-one months of harsh solar ultraviolet exposure.',
       },
       {
         id: 'surv3-camera',
@@ -432,6 +481,8 @@ export const ARTIFACTS: Record<string, ArtifactData> = {
           '200/600-line vidicon camera that beamed 6,315 images during 1967 before freezing; returned to Earth so engineers could test micrometeorite impacts and vacuum fatigue.',
         guideExplanation:
           'Note: Surveyor 3’s famous TV camera is NOT on the Moon today—Pete Conrad and Alan Bean unbolted it with cable cutters and brought it home aboard Intrepid.',
+        voiceScript:
+          'Notice that the television camera is no longer attached. Pete Conrad and Alan Bean cut its electrical cables and unbolted the housing, carrying it back to Earth for microbiological and materials analysis.',
       },
       {
         id: 'surv3-scoop',
@@ -443,6 +494,8 @@ export const ARTIFACTS: Record<string, ArtifactData> = {
           'Pantograph robotic arm and scoop that dug four test trenches in 1967, proving lunar soil could bear human astronauts and heavy Lunar Modules.',
         guideExplanation:
           'This telescoping digging claw gave NASA confidence that lunar soil would not swallow Apollo astronauts; Apollo 12 brought the scoop arm home for metallurgical inspection.',
+        voiceScript:
+          'This motorized pantograph arm and scoop dug four trenches into Oceanus Procellarum, proving lunar dust could bear the weight of heavy spacecraft. Apollo 12 brought the scoop back to Earth for metallurgical study.',
       },
       {
         id: 'surv3-solar',
@@ -454,6 +507,8 @@ export const ARTIFACTS: Record<string, ArtifactData> = {
           'Dual-axis steerable solar array and flat high-gain planar antenna perched atop the central mast.',
         guideExplanation:
           'The tall flat solar wing and planar communications panel remain perched atop Surveyor 3’s tripod frame in Oceanus Procellarum.',
+        voiceScript:
+          'Perched atop the central mast are the planar high-gain communications antenna and solar array, which tracked the Sun across fourteen Earth days of blistering heat before the freezing lunar night set in.',
       },
     ],
     specs: {
@@ -558,6 +613,15 @@ export const ARTIFACTS: Record<string, ArtifactData> = {
         'ALSEP instruments were designed specifically to remain behind and operate unattended across freezing two-week lunar nights until radio support ended in 1977.',
       presentStatus:
         'Active powered transmitters are shut down; however, optical Laser Ranging Retroreflectors (LRRR) from Apollo 11, 14, and 15 still return Earth laser pulses today.',
+      spokenIntro:
+        "Welcome! You're looking at the Apollo Lunar Surface Experiments Package, commonly known as ALSEP.",
+      voiceScript:
+        "Welcome! You're looking at the Apollo Lunar Surface Experiments Package, commonly known as ALSEP. NASA astronauts deployed these scientific instruments across several Apollo landing sites between 1969 and 1972. Their purpose was to turn the Moon into a long-term scientific laboratory. Powered by nuclear SNAP-27 radioisotope thermoelectric generators, each package operated independently of the spacecraft, transmitting continuous environmental data back to Earth. They measured moonquakes, magnetic fields and heat flowing from beneath the lunar surface. Even after the astronauts returned to Earth, these instruments continued collecting valuable scientific data. Together, they logged more than twelve thousand moonquakes, proved the Moon has a partially molten core, and functioned across eight years of unattended lunar nights. When NASA turned off telemetry in September 1977, the stations remained on the surface. Today, five ALSEP arrays remain on the Moon, and their passive laser retroreflector mirrors still reflect laser beams from Earth telescopes.",
+      keyFacts: [
+        'Continuous scientific network operated from 1969 to 1977',
+        'Recorded over 12,000 seismic events, revealing lunar core structure',
+        'Five stations remain permanently at Apollo 12, 14, 15, 16, and 17 sites',
+      ],
     },
     components: [
       {
@@ -570,6 +634,8 @@ export const ARTIFACTS: Record<string, ArtifactData> = {
           'Thermal-controlled box collecting data ribbons from surrounding experiments and transmitting continuous S-band telemetry back to NASA tracking stations.',
         guideExplanation:
           'Every sensor wired into this central computer hub via flat Kapton-coated ribbon cables, beaming continuous seismic waves to Earth for up to eight years.',
+        voiceScript:
+          'This is the Central Telemetry Station. Every peripheral instrument connected into this aluminum hub via flat Kapton-coated ribbon cables, routing seismic signals and temperature telemetry back to NASA ground stations.',
       },
       {
         id: 'alsep-rtg',
@@ -581,6 +647,8 @@ export const ARTIFACTS: Record<string, ArtifactData> = {
           'Plutonium-238 thermoelectric generator producing ~70 watts continuously without sunlight—critical during 14-day−170°C lunar nights.',
         guideExplanation:
           'Unlike Apollo 11’s solar panels, SNAP-27 used heat from Plutonium-238 decay so science never paused during freezing two-week lunar nights.',
+        voiceScript:
+          'The SNAP-27 generator was fueled by a capsule of Plutonium-238. Producing seventy watts of continuous electrical power from radioactive decay heat, it kept ALSEP alive through two-week minus one-hundred-and-seventy degree lunar nights.',
       },
       {
         id: 'alsep-pse',
@@ -592,6 +660,8 @@ export const ARTIFACTS: Record<string, ArtifactData> = {
           'Sensitive seismometers that recorded over 12,000 seismic events—revealing deep tidal moonquakes, meteorite strikes, and a small partially molten core.',
         guideExplanation:
           'Spread beneath reflective thermal foil skirts to stop thermal expansion clicks, these seismometers proved the Moon rings like a bell when struck by meteorites.',
+        voiceScript:
+          'Spread beneath a reflective thermal skirt to prevent metal expansion clicks, this seismometer detected vibrations as faint as a human heartbeat, proving the Moon possesses a layered crust, mantle, and metallic core.',
       },
       {
         id: 'alsep-lrrr',
@@ -603,6 +673,8 @@ export const ARTIFACTS: Record<string, ArtifactData> = {
           'Array of precision fused-silica corner cubes that bounce laser pulses directly back to terrestrial telescopes with millimeter precision.',
         guideExplanation:
           'Requiring zero electricity, these glass corner-cube mirrors still tell astronomers that the Moon drifts away from Earth by roughly 3.8 centimeters every year.',
+        voiceScript:
+          'Requiring zero electrical power, this tray of one hundred fused-silica corner cube prisms reflects laser pulses directly back to Earth observatory telescopes, proving the Moon recedes from Earth by three point eight centimeters each year.',
       },
     ],
     specs: {
@@ -725,6 +797,15 @@ export const ARTIFACTS: Record<string, ArtifactData> = {
         'Sojourner depended entirely on the stationary Carl Sagan Memorial Station lander to relay telemetry back to Earth. Once the lander’s battery failed in cold temperatures on September 27, 1997, communication ceased and Sojourner likely circled quietly beside its base until power ended.',
       presentStatus:
         'Non-operational and intact near the Pathfinder lander in Ares Vallis; its cruise entry heat shield and parachute impacted separately further downrange.',
+      spokenIntro:
+        "Welcome to Mars. You are examining Sojourner, humanity's first successful roving explorer on the Red Planet.",
+      voiceScript:
+        "Sojourner was a pioneering ten-point-six kilogram microrover that touched down inside Ares Vallis on July 4th, 1997, as part of the Mars Pathfinder mission. Its purpose was to demonstrate that low-cost, semi-autonomous wheeled mobility was possible on an alien world. Built around an ingenious six-wheeled rocker-bogie suspension system and solar arrays, Sojourner carried an Alpha Particle X-ray Spectrometer to analyze the chemical composition of Martian rocks and soil. Designed for a baseline mission of just seven days, the plucky rover survived for eighty-three Martian sols, traveling about one hundred meters and analyzing major rocks like Barnacle Bill and Yogi. It was left on the surface when the Pathfinder base station battery exhausted in late 1997. Sojourner remains resting quietly beside the Pathfinder lander on the boulder-strewn floodplains of Ares Vallis.",
+      keyFacts: [
+        'First wheeled vehicle on Mars, landed July 4, 1997',
+        'Demonstrated rocker-bogie suspension used by all future Mars rovers',
+        'Rests intact beside Carl Sagan Memorial Station in Ares Vallis',
+      ],
     },
     components: [
       {
@@ -737,6 +818,8 @@ export const ARTIFACTS: Record<string, ArtifactData> = {
           'Lightweight articulated titanium suspension keeping all six 13 cm cleated aluminum wheels planted over uneven rocks, topped by a 0.22 m² GaAs solar deck.',
         guideExplanation:
           'This hinged rocker-bogie frame prevented the tiny 10.6 kg rover from overturning over boulders—engineering lineage carried directly onto Spirit, Opportunity, Curiosity, and Perseverance.',
+        voiceScript:
+          'This hinged rocker-bogie chassis kept all six cleated aluminum wheels firmly planted over jagged rocks without springs, an architectural breakthrough adopted by Spirit, Opportunity, Curiosity, and Perseverance.',
       },
       {
         id: 'soj-apxs',
@@ -748,6 +831,8 @@ export const ARTIFACTS: Record<string, ArtifactData> = {
           'Contact sensor that backed up against rocks like Barnacle Bill and Yogi to measure elemental composition across basaltic and silica-rich specimens.',
         guideExplanation:
           'Sojourner backed carefully into boulders so this rear turret sensor could measure their chemical elements over hours of integration.',
+        voiceScript:
+          'Mounted on a deployable rear arm, the Alpha Proton X-Ray Spectrometer pressed directly against volcanic boulders to reveal high silicon levels, indicating complex volcanic processes on early Mars.',
       },
       {
         id: 'soj-airbags',
@@ -759,6 +844,8 @@ export const ARTIFACTS: Record<string, ArtifactData> = {
           'Tetrahedral lander later renamed Carl Sagan Memorial Station, surrounded by four clustered Vectran airbag lobes that absorbed at least 15 bounces upon landing.',
         guideExplanation:
           'To cut cost, Pathfinder skipped heavy retrorockets at final touchdown: deflated beige airbag cushions still drape around the three triangular lander petals nearby.',
+        voiceScript:
+          'Surrounding the three-petal Pathfinder lander are deflated Vectran airbags. They cushioned the spacecraft through fifteen violent bounces across the Martian floodplain at over fifty kilometers per hour.',
       },
       {
         id: 'soj-edl',
@@ -887,6 +974,15 @@ export const ARTIFACTS: Record<string, ArtifactData> = {
         'In May 2009, Spirit’s wheels broke through a fragile soil crust at a spot called "Troy," tilting away from the winter Sun. Without enough solar wattage to run survival heaters, Spirit froze during Martian winter after its final contact in March 2010.',
       presentStatus:
         'Non-operational stationary station parked in sulfate sand near Home Plate; its entry lander and airbags rest 7.7 km back across Gusev plains.',
+      spokenIntro:
+        'Welcome! This is Spirit, Mars Exploration Rover A, an iconic geological investigator that conquered Martian mountains.',
+      voiceScript:
+        "Spirit was launched by NASA in 2003 and landed in January 2004 inside Gusev Crater, a massive ancient impact basin believed to have once held a lake. Its primary mission was to search for geological evidence of past liquid water. Spirit possessed a suite of high-resolution panoramic cameras, miniature thermal emission spectrometers, and a robotic arm with a rock abrasion tool and Mössbauer spectrometer. Designed for just ninety Martian days, Spirit demonstrated extraordinary resilience, climbing over one hundred vertical meters to the summit of Husband Hill and discovering silica-rich deposits formed by ancient hot springs and hydrothermal vents. In 2009, Spirit became immobilized in a hidden soft-sand trap named Troy. After surviving the harsh Martian winter of 2010, communications ceased. Spirit remains parked in the sands of Gusev Crater as an immortal testament to robotic exploration.",
+      keyFacts: [
+        'Operated for 6 years across 7.73 kilometers of Martian terrain',
+        'Discovered pure silica deposits indicating ancient hydrothermal vents',
+        'Stationary resting place at Troy in Gusev Crater',
+      ],
     },
     components: [
       {
@@ -899,6 +995,8 @@ export const ARTIFACTS: Record<string, ArtifactData> = {
           'Gold-foil insulated core housing flight computers and lithium batteries beneath deployable solar wings generating ~140 W when dust-free.',
         guideExplanation:
           'Trapped in loose sulfates tilted slightly south away from the low winter sun, these solar wings could no longer keep Spirit’s internal heaters alive.',
+        voiceScript:
+          "This is Spirit's main warm electronics box and solar wing array. Insulated with gold-foil aerogel and resistance heaters, this core kept delicate computers alive through freezing minus-one-hundred-degree Martian nights.",
       },
       {
         id: 'spirit-wheel',
@@ -910,6 +1008,8 @@ export const ARTIFACTS: Record<string, ArtifactData> = {
           'When this wheel seized in 2006, operators drove Spirit in reverse, using the immobile wheel as a geological trencher that uncovered pure silica.',
         guideExplanation:
           'That broken wheel inadvertently wrote history: dragging backwards tore open bright white soil rich in 90% pure amorphous silica from ancient hot springs.',
+        voiceScript:
+          'This right-front wheel seized in 2006. Engineers drove Spirit backwards, dragging the locked wheel through the soil. That dragged wheel churned up bright white soil of ninety percent pure silica, proving volcanic hot springs once bubbled on Mars.',
       },
       {
         id: 'spirit-arm',
@@ -921,6 +1021,8 @@ export const ARTIFACTS: Record<string, ArtifactData> = {
           '1.4-meter stereo camera mast paired with a 5-joint robotic turret carrying grinders, spectrometers, and micro-imagers.',
         guideExplanation:
           'These instruments discovered carbonate outcrops at Comanche and confirmed hot-spring silica deposits favorable for ancient microbial life.',
+        voiceScript:
+          'Perched on the five-joint robotic instrument arm, the Rock Abrasion Tool ground into volcanic rocks while spectrometers measured mineral iron states, proving ancient water had chemically altered the bedrock.',
       },
       {
         id: 'spirit-edl',
@@ -1040,6 +1142,10 @@ export const ARTIFACTS: Record<string, ArtifactData> = {
     tagline:
       'Designed for ninety sols, Opportunity crossed craters, weathered dust storms, inspected its own fallen heat shield, and proved habitable neutral-pH water once flowed beneath Mars.',
     guide: {
+      spokenIntro:
+        'Welcome to the story of Opportunity, NASA’s longest-running Mars Exploration Rover.',
+      voiceScript:
+        'Welcome! You are standing before Opportunity, designated MER-B, one of humanity’s greatest planetary explorers. Touching down inside Eagle Crater in Meridiani Planum on January 25th, 2004, Opportunity was engineered for a mere ninety-sol warranty. Instead, it journeyed across Mars for over fourteen years and 5,111 Martian sols. Powered by triple-junction gallium arsenide solar wings and guided by hazard avoidance cameras, Opportunity navigated 45.16 kilometers, setting the off-Earth wheeled distance record. Its robotic arm, equipped with a microscopic imager, alpha particle X-ray spectrometer, and rock abrasion tool, discovered microscopic hematite spherules nicknamed blueberries and gypsum mineral veins, confirming that sustained, drinkable, neutral-pH water once pooled across the Martian surface. Opportunity was left behind in Perseverance Valley on the rim of Endeavour Crater when a cataclysmic, planet-encircling dust storm in June 2018 blocked ninety-nine percent of solar illumination, exhausting its batteries. Today, Opportunity rests silently at an eleven-degree tilt on the crater rim, fully intact and preserved beneath red Martian dust, waiting as a monument to human persistence.',
       explanation:
         'Opportunity landed inside small Eagle Crater on January 25, 2004, directly beside stratified sedimentary rocks. Over 5,111 sols, it drove an unprecedented 45.16 kilometers before a global dust storm cut off sunlight to its solar panels in June 2018.',
       purpose:
@@ -1049,6 +1155,12 @@ export const ARTIFACTS: Record<string, ArtifactData> = {
         'An extreme planet-encircling dust storm in June 2018 blocked 99% of sunlight for months, draining Opportunity’s batteries and preventing recovery heaters from protecting its electronics.',
       presentStatus:
         'Non-operational intact chassis parked at an 11-degree tilt inside Perseverance Valley; its discarded heat shield, backshell, and Challenger Memorial Station lander remain kilometers back near Eagle Crater.',
+      keyFacts: [
+        'Drove an unprecedented 45.16 km (28.06 mi), the off-Earth wheeled distance record',
+        'Survived 5,111 sols (over 14 years), 55 times longer than its 90-sol design baseline',
+        'Discovered hematite blueberries and gypsum veins proving ancient neutral-pH water',
+        'First spacecraft to inspect its own discarded entry heat shield on another world',
+      ],
     },
     components: [
       {
@@ -1059,6 +1171,8 @@ export const ARTIFACTS: Record<string, ArtifactData> = {
         siteNote: 'Rests in Perseverance Valley on the rim of Endeavour Crater.',
         description:
           'Six-wheel solar geological laboratory holding the off-Earth wheeled distance record of 45.16 km across fourteen years.',
+        voiceScript:
+          'This is Opportunity’s rover chassis and solar array deck. Equipped with a rocker-bogie mobility suspension, six independently steered aluminum wheels, and triple-junction gallium-arsenide solar wings, it maintained power for fourteen years thanks to periodic atmospheric cleaning gusts.',
         guideExplanation:
           'Dust-cleaning Martian wind gusts periodically swept these solar panels clean, letting Opportunity survive 55 times longer than its original 90-sol guarantee.',
       },
@@ -1070,6 +1184,8 @@ export const ARTIFACTS: Record<string, ArtifactData> = {
         siteNote: 'Extended forward toward Perseverance Valley bedrock.',
         description:
           'Five-degree-of-freedom arm that ground weathering rinds off rocks and identified hematite "blueberries" and gypsum veins.',
+        voiceScript:
+          'Here is the Instrument Deployment Device, a five-degree-of-freedom robotic arm. At the wrist, it carries a Rock Abrasion Tool to grind rock surfaces, a Microscopic Imager, and two spectrometers that detected gypsum veins formed by neutral-pH water.',
         guideExplanation:
           'At Endeavour Crater, this arm measured pure calcium sulfate gypsum veins—proof of neutral-pH, drinkable water passing through ancient fractures.',
       },
@@ -1081,6 +1197,8 @@ export const ARTIFACTS: Record<string, ArtifactData> = {
         siteNote: 'Impacted ~300 m south of Eagle Crater—visited by Opportunity in Dec 2004, >20 km behind its final location.',
         description:
           'Phenolic ablative heat shield shed after atmospheric entry; fractured on impact onto the plains and remarkably inspected up close by Opportunity on Sol 330.',
+        voiceScript:
+          'This is the discarded entry heat shield wreckage. Cast off during descent, it struck Meridiani Planum kilometers back. When Opportunity inspected the wreckage on Sol 330, it uncovered Heat Shield Rock, the very first meteorite discovered by a rover on another planet.',
         guideExplanation:
           'Distinct from the rover’s resting spot: Opportunity’s heat shield crashed hundreds of meters from Eagle Crater. When Opportunity drove past it in 2004, it even found a basketball-sized iron meteorite nearby.',
       },
@@ -1092,6 +1210,8 @@ export const ARTIFACTS: Record<string, ArtifactData> = {
         siteNote: 'Remains over 20 km northwest inside Eagle Crater and surrounding plains.',
         description:
           'Airbag-cushioned base platform left in Eagle Crater while parachute and backshell came down several hundred meters away.',
+        voiceScript:
+          'This is the Challenger Memorial Station landing platform and airbag assembly. It absorbed the final impacts of arrival before Opportunity rolled off its petal ramps on Sol 7. The platform rests permanently over twenty kilometers away inside Eagle Crater.',
         guideExplanation:
           'Like Spirit, Opportunity rolled clear of its landing platform on Sol 7. The folded lander base and parachute stay preserved far behind at Eagle Crater.',
       },
@@ -1208,6 +1328,10 @@ export const ARTIFACTS: Record<string, ArtifactData> = {
     tagline:
       'Unlike mobile rovers, InSight stayed rooted on Elysium Planitia—listening through a ultra-sensitive seismometer to over 1,300 marsquakes and meteor impacts echoing through the Martian core.',
     guide: {
+      spokenIntro:
+        'Welcome! You are examining InSight, NASA’s stationary geophysical observatory on Mars.',
+      voiceScript:
+        'Welcome! You are examining InSight, humanity’s premier geophysical observatory on Mars, resting on Elysium Planitia. Launched under NASA’s Discovery Program, InSight touched down on November 26th, 2018, not to roam the landscape, but to listen intently to the planet’s heartbeat. Powered by twin 2.15-meter circular solar arrays, InSight deployed a 1.8-meter robotic arm to lift scientific instruments off its deck and set them directly onto the Martian soil. Its ultra-sensitive French seismometer, SEIS, captured 1,319 marsquakes and meteor strikes, allowing scientists to map the Martian crust, mantle, and measure its liquid iron-alloy core radius at approximately 1,830 kilometers. InSight remained behind because seismic measurements required absolute mechanical stillness. Over four years, fine atmospheric dust gradually enveloped its solar panels, diminishing electrical output until the final transmission on December 15th, 2022. Today, InSight rests intact on Elysium Planitia, an eternal listening post preserved in the quiet solitude of Mars.',
       explanation:
         'InSight was a stationary geophysical lander that touched down on Elysium Planitia in November 2018. Using a 1.8-meter robotic arm, it lifted a copper-shielded seismometer directly off its deck and set it onto the ground to measure Mars’s crust, mantle, and core.',
       purpose:
@@ -1217,6 +1341,12 @@ export const ARTIFACTS: Record<string, ArtifactData> = {
         'InSight lacked wheels by design because seismic listening requires stationary grounding. Over four years, accumulated Martian dust coated both circular solar panels until power dropped below battery threshold in December 2022.',
       presentStatus:
         'Dust-blanketed lander, deployed SEIS seismometer, and heat probe housing remain stationary on Elysium Planitia; its heat shield and parachute rest ~600–800 meters away.',
+      keyFacts: [
+        'Detected 1,319 marsquakes and meteoroid impacts echoing through Mars',
+        'First mission to place a seismometer directly on the surface of another planet',
+        'Measured Mars’s liquid metallic core with a radius of approximately 1,830 km',
+        'Reused proven Phoenix lander pulsed descent propulsion system',
+      ],
     },
     components: [
       {
@@ -1227,6 +1357,8 @@ export const ARTIFACTS: Record<string, ArtifactData> = {
         siteNote: 'Standing stationary on three landing legs at Elysium Planitia.',
         description:
           'Three-legged Phoenix-heritage lander powered by dual 2.15 m decagonal solar panels and twelve pulsed retro-rocket thrusters used during powered landing.',
+        voiceScript:
+          'This is the InSight lander deck and dual circular solar arrays. Supported by three shock-absorbing legs, twelve pulsed hydrazine retro-rockets brought InSight to a soft touchdown without airbags, providing a vibration-free base for planetary listening.',
         guideExplanation:
           'InSight reused the proven three-leg powered descent design from Mars Phoenix, using twelve downward pulsing engines to touch down gently without bouncing.',
       },
@@ -1238,6 +1370,8 @@ export const ARTIFACTS: Record<string, ArtifactData> = {
         siteNote: 'Resting on Martian sand ~1.6 m south of the lander.',
         description:
           'Vacuum-sealed ultra-sensitive seismometer shielded from wind gusts beneath a domed white cover, detecting 1,319 marsquakes and meteor strikes.',
+        voiceScript:
+          'This is SEIS, the Seismic Experiment for Interior Structure. Covered by a protective aerodynamic and thermal wind shield, this ultra-sensitive instrument recorded 1,319 seismic events, mapping the liquid iron core and crustal layering of Mars.',
         guideExplanation:
           'InSight’s robotic arm picked this seismometer off the deck and set it directly onto Mars, revealing a crust 24–72 km thick and a liquid iron-alloy core.',
       },
@@ -1249,6 +1383,8 @@ export const ARTIFACTS: Record<string, ArtifactData> = {
         siteNote: 'Partially buried in regolith beside SEIS.',
         description:
           'Self-hammering thermal probe designed to burrow underground; unexpected cohesive duricrust halted deep descent despite creative robotic-arm soil tamping.',
+        voiceScript:
+          'This is the HP3 Heat Flow and Physical Properties Package, known as The Mole. Designed to burrow five meters underground to record planetary core heat release, it revealed critical geotechnical friction properties of Martian duricrust.',
         guideExplanation:
           'Although cohesive Martian sand prevented "The Mole" from hammering five meters deep, operations yielded valuable upper-soil mechanics telemetry.',
       },
@@ -1260,6 +1396,8 @@ export const ARTIFACTS: Record<string, ArtifactData> = {
         siteNote: 'Shed mid-descent; imaged by Mars Reconnaissance Orbiter ~600–800 m away.',
         description:
           '2.64-meter thermal aeroshell and supersonic parachute discarded prior to InSight’s final powered leg-descent burn.',
+        voiceScript:
+          'These are the separated heat shield, backshell, and supersonic parachute. Jettisoned during atmospheric entry, they descended independently and rest safely hundreds of meters away across the plains of Elysium Planitia.',
         guideExplanation:
           'Orbital HiRISE cameras spotted InSight’s white parachute and dark heat shield several hundred meters away across Elysium Planitia, well clear of the seismometer.',
       },
@@ -1373,6 +1511,10 @@ export const ARTIFACTS: Record<string, ArtifactData> = {
     tagline:
       'Operating more than 22 light-hours from Earth on dwindling plutonium power, Voyager 1 sails between the stars carrying our Golden Record across cosmic time.',
     guide: {
+      spokenIntro:
+        'Welcome! You are looking at Voyager 1, the most distant emissary in human history.',
+      voiceScript:
+        'Welcome! You are looking at Voyager 1, the most distant physical emissary of human civilization. Launched on September 5th, 1977, Voyager 1 embarked on a grand tour of the outer planets, utilizing gravity assists at Jupiter and Saturn before crossing the heliopause into interstellar space in August 2012. Generating electricity from three multi-hundred-watt Plutonium-238 radioisotope thermoelectric generators, Voyager 1 broadcasts back across more than twenty-four billion kilometers using a 3.7-meter high-gain parabolic antenna. It revealed active volcanism on Jupiter’s moon Io, intricate ring dynamics at Saturn, and captured the profound Pale Blue Dot photograph of Earth. Voyager 1 was never designed to return; moving at seventeen kilometers per second on a hyperbolic trajectory, it will traverse the Milky Way for eons. Mounted to its bus is the Golden Record, carrying the sounds, images, and greetings of Earth for any cosmic travelers who might encounter our silent herald.',
       explanation:
         'Voyager 1 is humanity’s farthest spacecraft. After swinging past Jupiter in 1979 and Saturn in 1980, it angled upward out of the planetary plane and crossed the heliopause in August 2012 into true interstellar space.',
       purpose:
@@ -1382,6 +1524,12 @@ export const ARTIFACTS: Record<string, ArtifactData> = {
         'Voyager 1 moves at ~17 km/s on an unbound hyperbolic escape trajectory out of our Solar System—it will never return to Earth.',
       presentStatus:
         'Operational and still communicating via Deep Space Network dishes using dwindling Plutonium-238 radioisotope power.',
+      keyFacts: [
+        'Humanity’s farthest operational spacecraft, over 24 billion kilometers (163 AU) from Earth',
+        'First human object to cross the heliopause and enter interstellar space (August 2012)',
+        'Travels at ~17 km/s (38,000 mph) on an unbound escape trajectory out of the Solar System',
+        'Carries the Golden Record with greetings in 55 languages and sounds of Earth',
+      ],
     },
     components: [
       {
@@ -1392,6 +1540,8 @@ export const ARTIFACTS: Record<string, ArtifactData> = {
         siteNote: 'Continuously pointed back toward Earth from >163 AU.',
         description:
           'White fiberglass honeycomb dish broadcasting weak 23-watt X-band telemetry across 24 billion kilometers.',
+        voiceScript:
+          'This is Voyager’s 3.7-meter high-gain parabolic antenna. Made of lightweight honeycomb fiberglass, it continuously directs a focused radio beam back toward Earth, transmitting data over twenty-four billion kilometers on just twenty-three watts of power.',
         guideExplanation:
           'Even from beyond the Solar System, Voyager keeps this single white dish aligned tightly toward our distant Sun to reach Deep Space Network antennas.',
       },
@@ -1403,6 +1553,8 @@ export const ARTIFACTS: Record<string, ArtifactData> = {
         siteNote: 'Mounted on aft outrigger boom away from sensors.',
         description:
           'Nuclear decay power units originally outputting ~470 W at launch, steadily declining each year.',
+        voiceScript:
+          'These are the three Multi-Hundred-Watt Radioisotope Thermoelectric Generators. Powered by decaying Plutonium-238 spheres, their thermal heat is converted into electricity, sustaining Voyager’s systems deep in the interstellar void where sunlight is virtually nonexistent.',
         guideExplanation:
           'Too far from the Sun for solar arrays, Voyager relies on decaying Plutonium-238 spheres whose fading thermal wattage dictates remaining mission lifespan.',
       },
@@ -1414,6 +1566,8 @@ export const ARTIFACTS: Record<string, ArtifactData> = {
         siteNote: 'Mounted inside gold-anodized aluminum protective jacket on core bus.',
         description:
           '12-inch gold-plated copper phonograph disc carrying 115 images, greetings in 55 languages, and music curated for potential cosmic travelers.',
+        voiceScript:
+          'This is the Voyager Golden Record. Encased in a gold-anodized aluminum cover with symbolic instructions, this 12-inch gold-plated copper phonograph record carries our music, greetings, and cosmic coordinates across billions of years of space.',
         guideExplanation:
           'Protected behind an etched uranium-238 clock cover and stylus instructions, the Golden Record endures for billions of years in interstellar vacuum.',
       },
