@@ -5,6 +5,7 @@ import { useExperienceStore } from '../../store/useExperienceStore';
 import { ARTIFACTS } from '../../data/artifacts';
 import { getDestinationTheme } from '../../theme/tokens';
 import { navigation } from '../../navigation/navigationController';
+import { guideVoiceEngine } from '../../audio/GuideVoiceEngine';
 
 export const ScreenLegacy: React.FC = () => {
   const selectedArtifactId = useExperienceStore((s) => s.selectedArtifactId);
@@ -20,6 +21,13 @@ export const ScreenLegacy: React.FC = () => {
     };
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
+  }, []);
+
+  // Clean up any narration audio when leaving legacy screen
+  React.useEffect(() => {
+    return () => {
+      guideVoiceEngine.stop(false);
+    };
   }, []);
 
   const artifact = selectedArtifactId ? ARTIFACTS[selectedArtifactId] : null;

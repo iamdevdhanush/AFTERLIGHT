@@ -3,6 +3,7 @@ import { ARTIFACTS } from '../data/artifacts';
 import { DESTINATIONS } from '../data/destinations';
 import { useExperienceStore } from '../store/useExperienceStore';
 import { soundManager } from '../audio/SoundManager';
+import { guideVoiceEngine } from '../audio/GuideVoiceEngine';
 
 export type ActiveDestination = 'moon' | 'mars';
 
@@ -74,6 +75,7 @@ class NavigationController {
       }
 
       soundManager.playTransitionSwoosh();
+      guideVoiceEngine.stop(false);
 
       // Update Zustand store
       useExperienceStore.setState({
@@ -252,6 +254,7 @@ class NavigationController {
    * Navigate to Arrival Screen
    */
   public toArrival() {
+    guideVoiceEngine.stop(false);
     soundManager.stopAmbience();
     const nav: ParsedNavState = {
       state: 'ARRIVAL',
@@ -272,6 +275,7 @@ class NavigationController {
    * Navigate to 3D Destination Selection Screen
    */
   public toDestinations() {
+    guideVoiceEngine.stop(false);
     soundManager.playTransitionSwoosh();
     soundManager.stopAmbience();
     const nav: ParsedNavState = {
@@ -294,6 +298,7 @@ class NavigationController {
    * Navigate to a Destination with smooth loading descent
    */
   public toDestination(destId: ActiveDestination) {
+    guideVoiceEngine.stop(false);
     const validDest: ActiveDestination = destId === 'mars' ? 'mars' : 'moon';
     soundManager.playTransitionSwoosh();
 
@@ -336,6 +341,7 @@ class NavigationController {
    * Navigate to Exhibition (with view mode preservation)
    */
   public toExhibition(destId?: ActiveDestination, viewMode?: 'collection' | 'map') {
+    guideVoiceEngine.stop(false);
     soundManager.playTransitionSwoosh();
     const store = useExperienceStore.getState();
     const targetDest: ActiveDestination = destId

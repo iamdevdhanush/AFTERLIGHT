@@ -1,10 +1,18 @@
 /**
- * AFTERLIGHT — Interactive Museum Guide Voice & Speech Synthesis Engine
- * Provides voice narration with real-time speech boundary tracking,
- * viseme mouth modulation, audio progress, and browser speech synthesis.
+ * AFTERLIGHT — Museum Curator Voice & Speech Synthesis Engine
+ * 
+ * Provides warm, mature, documentary-style female voice narration with:
+ * - Reliable female English voice selection (preferring high-quality Edge/Chrome natural voices)
+ * - Strict male voice exclusion (never falls back to a male voice)
+ * - Transparent fallback when no female voice is available in the environment
+ * - Phrase-by-phrase sequential utterance queue with natural breath pauses
+ * - 1:1 real speech event synchronization for speech bubbles and character poses
+ * - Viseme mouth modulation synchronized to spoken words
  */
 
 import { soundManager } from './SoundManager';
+import { parseScriptIntoPhrases, NarrationPhrase } from '../utils/curatorNarrative';
+import { CharacterPose } from '../types';
 
 export interface VoiceState {
   isSpeaking: boolean;
@@ -12,14 +20,123 @@ export interface VoiceState {
   isMuted: boolean;
   volume: number;
   progress: number; // 0.0 to 1.0
-  currentCharIndex: number;
-  currentWord: string;
-  currentScript: string;
+  currentPhraseIndex: number;
+  totalPhrases: number;
+  currentPhraseText: string;
+  currentPose: CharacterPose;
+  selectedVoiceName: string;
+  isFemaleVoiceActive: boolean;
   visemeSignal: number; // 0.0 to 1.0 real-time mouth opening
   hasEnded: boolean;
+  currentScript: string;
+  currentCharIndex: number;
+  currentWord: string;
 }
 
 type VoiceListener = (state: VoiceState) => void;
+
+// Strict male name blacklist — these voices are NEVER selected
+const MALE_VOICE_BLACKLIST = [
+  'christopher',
+  'guy',
+  'david',
+  'mark',
+  'daniel',
+  'brian',
+  'andrew',
+  'eric',
+  'roger',
+  'steffan',
+  'ryan',
+  'thomas',
+  'liam',
+  'william',
+  'connor',
+  'prabhat',
+  'male',
+  'george',
+  'alex',
+  'fred',
+  'oliver',
+  'rishi',
+  'james',
+  'wayne',
+  'elimu',
+  'sardor',
+  'ahmet',
+  'ostap',
+  'salman',
+  'asad',
+  'jean',
+  'paul',
+  'cosimo',
+  'claude',
+];
+
+// Ranked list of preferred high-quality natural female voices
+const PREFERRED_FEMALE_VOICES = [
+  // Tier 1: Microsoft Natural Online voices (Edge / Windows 10/11)
+  'Microsoft Jenny Online (Natural) - English (United States)',
+  'Microsoft Aria Online (Natural) - English (United States)',
+  'Microsoft Sonia Online (Natural) - English (United Kingdom)',
+  'Microsoft Libby Online (Natural) - English (United Kingdom)',
+  'Microsoft Natasha Online (Natural) - English (Australia)',
+  'Microsoft Clara Online (Natural) - English (Canada)',
+  'Microsoft Michelle Online (Natural) - English (United States)',
+  'Microsoft Ava Online (Natural) - English (United States)',
+  'Microsoft Emma Online (Natural) - English (United States)',
+  'Microsoft Neerja Online (Natural) - English (India)',
+
+  // Tier 2: Google & Apple High-Quality Natural Voices
+  'Google UK English Female',
+  'Google US English',
+  'Samantha',
+  'Karen',
+  'Serena',
+  'Moira',
+  'Victoria',
+  'Fiona',
+  'Tessa',
+
+  // Tier 3: Installed Windows SAPI Desktop Female Voices
+  'Microsoft Zira Desktop - English (United States)',
+  'Microsoft Zira',
+  'Microsoft Hazel Desktop - English (Great Britain)',
+  'Microsoft Hazel',
+  'Microsoft Susan',
+  'Microsoft Catherine',
+];
+
+// Patterns identifying female voices
+const FEMALE_NAME_PATTERNS = [
+  'jenny',
+  'aria',
+  'sonia',
+  'libby',
+  'natasha',
+  'clara',
+  'michelle',
+  'ava',
+  'emma',
+  'samantha',
+  'karen',
+  'serena',
+  'moira',
+  'victoria',
+  'fiona',
+  'tessa',
+  'zira',
+  'hazel',
+  'susan',
+  'catherine',
+  'female',
+  'woman',
+  'girl',
+  'neerja',
+  'luna',
+  'stephanie',
+  'amanda',
+];
 
 class GuideVoiceEngine {
   private state: VoiceState = {
@@ -28,20 +145,35 @@ class GuideVoiceEngine {
     isMuted: false,
     volume: 0.85,
     progress: 0,
-    currentCharIndex: 0,
-    currentWord: '',
-    currentScript: '',
+    currentPhraseIndex: 0,
+    totalPhrases: 1,
+    currentPhraseText: '',
+    currentPose: 'idle',
+    selectedVoiceName: 'Detecting...',
+    isFemaleVoiceActive: false,
     visemeSignal: 0,
     hasEnded: false,
+    currentScript: '',
+    currentCharIndex: 0,
+    currentWord: '',
   };
 
   private listeners = new Set<VoiceListener>();
-  private currentUtterance: SpeechSynthesisUtterance | null = null;
   private selectedVoice: SpeechSynthesisVoice | null = null;
+  private currentUtterance: SpeechSynthesisUtterance | null = null;
+
+  // Queue of storytelling phrases for the active script
+  private phraseQueue: NarrationPhrase[] = [];
+  private activePhraseIdx: number = 0;
+  private nextPhraseTimerId: number | null = null;
+
+  // Viseme mouth animation frame
   private animFrameId: number | null = null;
-  private simulationTimerId: number | null = null;
   private lastBoundaryTime: number = 0;
+
+  // Simulation mode fallback
   private isSimulating: boolean = false;
+  private simulationTimerId: number | null = null;
   private simStartTime: number = 0;
   private simDurationMs: number = 0;
 
@@ -54,46 +186,86 @@ class GuideVoiceEngine {
     }
   }
 
-  private initVoices() {
-    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+  /**
+   * Discovers and selects the best available natural female English voice.
+   * Guarantees that male voices are never selected.
+   */
+  public initVoices() {
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
+      this.state.selectedVoiceName = 'SpeechSynthesis Not Supported';
+      this.state.isFemaleVoiceActive = false;
+      this.notify();
+      return;
+    }
+
     const voices = window.speechSynthesis.getVoices();
     if (!voices || voices.length === 0) return;
 
-    // Prefer high-quality, natural/online English voices for warm documentary narration
-    const preferredVoices = [
-      'Microsoft Christopher Online (Natural) - English (United States)',
-      'Microsoft Jenny Online (Natural) - English (United States)',
-      'Microsoft Guy Online (Natural) - English (United States)',
-      'Google US English',
-      'Samantha',
-      'Daniel',
-      'Microsoft David',
-      'Microsoft Mark',
-      'Microsoft Zira',
-    ];
+    const femaleVoice = this.findBestFemaleVoice(voices);
 
-    let found: SpeechSynthesisVoice | undefined;
-
-    for (const name of preferredVoices) {
-      found = voices.find((v) => v.name.toLowerCase().includes(name.toLowerCase()));
-      if (found) break;
-    }
-
-    if (!found) {
-      // Find any natural / neural English voice
-      found = voices.find(
-        (v) =>
-          v.lang.startsWith('en') &&
-          (v.name.includes('Natural') || v.name.includes('Neural') || v.name.includes('Online'))
+    if (femaleVoice) {
+      this.selectedVoice = femaleVoice;
+      this.state.selectedVoiceName = femaleVoice.name;
+      this.state.isFemaleVoiceActive = true;
+    } else {
+      // Transparency: if no female voice exists, NEVER pick a male voice
+      this.selectedVoice = null;
+      this.state.selectedVoiceName = 'Ambient Acoustic Simulation (No Female Voice Available)';
+      this.state.isFemaleVoiceActive = false;
+      console.warn(
+        '[AFTERLIGHT GuideVoiceEngine] No verified female English voice detected. To preserve Dr. Mae Vance\'s curatorial identity, narration will run in ambient simulated mode rather than using a male voice.'
       );
     }
 
-    if (!found) {
-      // Fallback to any English voice
-      found = voices.find((v) => v.lang.startsWith('en-US')) || voices.find((v) => v.lang.startsWith('en'));
+    this.notify();
+  }
+
+  /**
+   * Helper that evaluates available voices against female quality criteria and male exclusions.
+   */
+  private findBestFemaleVoice(voices: SpeechSynthesisVoice[]): SpeechSynthesisVoice | null {
+    const isMale = (v: SpeechSynthesisVoice) => {
+      const name = v.name.toLowerCase();
+      return MALE_VOICE_BLACKLIST.some((m) => name.includes(m));
+    };
+
+    const isEnglish = (v: SpeechSynthesisVoice) => {
+      return v.lang.toLowerCase().startsWith('en');
+    };
+
+    // Filter to English voices that are NOT on the male blacklist
+    const nonMaleEnglish = voices.filter((v) => isEnglish(v) && !isMale(v));
+
+    // 1. Check against prioritized preferred female voice names
+    for (const pref of PREFERRED_FEMALE_VOICES) {
+      const match = nonMaleEnglish.find((v) =>
+        v.name.toLowerCase().includes(pref.toLowerCase())
+      );
+      if (match) return match;
     }
 
-    this.selectedVoice = found || voices[0] || null;
+    // 2. Check for any natural/neural English voice matching female name patterns
+    const naturalFemale = nonMaleEnglish.find((v) => {
+      const name = v.name.toLowerCase();
+      const isNatural = name.includes('natural') || name.includes('neural') || name.includes('online');
+      const matchesFemalePattern = FEMALE_NAME_PATTERNS.some((p) => name.includes(p));
+      return isNatural && matchesFemalePattern;
+    });
+    if (naturalFemale) return naturalFemale;
+
+    // 3. Check for any English voice matching female name patterns
+    const anyFemalePattern = nonMaleEnglish.find((v) => {
+      const name = v.name.toLowerCase();
+      return FEMALE_NAME_PATTERNS.some((p) => name.includes(p));
+    });
+    if (anyFemalePattern) return anyFemalePattern;
+
+    // 4. Check for any English voice containing 'female' in name
+    const explicitFemale = nonMaleEnglish.find((v) => v.name.toLowerCase().includes('female'));
+    if (explicitFemale) return explicitFemale;
+
+    // Do NOT fall back to any voice — returning null ensures a male voice is never chosen
+    return null;
   }
 
   public subscribe(listener: VoiceListener): () => void {
@@ -117,11 +289,31 @@ class GuideVoiceEngine {
     return this.state.visemeSignal;
   }
 
+  /**
+   * Primary playback entry point.
+   * Splits script into documentary phrases and executes sequential playback.
+   */
   public play(script: string, autoStartBeep: boolean = true) {
-    if (!script) return;
+    if (!script || !script.trim()) return;
+
     this.stop(false);
 
+    // Refresh voice list in case it loaded lazily
+    if (!this.selectedVoice) {
+      this.initVoices();
+    }
+
+    const phrases = parseScriptIntoPhrases(script);
+    if (phrases.length === 0) return;
+
+    this.phraseQueue = phrases;
+    this.activePhraseIdx = 0;
+
     this.state.currentScript = script;
+    this.state.totalPhrases = phrases.length;
+    this.state.currentPhraseIndex = 0;
+    this.state.currentPhraseText = phrases[0].text;
+    this.state.currentPose = phrases[0].pose;
     this.state.currentCharIndex = 0;
     this.state.currentWord = '';
     this.state.progress = 0;
@@ -134,137 +326,195 @@ class GuideVoiceEngine {
       soundManager.playTelemetryBeep();
     }
 
-    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      try {
-        window.speechSynthesis.cancel();
-
-        const utterance = new SpeechSynthesisUtterance(script);
-        if (this.selectedVoice) {
-          utterance.voice = this.selectedVoice;
-        }
-
-        utterance.rate = 0.94; // Calm, clear museum documentary cadence
-        utterance.pitch = 0.98; // Warm, natural vocal pitch
-        utterance.volume = this.state.isMuted ? 0 : this.state.volume;
-
-        utterance.onstart = () => {
-          this.state.isSpeaking = true;
-          this.state.isPaused = false;
-          this.startVisemeLoop();
-          this.notify();
-        };
-
-        utterance.onboundary = (event) => {
-          if (!this.state.isSpeaking) return;
-          this.lastBoundaryTime = performance.now();
-          const charIdx = event.charIndex;
-          this.state.currentCharIndex = charIdx;
-          this.state.progress = Math.min(0.99, charIdx / Math.max(1, script.length));
-
-          // Extract current spoken word
-          const remainder = script.slice(charIdx);
-          const match = remainder.match(/^[\w’']+/);
-          if (match) {
-            this.state.currentWord = match[0];
-          }
-
-          // Trigger real-time mouth opening pulse on word boundaries
-          this.state.visemeSignal = 0.75 + Math.random() * 0.25;
-          this.notify();
-        };
-
-        utterance.onpause = () => {
-          this.state.isPaused = true;
-          this.state.visemeSignal = 0;
-          this.notify();
-        };
-
-        utterance.onresume = () => {
-          this.state.isPaused = false;
-          this.lastBoundaryTime = performance.now();
-          this.notify();
-        };
-
-        utterance.onend = () => {
-          this.finishNarration();
-        };
-
-        utterance.onerror = (e) => {
-          // If browser speech was cancelled or failed, handle cleanly
-          if (e.error !== 'canceled' && e.error !== 'interrupted') {
-            this.startSimulationFallback(script);
-          } else {
-            this.state.isSpeaking = false;
-            this.state.visemeSignal = 0;
-            this.notify();
-          }
-        };
-
-        this.currentUtterance = utterance;
-        window.speechSynthesis.speak(utterance);
-        this.startVisemeLoop();
-        this.notify();
-        return;
-      } catch {
-        // Fallback to simulation if speech synthesis failed
-      }
+    if (
+      typeof window !== 'undefined' &&
+      'speechSynthesis' in window &&
+      this.selectedVoice
+    ) {
+      this.speakActivePhrase();
+    } else {
+      // Run in simulated narration mode if SpeechSynthesis is unavailable or no female voice exists
+      this.startSimulationForActivePhrase();
     }
 
-    // Fallback if browser SpeechSynthesis is unavailable
-    this.startSimulationFallback(script);
+    this.startVisemeLoop();
+    this.notify();
   }
 
-  private startSimulationFallback(script: string) {
+  /**
+   * Speaks the current phrase in the queue using SpeechSynthesisUtterance.
+   */
+  private speakActivePhrase() {
+    if (this.activePhraseIdx >= this.phraseQueue.length) {
+      this.finishNarration();
+      return;
+    }
+
+    const phrase = this.phraseQueue[this.activePhraseIdx];
+    this.state.currentPhraseIndex = this.activePhraseIdx;
+    this.state.currentPhraseText = phrase.text;
+    this.state.currentPose = phrase.pose;
+    this.state.currentCharIndex = phrase.startChar;
+    this.state.progress = this.activePhraseIdx / Math.max(1, this.phraseQueue.length);
+
+    try {
+      window.speechSynthesis.cancel();
+
+      const utterance = new SpeechSynthesisUtterance(phrase.text);
+      if (this.selectedVoice) {
+        utterance.voice = this.selectedVoice;
+      }
+
+      // Calm, warm, articulate documentary storytelling delivery
+      utterance.rate = 0.92;
+      utterance.pitch = 1.0;
+      utterance.volume = this.state.isMuted ? 0 : this.state.volume;
+
+      utterance.onstart = () => {
+        if (!this.state.isSpeaking) return;
+        this.state.isPaused = false;
+        this.lastBoundaryTime = performance.now();
+        this.notify();
+      };
+
+      utterance.onboundary = (event) => {
+        if (!this.state.isSpeaking) return;
+        this.lastBoundaryTime = performance.now();
+        const charIdx = event.charIndex;
+        this.state.currentCharIndex = phrase.startChar + charIdx;
+
+        // Calculate fine-grained progress across total phrases
+        const phraseFrac = Math.min(0.99, charIdx / Math.max(1, phrase.text.length));
+        this.state.progress = Math.min(
+          0.99,
+          (this.activePhraseIdx + phraseFrac) / Math.max(1, this.phraseQueue.length)
+        );
+
+        // Spoken word tracking
+        const remainder = phrase.text.slice(charIdx);
+        const match = remainder.match(/^[\w’']+/);
+        if (match) {
+          this.state.currentWord = match[0];
+        }
+
+        // Syllable impulse for mouth opening
+        this.state.visemeSignal = 0.72 + Math.random() * 0.28;
+        this.notify();
+      };
+
+      utterance.onpause = () => {
+        this.state.isPaused = true;
+        this.state.visemeSignal = 0;
+        this.notify();
+      };
+
+      utterance.onresume = () => {
+        this.state.isPaused = false;
+        this.lastBoundaryTime = performance.now();
+        this.notify();
+      };
+
+      utterance.onend = () => {
+        if (!this.state.isSpeaking) return;
+
+        // Phrase completed — reset mouth signal
+        this.state.visemeSignal = 0;
+        this.notify();
+
+        // Advance to next phrase after a natural documentary breath pause
+        const pauseDuration = phrase.pauseAfterMs || 340;
+        this.activePhraseIdx++;
+
+        if (this.activePhraseIdx < this.phraseQueue.length) {
+          this.nextPhraseTimerId = window.setTimeout(() => {
+            if (this.state.isSpeaking && !this.state.isPaused) {
+              this.speakActivePhrase();
+            }
+          }, pauseDuration);
+        } else {
+          this.finishNarration();
+        }
+      };
+
+      utterance.onerror = (e) => {
+        if (e.error !== 'canceled' && e.error !== 'interrupted') {
+          // If browser speech was blocked or encountered an issue, fallback to simulation
+          this.startSimulationForActivePhrase();
+        } else {
+          this.state.visemeSignal = 0;
+          this.notify();
+        }
+      };
+
+      this.currentUtterance = utterance;
+      window.speechSynthesis.speak(utterance);
+    } catch {
+      this.startSimulationForActivePhrase();
+    }
+
+    this.notify();
+  }
+
+  /**
+   * Simulation fallback when SpeechSynthesis is unavailable or no female voice is present.
+   */
+  private startSimulationForActivePhrase() {
+    if (this.activePhraseIdx >= this.phraseQueue.length) {
+      this.finishNarration();
+      return;
+    }
+
+    const phrase = this.phraseQueue[this.activePhraseIdx];
     this.isSimulating = true;
+    this.state.currentPhraseIndex = this.activePhraseIdx;
+    this.state.currentPhraseText = phrase.text;
+    this.state.currentPose = phrase.pose;
+    this.state.currentCharIndex = phrase.startChar;
+
+    const words = phrase.text.split(/\s+/).filter(Boolean);
+    // ~135 words per minute cadence
+    this.simDurationMs = Math.max(1200, (words.length / 135) * 60 * 1000);
     this.simStartTime = performance.now();
-    // Human narration speed: ~135 words per minute
-    const wordCount = script.split(/\s+/).length;
-    this.simDurationMs = (wordCount / 135) * 60 * 1000;
 
-    const words = script.split(/(\s+)/);
-    let cumulative = 0;
-    const wordPositions = words.map((w) => {
-      const pos = cumulative;
-      cumulative += w.length;
-      return { word: w, pos };
-    });
-
-    const stepSimulation = () => {
+    const step = () => {
       if (!this.state.isSpeaking || this.state.isPaused) return;
 
       const elapsed = performance.now() - this.simStartTime;
-      const t = Math.min(1.0, elapsed / Math.max(1000, this.simDurationMs));
-      this.state.progress = t;
+      const t = Math.min(1.0, elapsed / this.simDurationMs);
 
-      const targetChar = Math.floor(t * script.length);
-      this.state.currentCharIndex = targetChar;
-
-      const currentWordItem = wordPositions.find(
-        (wp, i) =>
-          wp.pos <= targetChar &&
-          (i === wordPositions.length - 1 || wordPositions[i + 1].pos > targetChar)
+      const phraseFrac = t;
+      this.state.progress = Math.min(
+        0.99,
+        (this.activePhraseIdx + phraseFrac) / Math.max(1, this.phraseQueue.length)
       );
 
-      if (currentWordItem && currentWordItem.word.trim()) {
-        this.state.currentWord = currentWordItem.word.trim();
-        // Syllable oscillation for simulated mouth movement
-        const syllable = Math.sin(elapsed * 0.016);
-        this.state.visemeSignal = Math.max(0, syllable * 0.85);
-      } else {
-        this.state.visemeSignal = 0;
-      }
+      // Syllable oscillation for mouth animation
+      const syllable = Math.sin(elapsed * 0.018);
+      this.state.visemeSignal = Math.max(0, syllable * 0.82);
 
       this.notify();
 
       if (t >= 1.0) {
-        this.finishNarration();
+        this.state.visemeSignal = 0;
+        this.notify();
+
+        this.activePhraseIdx++;
+        if (this.activePhraseIdx < this.phraseQueue.length) {
+          const pause = phrase.pauseAfterMs || 340;
+          this.nextPhraseTimerId = window.setTimeout(() => {
+            if (this.state.isSpeaking && !this.state.isPaused) {
+              this.startSimulationForActivePhrase();
+            }
+          }, pause);
+        } else {
+          this.finishNarration();
+        }
       } else {
-        this.simulationTimerId = window.setTimeout(stepSimulation, 80);
+        this.simulationTimerId = window.setTimeout(step, 60);
       }
     };
 
-    stepSimulation();
-    this.startVisemeLoop();
+    step();
     this.notify();
   }
 
@@ -280,13 +530,11 @@ class GuideVoiceEngine {
       if (this.state.isPaused) {
         this.state.visemeSignal = 0;
       } else if (!this.isSimulating) {
-        // Decay viseme mouth signal naturally between words
         const timeSinceWord = performance.now() - this.lastBoundaryTime;
-        if (timeSinceWord > 280) {
+        if (timeSinceWord > 260) {
           this.state.visemeSignal = Math.max(0, this.state.visemeSignal - 0.08);
         } else {
-          // Micro-syllable bounce while word is active
-          const bounce = Math.sin(timeSinceWord * 0.035) * 0.25;
+          const bounce = Math.sin(timeSinceWord * 0.032) * 0.22;
           this.state.visemeSignal = Math.max(0, Math.min(1.0, this.state.visemeSignal + bounce));
         }
       }
@@ -303,6 +551,7 @@ class GuideVoiceEngine {
     this.state.progress = 1.0;
     this.state.visemeSignal = 0;
     this.state.hasEnded = true;
+    this.state.currentPose = 'concluding';
     this.isSimulating = false;
 
     if (this.animFrameId) {
@@ -313,6 +562,10 @@ class GuideVoiceEngine {
       clearTimeout(this.simulationTimerId);
       this.simulationTimerId = null;
     }
+    if (this.nextPhraseTimerId) {
+      clearTimeout(this.nextPhraseTimerId);
+      this.nextPhraseTimerId = null;
+    }
 
     this.notify();
   }
@@ -322,7 +575,16 @@ class GuideVoiceEngine {
     this.state.isPaused = true;
     this.state.visemeSignal = 0;
 
-    if (typeof window !== 'undefined' && 'speechSynthesis' in window && !this.isSimulating) {
+    if (this.nextPhraseTimerId) {
+      clearTimeout(this.nextPhraseTimerId);
+      this.nextPhraseTimerId = null;
+    }
+
+    if (
+      typeof window !== 'undefined' &&
+      'speechSynthesis' in window &&
+      !this.isSimulating
+    ) {
       window.speechSynthesis.pause();
     }
     this.notify();
@@ -333,10 +595,19 @@ class GuideVoiceEngine {
     this.state.isPaused = false;
     this.lastBoundaryTime = performance.now();
 
-    if (typeof window !== 'undefined' && 'speechSynthesis' in window && !this.isSimulating) {
-      window.speechSynthesis.resume();
+    if (
+      typeof window !== 'undefined' &&
+      'speechSynthesis' in window &&
+      !this.isSimulating
+    ) {
+      if (window.speechSynthesis.paused) {
+        window.speechSynthesis.resume();
+      } else {
+        // Resume by speaking the active phrase if interrupted
+        this.speakActivePhrase();
+      }
     } else if (this.isSimulating) {
-      this.simStartTime = performance.now() - this.state.progress * this.simDurationMs;
+      this.startSimulationForActivePhrase();
     }
     this.notify();
   }
@@ -355,6 +626,10 @@ class GuideVoiceEngine {
       clearTimeout(this.simulationTimerId);
       this.simulationTimerId = null;
     }
+    if (this.nextPhraseTimerId) {
+      clearTimeout(this.nextPhraseTimerId);
+      this.nextPhraseTimerId = null;
+    }
 
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       window.speechSynthesis.cancel();
@@ -368,6 +643,7 @@ class GuideVoiceEngine {
     this.state.visemeSignal = 0;
     this.state.currentWord = '';
     this.state.currentCharIndex = 0;
+    this.activePhraseIdx = 0;
 
     if (notify) this.notify();
   }
@@ -390,15 +666,27 @@ class GuideVoiceEngine {
   }
 
   public seekProgress(progress: number) {
+    if (this.phraseQueue.length === 0) return;
     const clamped = Math.max(0, Math.min(1, progress));
-    this.state.progress = clamped;
-    if (this.state.currentScript) {
-      this.state.currentCharIndex = Math.floor(clamped * this.state.currentScript.length);
+    const targetIdx = Math.min(
+      this.phraseQueue.length - 1,
+      Math.floor(clamped * this.phraseQueue.length)
+    );
+    this.activePhraseIdx = targetIdx;
+    if (this.state.isSpeaking && !this.state.isPaused) {
+      if (this.selectedVoice && typeof window !== 'undefined' && 'speechSynthesis' in window) {
+        this.speakActivePhrase();
+      } else {
+        this.startSimulationForActivePhrase();
+      }
+    } else {
+      const phrase = this.phraseQueue[targetIdx];
+      this.state.currentPhraseIndex = targetIdx;
+      this.state.currentPhraseText = phrase.text;
+      this.state.currentPose = phrase.pose;
+      this.state.progress = clamped;
+      this.notify();
     }
-    if (this.isSimulating) {
-      this.simStartTime = performance.now() - clamped * this.simDurationMs;
-    }
-    this.notify();
   }
 }
 
@@ -407,4 +695,3 @@ export const guideVoiceEngine = new GuideVoiceEngine();
 if (typeof window !== 'undefined') {
   (window as unknown as { __GUIDE_VOICE_ENGINE__?: GuideVoiceEngine }).__GUIDE_VOICE_ENGINE__ = guideVoiceEngine;
 }
-

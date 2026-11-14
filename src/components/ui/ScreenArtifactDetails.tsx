@@ -22,6 +22,7 @@ import { DESTINATIONS } from '../../data/destinations';
 import { getDestinationTheme } from '../../theme/tokens';
 import { ArtifactComponent } from '../../types';
 import { navigation } from '../../navigation/navigationController';
+import { guideVoiceEngine } from '../../audio/GuideVoiceEngine';
 
 interface ScreenArtifactDetailsProps {
   onClose?: () => void;
@@ -60,6 +61,13 @@ export const ScreenArtifactDetails: React.FC<ScreenArtifactDetailsProps> = ({ on
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleClose]);
+
+  // Cleanly silence narration when exiting the artifact screen
+  useEffect(() => {
+    return () => {
+      guideVoiceEngine.stop(false);
+    };
+  }, []);
 
   // Reset active photo if artifact switches
   useEffect(() => {

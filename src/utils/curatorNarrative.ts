@@ -6,6 +6,7 @@ export interface NarrationPhrase {
   startChar: number;
   endChar: number;
   pose: CharacterPose;
+  pauseAfterMs: number;
 }
 
 /**
@@ -35,7 +36,10 @@ export function determinePoseForPhrase(
     p.includes('still reflect') ||
     p.includes('conclude') ||
     p.includes('final') ||
-    p.includes('in the end')
+    p.includes('in the end') ||
+    p.includes('forever') ||
+    p.includes('symbol of endurance') ||
+    p.includes('monument')
   ) {
     return 'concluding';
   }
@@ -43,10 +47,12 @@ export function determinePoseForPhrase(
   // Pointing sideways: directing visitor attention to specific artifact / hardware
   if (
     p.includes("you're looking at") ||
+    p.includes('look closely') ||
     p.includes('look at') ||
     p.includes('here is') ||
     p.includes('this is') ||
     p.includes('these instruments') ||
+    p.includes('standing before you') ||
     p.includes('deployed') ||
     p.includes('left behind') ||
     p.includes('array') ||
@@ -70,6 +76,8 @@ export function determinePoseForPhrase(
     p.includes('whether') ||
     p.includes('question') ||
     p.includes('challenge') ||
+    p.includes('imagine') ||
+    p.includes('remarkable thing') ||
     p.includes('designed to survive')
   ) {
     return 'thinking';
@@ -86,7 +94,10 @@ export function determinePoseForPhrase(
     p.includes('unattended') ||
     p.includes('valuable') ||
     p.includes('thriving') ||
-    p.includes('unlocked')
+    p.includes('unlocked') ||
+    p.includes('record') ||
+    p.includes('summit') ||
+    p.includes('first time')
   ) {
     return 'excited';
   }
@@ -95,6 +106,9 @@ export function determinePoseForPhrase(
   if (
     p.includes('twelve thousand') ||
     p.includes('eight years') ||
+    p.includes('fourteen years') ||
+    p.includes('5,111') ||
+    p.includes('forty-five kilometers') ||
     p.includes('nuclear') ||
     p.includes('snap-27') ||
     p.includes('measured') ||
@@ -102,10 +116,15 @@ export function determinePoseForPhrase(
     p.includes('plutonium') ||
     p.includes('kilometers') ||
     p.includes('degrees') ||
+    p.includes('1967') ||
     p.includes('1969') ||
     p.includes('1971') ||
     p.includes('1972') ||
-    p.includes('1977')
+    p.includes('1977') ||
+    p.includes('1997') ||
+    p.includes('2004') ||
+    p.includes('2018') ||
+    p.includes('2022')
   ) {
     return 'pointing_up';
   }
@@ -115,8 +134,22 @@ export function determinePoseForPhrase(
 }
 
 /**
- * Splits a full narration script into short, readable phrases
- * with character offsets matching GuideVoiceEngine.
+ * Calculates a natural documentary pause duration based on ending punctuation.
+ */
+function calculatePauseDuration(text: string): number {
+  const trimmed = text.trim();
+  if (trimmed.endsWith('...') || trimmed.endsWith('…')) return 520;
+  if (trimmed.endsWith('?')) return 480;
+  if (trimmed.endsWith('!')) return 420;
+  if (trimmed.endsWith(';') || trimmed.endsWith('—')) return 360;
+  if (trimmed.endsWith('.')) return 340;
+  if (trimmed.endsWith(',')) return 240;
+  return 280;
+}
+
+/**
+ * Splits a full narration script into discrete, rhythmically paced storytelling phrases
+ * tailored for natural documentary voice delivery and real-time speech bubble synchronization.
  */
 export function parseScriptIntoPhrases(
   script: string,
@@ -124,24 +157,31 @@ export function parseScriptIntoPhrases(
 ): NarrationPhrase[] {
   if (!script || !script.trim()) return [];
 
-  const rawSentences = script.match(/[^.!?]+[.!?]+(\s|$)|[^.!?]+$/g) || [script];
+  // Match sentences, ellipses boundaries, and major thoughts
+  // Handles ellipses '...', em dashes '—', semicolons ';', and standard sentence terminators
+  const rawSegments = script
+    .replace(/\.\.\./g, '…')
+    .match(/[^.!?…;—]+[.!?…;—]+(?:\s+|$)|[^.!?…;—]+$/g) || [script];
+
   const phrases: NarrationPhrase[] = [];
   let cumulative = 0;
 
-  for (let i = 0; i < rawSentences.length; i++) {
-    const raw = rawSentences[i];
+  for (let i = 0; i < rawSegments.length; i++) {
+    // Restore ellipses
+    const raw = rawSegments[i].replace(/…/g, '...');
     const trimmed = raw.trim();
     if (!trimmed) {
-      cumulative += raw.length;
+      cumulative += rawSegments[i].length;
       continue;
     }
 
-    // Split long sentences (> 85 characters) at natural grammatical pauses
-    if (trimmed.length > 85 && (trimmed.includes(';') || trimmed.includes(', '))) {
-      const clauses = trimmed.split(/(?<=;)\s+|,\s+(?=[A-Z]|and\s|transmitting\s|proved\s|measuring\s|linked\s)/);
+    // If an individual segment is still quite long (> 95 characters), split on natural clause boundaries
+    if (trimmed.length > 95 && (trimmed.includes(', ') || trimmed.includes(' - '))) {
+      const clauses = trimmed.split(/,\s+(?=[A-Z]|and\s|which\s|while\s|transmitting\s|proved\s|measuring\s|leaving\s|finding\s|allowing\s)/);
       let clauseOffset = 0;
 
-      for (const clause of clauses) {
+      for (let cIdx = 0; cIdx < clauses.length; cIdx++) {
+        const clause = clauses[cIdx];
         const cTrimmed = clause.trim();
         if (cTrimmed) {
           const matchIdx = raw.indexOf(cTrimmed, clauseOffset);
@@ -149,33 +189,40 @@ export function parseScriptIntoPhrases(
           const end = start + cTrimmed.length;
           clauseOffset = (matchIdx >= 0 ? matchIdx : clauseOffset) + cTrimmed.length;
 
+          // Preserve punctuation for spoken cadence
+          const formattedText = cIdx < clauses.length - 1 && !/[.,;?!—]$/.test(cTrimmed)
+            ? `${cTrimmed},`
+            : cTrimmed;
+
           phrases.push({
             id: phrases.length,
-            text: cTrimmed,
+            text: formattedText,
             startChar: start,
             endChar: end,
-            pose: determinePoseForPhrase(cTrimmed, phrases.length, rawSentences.length, isComponent),
+            pose: determinePoseForPhrase(cTrimmed, phrases.length, rawSegments.length, isComponent),
+            pauseAfterMs: calculatePauseDuration(formattedText),
           });
         }
       }
-      cumulative += raw.length;
+      cumulative += rawSegments[i].length;
     } else {
       const matchIdx = raw.indexOf(trimmed);
       const start = cumulative + (matchIdx >= 0 ? matchIdx : 0);
       const end = start + trimmed.length;
-      cumulative += raw.length;
+      cumulative += rawSegments[i].length;
 
       phrases.push({
         id: phrases.length,
         text: trimmed,
         startChar: start,
         endChar: end,
-        pose: determinePoseForPhrase(trimmed, phrases.length, rawSentences.length, isComponent),
+        pose: determinePoseForPhrase(trimmed, phrases.length, rawSegments.length, isComponent),
+        pauseAfterMs: calculatePauseDuration(trimmed),
       });
     }
   }
 
-  // Final sanity fallback
+  // Final fallback
   if (phrases.length === 0 && script.trim()) {
     phrases.push({
       id: 0,
@@ -183,9 +230,9 @@ export function parseScriptIntoPhrases(
       startChar: 0,
       endChar: script.length,
       pose: 'explaining',
+      pauseAfterMs: 350,
     });
   }
 
   return phrases;
 }
-

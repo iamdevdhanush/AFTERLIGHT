@@ -28,14 +28,8 @@ const POSE_IMAGES: Record<CharacterPose, string> = {
  * AFTERLIGHT — Floating 2D Illustrated Curator Presenter & Animated Speech Bubble
  * Featuring Dr. Mae Vance, Senior Curator of Planetary Heritage.
  * 
- * Requirements:
- * - Fixed positioning at viewport bottom-right corner.
- * - 100% transparent PNG character illustrations with waist-up presentation.
- * - Pure white (#FFFFFF) speech bubble with black (#171717) text above & slightly left of Mae.
- * - Small triangular speech pointer directed towards Mae.
- * - Phrase-by-phrase sequential animation synchronized to audio/speech engine.
- * - Context-aware pose transitions (explaining, thinking, excited, pointing_up, pointing_sideways, concluding, idle).
- * - Compact separated narration playback controls.
+ * Synchronized with GuideVoiceEngine using real speech events, natural documentary pauses,
+ * and warm female voice narration.
  */
 export const CuratorPresenter2D: React.FC<CuratorPresenter2DProps> = ({
   script,
@@ -61,8 +55,8 @@ export const CuratorPresenter2D: React.FC<CuratorPresenter2DProps> = ({
     };
   }, []);
 
-  // Parse narrative script into discrete, readable storytelling phrases
-  const phrases = useMemo(() => {
+  // Pre-parse narrative script to determine initial state before playback
+  const staticPhrases = useMemo(() => {
     return parseScriptIntoPhrases(script, isComponent);
   }, [script, isComponent]);
 
@@ -81,24 +75,22 @@ export const CuratorPresenter2D: React.FC<CuratorPresenter2DProps> = ({
     };
   }, [script, isAudioMuted]);
 
-  // Identify active phrase based on voice engine character progress
-  const activePhraseIndex = useMemo(() => {
-    if (phrases.length === 0) return 0;
-    if (voiceState.progress >= 0.99 || voiceState.hasEnded) {
-      return phrases.length - 1;
+  // Real-time phrase text and indices driven directly by actual speech events
+  const displayedPhraseText = useMemo(() => {
+    if (voiceState.currentPhraseText && voiceState.currentPhraseText.trim()) {
+      return voiceState.currentPhraseText;
     }
+    return staticPhrases[0]?.text || '';
+  }, [voiceState.currentPhraseText, staticPhrases]);
 
-    const charIdx = voiceState.currentCharIndex;
-    const foundIdx = phrases.findIndex(
-      (p, i) => charIdx >= p.startChar && (i === phrases.length - 1 || charIdx < phrases[i + 1].startChar)
-    );
+  const activePhraseNum = Math.min(
+    Math.max(1, voiceState.currentPhraseIndex + 1),
+    Math.max(1, voiceState.totalPhrases || staticPhrases.length)
+  );
 
-    return foundIdx >= 0 ? foundIdx : 0;
-  }, [phrases, voiceState.currentCharIndex, voiceState.progress, voiceState.hasEnded]);
+  const totalPhrasesCount = Math.max(1, voiceState.totalPhrases || staticPhrases.length);
 
-  const activePhrase: NarrationPhrase | undefined = phrases[activePhraseIndex] || phrases[0];
-
-  // Dynamic context-aware pose determination
+  // Dynamic context-aware pose determination directly from voice engine
   const currentPose: CharacterPose = useMemo(() => {
     if (!voiceState.isSpeaking || voiceState.isPaused) {
       return 'idle';
@@ -106,8 +98,8 @@ export const CuratorPresenter2D: React.FC<CuratorPresenter2DProps> = ({
     if (voiceState.hasEnded) {
       return 'concluding';
     }
-    return activePhrase?.pose || 'explaining';
-  }, [voiceState.isSpeaking, voiceState.isPaused, voiceState.hasEnded, activePhrase]);
+    return voiceState.currentPose || 'explaining';
+  }, [voiceState.isSpeaking, voiceState.isPaused, voiceState.hasEnded, voiceState.currentPose]);
 
   // Telemetry duration display (~135 wpm cadence)
   const timeDisplay = useMemo(() => {
@@ -155,11 +147,8 @@ export const CuratorPresenter2D: React.FC<CuratorPresenter2DProps> = ({
   };
 
   return (
-    <div
-      aria-label="AFTERLIGHT 2D Museum Curator Presenter"
-      className="fixed bottom-0 right-2 sm:right-6 md:right-8 lg:right-10 z-50 flex flex-col items-end pointer-events-none select-none"
-    >
-      {/* 1. SEPARATE COMPACT PLAYBACK CONTROLS (Floating pill above speech bubble) */}
+    <div className="fixed bottom-0 right-0 z-40 pointer-events-none flex flex-col items-end select-none">
+      {/* 1. COMPACT SEPARATED NARRATION PLAYBACK CONTROLS */}
       {showControls && (
         <motion.div
           initial={{ opacity: 0, y: 10 }}
@@ -264,7 +253,7 @@ export const CuratorPresenter2D: React.FC<CuratorPresenter2DProps> = ({
 
       {/* 2. SIGNATURE WHITE SPEECH BUBBLE WITH BLACK TEXT (Above & slightly left of Mae) */}
       <AnimatePresence>
-        {showCaptions && activePhrase && (
+        {showCaptions && displayedPhraseText && (
           <motion.div
             initial={reducedMotion ? { opacity: 0 } : { opacity: 0, y: 12, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -289,7 +278,7 @@ export const CuratorPresenter2D: React.FC<CuratorPresenter2DProps> = ({
 
                 <div className="flex items-center space-x-2">
                   <span className="font-mono text-[9px] tracking-wider text-black/40">
-                    {activePhraseIndex + 1}/{phrases.length}
+                    {activePhraseNum}/{totalPhrasesCount}
                   </span>
                   {isComponent && onResetComponent && (
                     <button
@@ -307,14 +296,14 @@ export const CuratorPresenter2D: React.FC<CuratorPresenter2DProps> = ({
               <div className="min-h-[46px] sm:min-h-[54px] flex items-center">
                 <AnimatePresence mode="wait">
                   <motion.p
-                    key={activePhrase.id}
+                    key={`${voiceState.currentPhraseIndex}-${displayedPhraseText}`}
                     initial={{ opacity: 0, y: 4, scale: 0.98 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: -4, scale: 0.98 }}
                     transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
                     className="font-sans text-sm sm:text-base md:text-[16px] font-normal leading-relaxed text-[#171717]"
                   >
-                    "{activePhrase.text}"
+                    "{displayedPhraseText}"
                   </motion.p>
                 </AnimatePresence>
               </div>

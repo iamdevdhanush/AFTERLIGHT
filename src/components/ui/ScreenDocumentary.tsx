@@ -7,6 +7,7 @@ import { soundManager } from '../../audio/SoundManager';
 import { getDestinationTheme } from '../../theme/tokens';
 import { CuratorPresenter2D } from './CuratorPresenter2D';
 import { navigation } from '../../navigation/navigationController';
+import { guideVoiceEngine } from '../../audio/GuideVoiceEngine';
 
 export const ScreenDocumentary: React.FC = () => {
   const selectedArtifactId = useExperienceStore((s) => s.selectedArtifactId);
@@ -49,6 +50,13 @@ export const ScreenDocumentary: React.FC = () => {
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
   }, [isLastChapter, nextStoryChapter, prevStoryChapter, enterLegacy]);
+
+  // Clean up narration audio when leaving documentary
+  useEffect(() => {
+    return () => {
+      guideVoiceEngine.stop(false);
+    };
+  }, []);
 
   // Optional auto-play progression
   useEffect(() => {
