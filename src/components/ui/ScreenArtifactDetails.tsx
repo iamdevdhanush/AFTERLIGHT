@@ -140,7 +140,7 @@ export const ScreenArtifactDetails: React.FC<ScreenArtifactDetailsProps> = ({ on
       </header>
 
       {/* Main Two-Column Editorial Museum Layout */}
-      <main className="max-w-7xl mx-auto px-6 md:px-14 pt-8 pb-24">
+      <main className="max-w-7xl mx-auto px-6 md:px-14 pt-8 pb-36">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-start">
           {/* LEFT / MAIN COLUMN: Visual Showcase, Title, Hotspots, Specs & Curatorial Records */}
           <motion.section

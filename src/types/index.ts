@@ -27,6 +27,15 @@ export type ArtifactCategory =
   | 'Scientific Instrument'
   | 'Landing Equipment';
 
+export type CharacterPose =
+  | 'explaining'
+  | 'thinking'
+  | 'excited'
+  | 'pointing_up'
+  | 'pointing_sideways'
+  | 'concluding'
+  | 'idle';
+
 export interface ArtifactComponent {
   id: string;
   name: string;

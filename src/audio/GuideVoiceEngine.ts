@@ -395,9 +395,16 @@ class GuideVoiceEngine {
     if (this.state.currentScript) {
       this.state.currentCharIndex = Math.floor(clamped * this.state.currentScript.length);
     }
+    if (this.isSimulating) {
+      this.simStartTime = performance.now() - clamped * this.simDurationMs;
+    }
     this.notify();
   }
 }
 
 export const guideVoiceEngine = new GuideVoiceEngine();
+
+if (typeof window !== 'undefined') {
+  (window as unknown as { __GUIDE_VOICE_ENGINE__?: GuideVoiceEngine }).__GUIDE_VOICE_ENGINE__ = guideVoiceEngine;
+}
 

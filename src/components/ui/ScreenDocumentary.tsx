@@ -5,6 +5,7 @@ import { useExperienceStore } from '../../store/useExperienceStore';
 import { ARTIFACTS } from '../../data/artifacts';
 import { soundManager } from '../../audio/SoundManager';
 import { getDestinationTheme } from '../../theme/tokens';
+import { CuratorPresenter2D } from './CuratorPresenter2D';
 
 export const ScreenDocumentary: React.FC = () => {
   const selectedArtifactId = useExperienceStore((s) => s.selectedArtifactId);
@@ -256,6 +257,13 @@ export const ScreenDocumentary: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* 4. 2D CURATOR STORYTELLING PRESENTER & ANIMATED SPEECH BUBBLE */}
+      <CuratorPresenter2D
+        script={currentChapter.narrative}
+        contextTitle={`CH ${currentChapter.chapterNumber}: ${currentChapter.chapterTitle}`}
+        showControls={false}
+      />
     </div>
   );
 };
