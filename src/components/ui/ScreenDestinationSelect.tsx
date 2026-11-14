@@ -148,26 +148,26 @@ export const ScreenDestinationSelect: React.FC = () => {
                 <>
                   <button
                     type="button"
-                    onClick={enterPlanetaryArchaeology}
+                    onClick={() => selectDestination(activeData.id)}
                     className="pointer-events-auto group inline-flex items-center space-x-3.5 px-7 py-3.5 text-obsidian font-semibold transition-all duration-300 shadow-lg"
                     style={{
                       backgroundColor: activeTheme.accent,
                     }}
-                    title="Launch Interactive 3D Planetary Orbital Map"
                   >
-                    <Compass className="w-4 h-4 text-obsidian group-hover:rotate-45 transition-transform duration-300" />
                     <span className="font-mono text-xs uppercase tracking-[0.18em] font-semibold text-obsidian">
-                      3D {activeData.name} MAP
+                      MUSEUM CATALOG
                     </span>
                     <ArrowRight className="w-4 h-4 text-obsidian group-hover:translate-x-1 transition-transform duration-200" />
                   </button>
 
                   <button
                     type="button"
-                    onClick={() => selectDestination(activeData.id)}
-                    className="pointer-events-auto group inline-flex items-center space-x-2 px-5 py-3.5 bg-black/60 hover:bg-black/90 text-stone-200 hover:text-white border border-[#2A374A] hover:border-amber-400/50 font-mono text-xs uppercase tracking-[0.16em] transition-all duration-300 shadow-lg"
+                    onClick={enterPlanetaryArchaeology}
+                    className="pointer-events-auto group inline-flex items-center space-x-2.5 px-5 py-3.5 bg-black/60 hover:bg-black/90 text-stone-200 hover:text-white border border-[#2A374A] hover:border-amber-400/60 font-mono text-xs uppercase tracking-[0.16em] transition-all duration-300 shadow-lg"
+                    title="Launch Interactive 3D Planetary Orbital Map"
                   >
-                    <span>MUSEUM CATALOG</span>
+                    <Compass className="w-4 h-4 text-amber-400 group-hover:rotate-45 transition-transform duration-300" />
+                    <span>3D {activeData.name} MAP</span>
                   </button>
                 </>
               ) : (
