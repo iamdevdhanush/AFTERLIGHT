@@ -28,12 +28,6 @@ export const ScreenDocumentary: React.FC = () => {
 
   const isLastChapter = activeChapterIndex === chapters.length - 1;
 
-  // Sound cue on chapter change
-  useEffect(() => {
-    if (currentChapter?.audioFrequency) {
-      soundManager.playArtifactChime(currentChapter.audioFrequency);
-    }
-  }, [activeChapterIndex, currentChapter]);
 
   // Keyboard navigation
   useEffect(() => {
@@ -288,6 +282,7 @@ export const ScreenDocumentary: React.FC = () => {
         script={currentChapter.narrative}
         contextTitle={`CH ${currentChapter.chapterNumber}: ${currentChapter.chapterTitle}`}
         showControls={false}
+        variant="overlay"
       />
     </div>
   );

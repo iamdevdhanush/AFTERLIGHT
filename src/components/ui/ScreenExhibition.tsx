@@ -21,15 +21,19 @@ import { DestinationId, ArtifactCategory, HardwareStatus, ArtifactData } from '.
 import { ScreenArtifactDetails } from './ScreenArtifactDetails';
 import { PlanetarySurfaceMap } from './PlanetarySurfaceMap';
 import { navigation } from '../../navigation/navigationController';
+import { soundManager } from '../../audio/SoundManager';
 
 export const ScreenExhibition: React.FC = () => {
   const currentDestination = useExperienceStore((s) => s.currentDestination);
+  const enterPlanetaryArchaeology = useExperienceStore((s) => s.enterPlanetaryArchaeology);
   const selectedArtifactId = useExperienceStore((s) => s.selectedArtifactId);
   const selectArtifact = useExperienceStore((s) => s.selectArtifact);
   const returnToExhibition = useExperienceStore((s) => s.returnToExhibition);
   const returnToDestinations = useExperienceStore((s) => s.returnToDestinations);
   const isAudioMuted = useExperienceStore((s) => s.isAudioMuted);
   const toggleAudio = useExperienceStore((s) => s.toggleAudio);
+  const isSfxMuted = useExperienceStore((s) => s.isSfxMuted);
+  const toggleSfx = useExperienceStore((s) => s.toggleSfx);
   const reducedMotion = useExperienceStore((s) => s.reducedMotion);
 
   // Exhibition exploration mode: stored in store and synced with URL
@@ -158,19 +162,33 @@ export const ScreenExhibition: React.FC = () => {
           </div>
         </div>
 
-        {/* Right Tools: Ambient Audio Toggle */}
-        <button
-          type="button"
-          onClick={toggleAudio}
-          aria-label={isAudioMuted ? 'Unmute Ambient Audio' : 'Mute Ambient Audio'}
-          className="text-stone-secondary hover:text-bone transition-colors p-2"
-        >
-          {isAudioMuted ? (
-            <VolumeX className="w-4 h-4 text-stone-muted" />
-          ) : (
-            <Volume2 className="w-4 h-4" style={{ color: destTheme.accent }} />
+        {/* Right Tools: 3D Map shortcut & Ambient Audio Toggle */}
+        <div className="flex items-center space-x-3">
+          {(selectedDestFilter === 'moon' || selectedDestFilter === 'mars' || currentDestination === 'moon' || currentDestination === 'mars') && (
+            <button
+              type="button"
+              onClick={enterPlanetaryArchaeology}
+              className="inline-flex items-center space-x-2 px-3 py-1.5 bg-black/60 hover:bg-black/90 text-amber-400 hover:text-amber-300 border border-amber-500/40 hover:border-amber-400 font-mono text-[10px] tracking-[0.16em] uppercase transition-all duration-200"
+              title="Launch Interactive 3D Planetary Map"
+            >
+              <Compass className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">3D PLANETARY MAP</span>
+            </button>
           )}
-        </button>
+
+          <button
+            type="button"
+            onClick={toggleAudio}
+            aria-label={isAudioMuted ? 'Unmute Ambient Audio' : 'Mute Ambient Audio'}
+            className="text-stone-secondary hover:text-bone transition-colors p-2"
+          >
+            {isAudioMuted ? (
+              <VolumeX className="w-4 h-4 text-stone-muted" />
+            ) : (
+              <Volume2 className="w-4 h-4" style={{ color: destTheme.accent }} />
+            )}
+          </button>
+        </div>
       </header>
 
       {/* 2. Main Museum Exhibition Canvas */}
@@ -265,7 +283,12 @@ export const ScreenExhibition: React.FC = () => {
               <div className="flex items-center space-x-3 text-xs font-mono">
                 <button
                   type="button"
-                  onClick={() => setIsFilterPanelOpen(!isFilterPanelOpen)}
+                  onClick={() => {
+                    const next = !isFilterPanelOpen;
+                    if (next) soundManager.playNavModalOpen();
+                    else soundManager.playNavModalClose();
+                    setIsFilterPanelOpen(next);
+                  }}
                   className={`inline-flex items-center space-x-2 px-3.5 py-2 border rounded-sm transition-colors uppercase tracking-[0.14em] ${
                     isFilterPanelOpen || hasActiveFilters
                       ? 'border-signal text-signal bg-signal/10'

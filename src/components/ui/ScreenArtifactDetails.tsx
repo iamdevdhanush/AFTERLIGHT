@@ -37,6 +37,8 @@ export const ScreenArtifactDetails: React.FC<ScreenArtifactDetailsProps> = ({ ar
   const enterStory = useExperienceStore((s) => s.enterStory);
   const isAudioMuted = useExperienceStore((s) => s.isAudioMuted);
   const toggleAudio = useExperienceStore((s) => s.toggleAudio);
+  const isSfxMuted = useExperienceStore((s) => s.isSfxMuted);
+  const toggleSfx = useExperienceStore((s) => s.toggleSfx);
   const reducedMotion = useExperienceStore((s) => s.reducedMotion);
 
   const [viewMode, setViewMode] = useState<'photo' | '3d'>('photo');
@@ -150,20 +152,37 @@ export const ScreenArtifactDetails: React.FC<ScreenArtifactDetailsProps> = ({ ar
           <X className="w-4 h-4 group-hover:scale-110 transition-transform" />
         </button>
 
-        {/* Right: Master Sound Toggle */}
-        <button
-          type="button"
-          onClick={toggleAudio}
-          aria-label={isAudioMuted ? 'Unmute Ambient Audio' : 'Mute Ambient Audio'}
-          className="hover:text-bone transition-colors p-2"
-          style={{ color: '#DEB275' }}
-        >
-          {isAudioMuted ? (
-            <VolumeX className="w-4 h-4 text-stone-muted" />
-          ) : (
-            <Volume2 className="w-4 h-4" />
-          )}
-        </button>
+        {/* Right: Master Sound & Navigation SFX Controls */}
+        <div className="flex items-center space-x-2.5">
+          <button
+            type="button"
+            onClick={toggleSfx}
+            aria-label={isSfxMuted ? 'Unmute Navigation Sound Effects' : 'Mute Navigation Sound Effects'}
+            title={isSfxMuted ? 'Navigation SFX: MUTED' : 'Navigation SFX: ACTIVE'}
+            className={`px-2 py-1 font-mono text-[10px] tracking-wider rounded border transition-colors uppercase ${
+              isSfxMuted
+                ? 'border-meteorite text-stone-muted hover:text-stone-secondary bg-surface/30'
+                : 'border-meteorite/80 text-bone hover:border-signal bg-surface/60'
+            }`}
+          >
+            SFX: {isSfxMuted ? 'OFF' : 'ON'}
+          </button>
+
+          <button
+            type="button"
+            onClick={toggleAudio}
+            aria-label={isAudioMuted ? 'Unmute Ambient Audio' : 'Mute Ambient Audio'}
+            title={isAudioMuted ? 'Ambient: MUTED' : 'Ambient: ACTIVE'}
+            className="hover:text-bone transition-colors p-2"
+            style={{ color: '#DEB275' }}
+          >
+            {isAudioMuted ? (
+              <VolumeX className="w-4 h-4 text-stone-muted" />
+            ) : (
+              <Volume2 className="w-4 h-4" />
+            )}
+          </button>
+        </div>
       </header>
 
       {/* Main Two-Column Editorial Museum Layout */}

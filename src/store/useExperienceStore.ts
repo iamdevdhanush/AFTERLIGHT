@@ -26,6 +26,7 @@ interface ExperienceStore {
 
   // Settings & Preferences
   isAudioMuted: boolean;
+  isSfxMuted: boolean;
   audioVolume: number;
   narrationVolume: number;
   graphicsQuality: 'high' | 'medium' | 'low';
@@ -54,10 +55,13 @@ interface ExperienceStore {
   returnToExhibition: () => void;
   returnToExploration: () => void;
   returnToDestinations: () => void;
+  enterPlanetaryArchaeology: () => void;
   setExhibitionView: (view: 'collection' | 'map') => void;
   navigateBack: () => void;
   setCameraAnimating: (isAnimating: boolean) => void;
   toggleAudio: () => void;
+  toggleSfx: () => void;
+  setSfxMuted: (muted: boolean) => void;
   setAudioVolume: (vol: number) => void;
   setNarrationVolume: (vol: number) => void;
   setGraphicsQuality: (quality: 'high' | 'medium' | 'low') => void;
@@ -66,7 +70,7 @@ interface ExperienceStore {
   toggleAiGuide: (open?: boolean) => void;
 }
 
-// Initial state resolution with strict destination narrowing (Moon & Mars only)
+// Initial state resolution with URL query synchronization & planetary module support
 const getInitialFromUrl = (): {
   state: ExperienceState;
   dest: DestinationId;
@@ -77,9 +81,14 @@ const getInitialFromUrl = (): {
   if (typeof window === 'undefined') {
     return { state: 'ARRIVAL', dest: 'moon', artifact: null, chapter: 0, view: 'collection' };
   }
+  const params = new URLSearchParams(window.location.search);
+  const rawState = params.get('state');
+  const moduleParam = params.get('module');
+  const isPlanetary3D = moduleParam === 'planetary3d' || rawState === 'PLANETARY_ARCHAEOLOGY';
   const parsed = navigation.parseUrl(window.location.search);
+
   return {
-    state: parsed.state,
+    state: isPlanetary3D ? 'PLANETARY_ARCHAEOLOGY' : parsed.state,
     dest: parsed.destination,
     artifact: parsed.artifactId,
     chapter: parsed.storyChapterIndex,
@@ -106,6 +115,7 @@ export const useExperienceStore = create<ExperienceStore>((set, get) => ({
   isCameraAnimating: false,
 
   isAudioMuted: false,
+  isSfxMuted: soundManager.isSoundEffectsMuted(),
   audioVolume: 0.5,
   narrationVolume: guideVoiceEngine.getState().volume,
   graphicsQuality: 'high',
@@ -124,7 +134,11 @@ export const useExperienceStore = create<ExperienceStore>((set, get) => ({
   previewDestination: (destId) => {
     const validDest: DestinationId = destId === 'mars' ? 'mars' : 'moon';
     if (get().currentDestination === validDest) return;
-    soundManager.playClick();
+    if (validDest === 'mars') {
+      soundManager.playNavMarsSelected();
+    } else {
+      soundManager.playNavMoonSelected();
+    }
     set({ currentDestination: validDest });
   },
 
@@ -142,6 +156,7 @@ export const useExperienceStore = create<ExperienceStore>((set, get) => ({
   },
 
   selectArtifact: (id) => {
+    soundManager.playNavArtifactSelect();
     navigation.toArtifact(id);
   },
 
@@ -209,6 +224,16 @@ export const useExperienceStore = create<ExperienceStore>((set, get) => ({
     navigation.goBack();
   },
 
+  enterPlanetaryArchaeology: () => {
+    soundManager.playTransitionSwoosh();
+    set({
+      state: 'PLANETARY_ARCHAEOLOGY',
+      selectedArtifactId: null,
+      selectedComponentId: null,
+      hoveredArtifactId: null,
+    });
+  },
+
   setCameraAnimating: (isAnimating) => set({ isCameraAnimating: isAnimating }),
 
   toggleAudio: () => {
@@ -216,6 +241,17 @@ export const useExperienceStore = create<ExperienceStore>((set, get) => ({
     soundManager.setMuted(nextMuted);
     guideVoiceEngine.setMuted(nextMuted);
     set({ isAudioMuted: nextMuted });
+  },
+
+  toggleSfx: () => {
+    const next = !get().isSfxMuted;
+    soundManager.setSfxMuted(next);
+    set({ isSfxMuted: next });
+  },
+
+  setSfxMuted: (muted) => {
+    soundManager.setSfxMuted(muted);
+    set({ isSfxMuted: muted });
   },
 
   setAudioVolume: (vol) => {
@@ -238,8 +274,13 @@ export const useExperienceStore = create<ExperienceStore>((set, get) => ({
   },
 
   toggleAiGuide: (open) => {
-    soundManager.playClick();
-    set((s) => ({ isAiGuideOpen: open !== undefined ? open : !s.isAiGuideOpen }));
+    const next = open !== undefined ? open : !get().isAiGuideOpen;
+    if (next) {
+      soundManager.playNavModalOpen();
+    } else {
+      soundManager.playNavModalClose();
+    }
+    set({ isAiGuideOpen: next });
   },
 }));
 

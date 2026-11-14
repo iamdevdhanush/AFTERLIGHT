@@ -17,6 +17,7 @@ import { navigation } from '../../navigation/navigationController';
 import { ARTIFACTS } from '../../data/artifacts';
 import { DESTINATIONS } from '../../data/destinations';
 import { ArtifactData } from '../../types';
+import { soundManager } from '../../audio/SoundManager';
 
 interface PlanetarySurfaceMapProps {
   initialPlanet?: 'moon' | 'mars';
@@ -165,6 +166,10 @@ export const PlanetarySurfaceMap: React.FC<PlanetarySurfaceMapProps> = ({
   }, []);
 
   const handlePlanetChange = (planet: 'moon' | 'mars') => {
+    if (planet !== activePlanet) {
+      if (planet === 'mars') soundManager.playNavMarsSelected();
+      else soundManager.playNavMoonSelected();
+    }
     setActivePlanet(planet);
     handleResetView();
     setHoveredSite(null);
