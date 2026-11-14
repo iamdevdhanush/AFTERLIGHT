@@ -17,7 +17,7 @@ interface PlanetMaterialMaps {
   roughnessMap: THREE.Texture;
 }
 
-function buildDerivedPlanetMaps(
+export function buildDerivedPlanetMaps(
   img: HTMLImageElement,
   planetId: PlanetSphereId
 ): { bumpMap: THREE.CanvasTexture; roughnessMap: THREE.CanvasTexture } {

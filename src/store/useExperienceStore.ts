@@ -55,6 +55,7 @@ interface ExperienceStore {
   returnToExhibition: () => void;
   returnToExploration: () => void;
   returnToDestinations: () => void;
+  enterPlanetaryArchaeology: () => void;
   setExhibitionView: (view: 'collection' | 'map') => void;
   navigateBack: () => void;
   setCameraAnimating: (isAnimating: boolean) => void;
@@ -69,7 +70,7 @@ interface ExperienceStore {
   toggleAiGuide: (open?: boolean) => void;
 }
 
-// Initial state resolution with strict destination narrowing (Moon & Mars only)
+// Initial state resolution with URL query synchronization & planetary module support
 const getInitialFromUrl = (): {
   state: ExperienceState;
   dest: DestinationId;
@@ -80,9 +81,14 @@ const getInitialFromUrl = (): {
   if (typeof window === 'undefined') {
     return { state: 'ARRIVAL', dest: 'moon', artifact: null, chapter: 0, view: 'collection' };
   }
+  const params = new URLSearchParams(window.location.search);
+  const rawState = params.get('state');
+  const moduleParam = params.get('module');
+  const isPlanetary3D = moduleParam === 'planetary3d' || rawState === 'PLANETARY_ARCHAEOLOGY';
   const parsed = navigation.parseUrl(window.location.search);
+
   return {
-    state: parsed.state,
+    state: isPlanetary3D ? 'PLANETARY_ARCHAEOLOGY' : parsed.state,
     dest: parsed.destination,
     artifact: parsed.artifactId,
     chapter: parsed.storyChapterIndex,
@@ -219,6 +225,16 @@ export const useExperienceStore = create<ExperienceStore>((set, get) => ({
 
   navigateBack: () => {
     navigation.goBack();
+  },
+
+  enterPlanetaryArchaeology: () => {
+    soundManager.playTransitionSwoosh();
+    set({
+      state: 'PLANETARY_ARCHAEOLOGY',
+      selectedArtifactId: null,
+      selectedComponentId: null,
+      hoveredArtifactId: null,
+    });
   },
 
   setCameraAnimating: (isAnimating) => set({ isCameraAnimating: isAnimating }),

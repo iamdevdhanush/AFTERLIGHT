@@ -135,6 +135,9 @@ class NavigationController {
       else if (upper === 'STORY' || upper === 'STORY_CHAPTER') state = 'STORY_CHAPTER';
       else if (upper === 'LEGACY') state = 'LEGACY';
       else if (upper === 'EXPLORATION' || upper === 'FREE_EXPLORATION') state = 'FREE_EXPLORATION';
+      else if (upper === 'PLANETARY_ARCHAEOLOGY' || upper === 'PLANETARY3D') state = 'PLANETARY_ARCHAEOLOGY';
+    } else if (params.get('module') === 'planetary3d') {
+      state = 'PLANETARY_ARCHAEOLOGY';
     } else {
       // If ?artifact= is present without explicit state parameter, default to ARTIFACT_DETAILS
       if (params.has('artifact')) {
