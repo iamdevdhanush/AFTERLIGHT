@@ -20,6 +20,7 @@ import { getDestinationTheme } from '../../theme/tokens';
 import { DestinationId, ArtifactCategory, HardwareStatus, ArtifactData } from '../../types';
 import { ScreenArtifactDetails } from './ScreenArtifactDetails';
 import { PlanetarySurfaceMap } from './PlanetarySurfaceMap';
+import { navigation } from '../../navigation/navigationController';
 
 export const ScreenExhibition: React.FC = () => {
   const currentDestination = useExperienceStore((s) => s.currentDestination);
@@ -31,8 +32,9 @@ export const ScreenExhibition: React.FC = () => {
   const toggleAudio = useExperienceStore((s) => s.toggleAudio);
   const reducedMotion = useExperienceStore((s) => s.reducedMotion);
 
-  // Exhibition exploration mode: 'collection' (editorial card grid) or 'map' (orbital surface map)
-  const [exhibitionView, setExhibitionView] = useState<'collection' | 'map'>('collection');
+  // Exhibition exploration mode: stored in store and synced with URL
+  const exhibitionView = useExperienceStore((s) => s.exhibitionView);
+  const setExhibitionView = useExperienceStore((s) => s.setExhibitionView);
 
   // Search & Filter state
   const [searchQuery, setSearchQuery] = useState('');
@@ -41,17 +43,20 @@ export const ScreenExhibition: React.FC = () => {
   const [selectedStatus, setSelectedStatus] = useState<HardwareStatus | 'all'>('all');
   const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
 
-  const dest = DESTINATIONS[currentDestination] || DESTINATIONS.moon;
-  const destTheme = getDestinationTheme(currentDestination);
+  const validDest = currentDestination === 'mars' ? 'mars' : 'moon';
+  const dest = DESTINATIONS[validDest] || DESTINATIONS.moon;
+  const destTheme = getDestinationTheme(validDest);
 
   // Sync destination filter if currentDestination changes externally
   React.useEffect(() => {
-    setSelectedDestFilter(currentDestination);
-  }, [currentDestination]);
+    setSelectedDestFilter(validDest);
+  }, [validDest]);
 
   // All artifacts or destination-scoped artifacts
   const allArtifacts = useMemo(() => {
-    return Object.values(ARTIFACTS);
+    return Object.values(ARTIFACTS).filter(
+      (item) => item.destination === 'moon' || item.destination === 'mars'
+    );
   }, []);
 
   // Filtered artifacts
@@ -88,34 +93,26 @@ export const ScreenExhibition: React.FC = () => {
 
   const hasActiveFilters =
     searchQuery.trim() !== '' ||
-    selectedDestFilter !== currentDestination ||
+    selectedDestFilter !== validDest ||
     selectedCategory !== 'all' ||
     selectedStatus !== 'all';
 
   const handleResetFilters = () => {
     setSearchQuery('');
-    setSelectedDestFilter(currentDestination);
+    setSelectedDestFilter(validDest);
     setSelectedCategory('all');
     setSelectedStatus('all');
   };
 
   const headline =
-    selectedDestFilter === 'moon'
-      ? 'THE MACHINES WE LEFT BEHIND'
-      : selectedDestFilter === 'mars'
+    selectedDestFilter === 'mars'
       ? 'THE MACHINES THAT EXPLORED ANOTHER WORLD'
-      : selectedDestFilter === 'deep_space'
-      ? 'THE MACHINES BEYOND THE SUN'
-      : 'ALL HUMAN HARDWARE ACROSS THE COSMOS';
+      : 'THE MACHINES WE LEFT BEHIND';
 
   const supportingText =
-    selectedDestFilter === 'moon'
-      ? 'Explore the rovers, landers, and scientific hardware preserved in the undisturbed lunar vacuum.'
-      : selectedDestFilter === 'mars'
+    selectedDestFilter === 'mars'
       ? 'Discover the mobile geological laboratories that braved dust storms and traversed craters across the Red Planet.'
-      : selectedDestFilter === 'deep_space'
-      ? 'Track humanity’s farthest emissaries carrying our scientific sensors and memories into the interstellar deep.'
-      : 'Search and inspect verified human artifacts resting on the Moon, roving across Mars, and sailing the interstellar void.';
+      : 'Explore the rovers, landers, and scientific hardware preserved in the undisturbed lunar vacuum.';
 
   // Asymmetric 12-column spans matching editorial rhythm
   const getAsymmetricLayout = (index: number) => {
@@ -308,21 +305,24 @@ export const ScreenExhibition: React.FC = () => {
                     DESTINATION / SECTOR
                   </span>
                   <div className="flex flex-wrap gap-2">
-                    {(['all', 'moon', 'mars', 'deep_space'] as const).map((dId) => {
+                    {(['all', 'moon', 'mars'] as const).map((dId) => {
                       const isSel = selectedDestFilter === dId;
                       const label =
                         dId === 'all'
                           ? 'ALL DESTINATIONS'
                           : dId === 'moon'
                           ? 'THE MOON'
-                          : dId === 'mars'
-                          ? 'MARS'
-                          : 'DEEP SPACE';
+                          : 'MARS';
                       return (
                         <button
                           key={dId}
                           type="button"
-                          onClick={() => setSelectedDestFilter(dId)}
+                          onClick={() => {
+                            setSelectedDestFilter(dId);
+                            if (dId === 'moon' || dId === 'mars') {
+                              navigation.toExhibition(dId, exhibitionView);
+                            }
+                          }}
                           className={`px-3 py-1 text-[11px] font-mono tracking-wider uppercase transition-colors rounded-sm border ${
                             isSel
                               ? 'border-signal bg-signal text-obsidian font-semibold'

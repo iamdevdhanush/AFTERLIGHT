@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useExperienceStore } from './store/useExperienceStore';
 import { SceneCanvas } from './components/canvas/SceneCanvas';
 import { ScreenArrival } from './components/ui/ScreenArrival';
@@ -10,9 +10,29 @@ import { ScreenArtifactDetails } from './components/ui/ScreenArtifactDetails';
 import { ScreenDocumentary } from './components/ui/ScreenDocumentary';
 import { ScreenLegacy } from './components/ui/ScreenLegacy';
 import { ScreenLoading } from './components/ui/ScreenLoading';
+import { navigation } from './navigation/navigationController';
 
 export const App: React.FC = () => {
   const state = useExperienceStore((s) => s.state);
+
+  // Initialize browser history and route synchronization
+  useEffect(() => {
+    navigation.init();
+  }, []);
+
+  const isKnownState =
+    state === 'ARRIVAL' ||
+    state === 'DESTINATION_SELECT' ||
+    state === 'ENVIRONMENT_LOADING' ||
+    state === 'EXHIBITION' ||
+    state === 'ARTIFACT_DETAILS' ||
+    state === 'GUIDED_INTRO' ||
+    state === 'FREE_EXPLORATION' ||
+    state === 'RETURN_TO_EXPLORATION' ||
+    state === 'ARTIFACT_APPROACH' ||
+    state === 'ARTIFACT_INSPECTION' ||
+    state === 'STORY_CHAPTER' ||
+    state === 'LEGACY';
 
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-void text-starlight font-sans">
@@ -41,6 +61,9 @@ export const App: React.FC = () => {
 
       {state === 'STORY_CHAPTER' && <ScreenDocumentary />}
       {state === 'LEGACY' && <ScreenLegacy />}
+
+      {/* 4. RECOVERY FALLBACK FOR INVALID OR UNRECOGNIZED STATE */}
+      {!isKnownState && <ScreenArrival />}
     </div>
   );
 };

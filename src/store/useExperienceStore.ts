@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { DestinationId, ExperienceState } from '../types';
 import { DESTINATIONS } from '../data/destinations';
 import { soundManager } from '../audio/SoundManager';
+import { navigation, ActiveDestination } from '../navigation/navigationController';
 
 interface SavedCamera {
   position: [number, number, number];
@@ -16,6 +17,7 @@ interface ExperienceStore {
   selectedComponentId: string | null;
   hoveredArtifactId: string | null;
   activeStoryChapterIndex: number;
+  exhibitionView: 'collection' | 'map';
 
   // Camera Management
   savedCamera: SavedCamera | null;
@@ -50,6 +52,8 @@ interface ExperienceStore {
   returnToExhibition: () => void;
   returnToExploration: () => void;
   returnToDestinations: () => void;
+  setExhibitionView: (view: 'collection' | 'map') => void;
+  navigateBack: () => void;
   setCameraAnimating: (isAnimating: boolean) => void;
   toggleAudio: () => void;
   setAudioVolume: (vol: number) => void;
@@ -59,16 +63,25 @@ interface ExperienceStore {
   toggleAiGuide: (open?: boolean) => void;
 }
 
-// Read initial state from URL query params if present (for validation & deep-linking)
-const getInitialFromUrl = (): { state: ExperienceState; dest: DestinationId; artifact: string | null } => {
-  if (typeof window === 'undefined') return { state: 'ARRIVAL', dest: 'moon', artifact: 'apollo11_eagle' };
-  const params = new URLSearchParams(window.location.search);
-  const rawState = params.get('state');
-  const rawDest = params.get('dest');
-  const state: ExperienceState = (rawState as ExperienceState) || 'ARRIVAL';
-  const dest: DestinationId = (rawDest as DestinationId) || 'moon';
-  const artifact = params.get('artifact') || (state.includes('ARTIFACT') || state === 'LEGACY' || state === 'STORY_CHAPTER' ? 'apollo11_eagle' : null);
-  return { state, dest, artifact };
+// Initial state resolution with strict destination narrowing (Moon & Mars only)
+const getInitialFromUrl = (): {
+  state: ExperienceState;
+  dest: DestinationId;
+  artifact: string | null;
+  chapter: number;
+  view: 'collection' | 'map';
+} => {
+  if (typeof window === 'undefined') {
+    return { state: 'ARRIVAL', dest: 'moon', artifact: null, chapter: 0, view: 'collection' };
+  }
+  const parsed = navigation.parseUrl(window.location.search);
+  return {
+    state: parsed.state,
+    dest: parsed.destination,
+    artifact: parsed.artifactId,
+    chapter: parsed.storyChapterIndex,
+    view: parsed.exhibitionView,
+  };
 };
 
 const initial = getInitialFromUrl();
@@ -77,16 +90,14 @@ const initialReducedMotion =
   typeof window.matchMedia === 'function' &&
   window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-let transitionTimeoutA: ReturnType<typeof setTimeout> | null = null;
-let transitionTimeoutB: ReturnType<typeof setTimeout> | null = null;
-
 export const useExperienceStore = create<ExperienceStore>((set, get) => ({
   state: initial.state,
   currentDestination: initial.dest,
   selectedArtifactId: initial.artifact,
   selectedComponentId: null,
   hoveredArtifactId: null,
-  activeStoryChapterIndex: 0,
+  activeStoryChapterIndex: initial.chapter,
+  exhibitionView: initial.view,
 
   savedCamera: null,
   isCameraAnimating: false,
@@ -98,45 +109,24 @@ export const useExperienceStore = create<ExperienceStore>((set, get) => ({
   isRotationPaused: false,
   isAiGuideOpen: false,
 
-  discoveredArtifacts: [],
+  discoveredArtifacts: initial.artifact ? [initial.artifact] : [],
 
   setState: (state) => set({ state }),
 
   beginArrival: () => {
-    soundManager.playTransitionSwoosh();
-    set({ state: 'DESTINATION_SELECT' });
+    navigation.toDestinations();
   },
 
   previewDestination: (destId) => {
-    if (get().currentDestination === destId) return;
+    const validDest: DestinationId = destId === 'mars' ? 'mars' : 'moon';
+    if (get().currentDestination === validDest) return;
     soundManager.playClick();
-    set({ currentDestination: destId });
+    set({ currentDestination: validDest });
   },
 
   selectDestination: (destId) => {
-    if (transitionTimeoutA) clearTimeout(transitionTimeoutA);
-    if (transitionTimeoutB) clearTimeout(transitionTimeoutB);
-
-    soundManager.playTransitionSwoosh();
-    const dest = DESTINATIONS[destId];
-    if (dest) {
-      soundManager.playAmbience(dest.ambientAudioType);
-    }
-    set({
-      currentDestination: destId,
-      state: 'ENVIRONMENT_LOADING',
-      selectedArtifactId: null,
-      hoveredArtifactId: null,
-    });
-
-    const isOrbitalDescent = destId === 'moon' || destId === 'mars';
-    const transitionDuration = get().reducedMotion ? 300 : isOrbitalDescent ? 1150 : 600;
-
-    // Restrained orbital approach fade into dedicated historical exhibition
-    transitionTimeoutA = setTimeout(() => {
-      if (get().state !== 'ENVIRONMENT_LOADING') return;
-      set({ state: 'EXHIBITION' });
-    }, transitionDuration);
+    const validDest: ActiveDestination = destId === 'mars' ? 'mars' : 'moon';
+    navigation.toDestination(validDest);
   },
 
   hoverArtifact: (id) => {
@@ -148,17 +138,7 @@ export const useExperienceStore = create<ExperienceStore>((set, get) => ({
   },
 
   selectArtifact: (id) => {
-    soundManager.playArtifactChime(392);
-    const discovered = new Set(get().discoveredArtifacts);
-    discovered.add(id);
-
-    set({
-      selectedArtifactId: id,
-      selectedComponentId: null,
-      state: 'ARTIFACT_DETAILS',
-      discoveredArtifacts: Array.from(discovered),
-      isCameraAnimating: false,
-    });
+    navigation.toArtifact(id);
   },
 
   selectComponent: (componentId) => {
@@ -167,72 +147,65 @@ export const useExperienceStore = create<ExperienceStore>((set, get) => ({
   },
 
   enterInspection: () => {
-    set({ state: 'ARTIFACT_DETAILS', isCameraAnimating: false });
+    const artifactId = get().selectedArtifactId || 'apollo11_eagle';
+    navigation.toArtifact(artifactId);
   },
 
   enterStory: () => {
-    soundManager.playTransitionSwoosh();
-    set({ state: 'STORY_CHAPTER', activeStoryChapterIndex: 0 });
+    const artifactId = get().selectedArtifactId || 'apollo11_eagle';
+    navigation.toStory(artifactId, 0);
   },
 
   setStoryChapter: (index) => {
-    soundManager.playClick();
-    set({ activeStoryChapterIndex: index });
+    navigation.setStoryChapter(index);
   },
 
   nextStoryChapter: () => {
-    soundManager.playClick();
-    set((state) => ({ activeStoryChapterIndex: state.activeStoryChapterIndex + 1 }));
+    navigation.nextStoryChapter();
   },
 
   prevStoryChapter: () => {
-    soundManager.playClick();
-    set((state) => ({ activeStoryChapterIndex: Math.max(0, state.activeStoryChapterIndex - 1) }));
+    navigation.prevStoryChapter();
   },
 
   enterLegacy: () => {
-    soundManager.playArtifactChime(523.25);
-    set({ state: 'LEGACY' });
+    const artifactId = get().selectedArtifactId || 'apollo11_eagle';
+    navigation.toLegacy(artifactId);
   },
 
   returnToArtifactDetails: () => {
-    soundManager.playTransitionSwoosh();
-    set({
-      state: 'ARTIFACT_DETAILS',
-      isCameraAnimating: false,
-    });
+    const artifactId = get().selectedArtifactId;
+    if (artifactId) {
+      navigation.toArtifact(artifactId);
+    } else {
+      navigation.toExhibition();
+    }
   },
 
   returnToExhibition: () => {
-    soundManager.playTransitionSwoosh();
-    set({
-      state: 'EXHIBITION',
-      selectedArtifactId: null,
-      selectedComponentId: null,
-      isCameraAnimating: false,
-    });
+    navigation.toExhibition(
+      get().currentDestination === 'mars' ? 'mars' : 'moon',
+      get().exhibitionView
+    );
   },
 
   returnToExploration: () => {
-    soundManager.playTransitionSwoosh();
-    set({
-      state: 'EXHIBITION',
-      selectedArtifactId: null,
-      selectedComponentId: null,
-      isCameraAnimating: false,
-    });
+    navigation.toExhibition(
+      get().currentDestination === 'mars' ? 'mars' : 'moon',
+      get().exhibitionView
+    );
   },
 
   returnToDestinations: () => {
-    soundManager.playTransitionSwoosh();
-    soundManager.stopAmbience();
-    set({
-      state: 'DESTINATION_SELECT',
-      selectedArtifactId: null,
-      selectedComponentId: null,
-      hoveredArtifactId: null,
-      savedCamera: null,
-    });
+    navigation.toDestinations();
+  },
+
+  setExhibitionView: (view) => {
+    navigation.setExhibitionView(view);
+  },
+
+  navigateBack: () => {
+    navigation.goBack();
   },
 
   setCameraAnimating: (isAnimating) => set({ isCameraAnimating: isAnimating }),
@@ -263,8 +236,8 @@ export const useExperienceStore = create<ExperienceStore>((set, get) => ({
   },
 }));
 
+// Initialize history event listener and sync when run in browser
 if (typeof window !== 'undefined') {
   (window as any).__EXPERIENCE_STORE__ = useExperienceStore;
+  navigation.init();
 }
-
-
