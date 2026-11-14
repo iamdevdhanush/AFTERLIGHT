@@ -178,30 +178,27 @@ export const useExperienceStore = create<ExperienceStore>((set, get) => ({
   },
 
   returnToArtifactDetails: () => {
-    const artifactId = get().selectedArtifactId;
-    if (artifactId) {
-      navigation.toArtifact(artifactId);
-    } else {
-      navigation.toExhibition();
-    }
+    navigation.goBack();
   },
 
   returnToExhibition: () => {
-    navigation.toExhibition(
-      get().currentDestination === 'mars' ? 'mars' : 'moon',
-      get().exhibitionView
-    );
+    // If inside an artifact detail overlay, closing it goes back to exhibition
+    if (get().state === 'ARTIFACT_DETAILS') {
+      navigation.goBack();
+    } else {
+      navigation.toExhibition(
+        get().currentDestination === 'mars' ? 'mars' : 'moon',
+        get().exhibitionView
+      );
+    }
   },
 
   returnToExploration: () => {
-    navigation.toExhibition(
-      get().currentDestination === 'mars' ? 'mars' : 'moon',
-      get().exhibitionView
-    );
+    navigation.goBack();
   },
 
   returnToDestinations: () => {
-    navigation.toDestinations();
+    navigation.goBack();
   },
 
   setExhibitionView: (view) => {

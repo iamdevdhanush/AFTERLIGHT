@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:nav": "node scripts/test_navigation_scenarios.cjs"
   },
   "dependencies": {
     "@react-three/drei": "^9.117.3",

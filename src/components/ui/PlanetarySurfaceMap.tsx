@@ -13,6 +13,7 @@ import {
   SlidersHorizontal,
 } from 'lucide-react';
 import { useExperienceStore } from '../../store/useExperienceStore';
+import { navigation } from '../../navigation/navigationController';
 import { ARTIFACTS } from '../../data/artifacts';
 import { DESTINATIONS } from '../../data/destinations';
 import { ArtifactData } from '../../types';
@@ -135,6 +136,12 @@ export const PlanetarySurfaceMap: React.FC<PlanetarySurfaceMapProps> = ({
     initialPlanet === 'mars' || currentDestination === 'mars' ? 'mars' : 'moon'
   );
 
+  // Sync active planet tab with store/prop changes
+  useEffect(() => {
+    const valid = currentDestination === 'mars' || initialPlanet === 'mars' ? 'mars' : 'moon';
+    setActivePlanet(valid);
+  }, [currentDestination, initialPlanet]);
+
   // Pan and Zoom Transform State
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
@@ -161,6 +168,9 @@ export const PlanetarySurfaceMap: React.FC<PlanetarySurfaceMapProps> = ({
     setActivePlanet(planet);
     handleResetView();
     setHoveredSite(null);
+    if (currentDestination !== planet) {
+      navigation.toExhibition(planet, 'map', true);
+    }
   };
 
   // Zoom controls (clamped 1x to 4x)

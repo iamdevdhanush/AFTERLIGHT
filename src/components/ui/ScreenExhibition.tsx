@@ -591,26 +591,28 @@ export const ScreenExhibition: React.FC = () => {
       {/* 6. SIGNATURE INTERACTION — EXPANDED ARTIFACT DETAIL OVERLAY */}
       <AnimatePresence>
         {selectedArtifactId && (
-          <div className="fixed inset-0 z-50 overflow-y-auto">
+          <motion.div
+            key={selectedArtifactId}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3, ease: 'easeOut' }}
+            className="fixed inset-0 z-50 overflow-y-auto"
+          >
             {/* Translucent Blurred Backdrop Overlay */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.35, ease: 'easeOut' }}
-              onClick={returnToExhibition}
+            <div
+              onClick={() => navigation.goBack()}
               className="fixed inset-0 bg-obsidian/85 backdrop-blur-xl"
             />
 
             {/* Seamless Expanded Presentation Container */}
-            <motion.div
-              layoutId={`exhibit-card-${selectedArtifactId}`}
-              transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-              className="relative z-10 min-h-screen"
-            >
-              <ScreenArtifactDetails onClose={returnToExhibition} />
-            </motion.div>
-          </div>
+            <div className="relative z-10 min-h-screen pointer-events-auto">
+              <ScreenArtifactDetails
+                artifactId={selectedArtifactId}
+                onClose={() => navigation.goBack()}
+              />
+            </div>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>
