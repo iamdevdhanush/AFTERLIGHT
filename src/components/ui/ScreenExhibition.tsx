@@ -10,6 +10,8 @@ import {
   SlidersHorizontal,
   Compass,
   Sparkles,
+  Globe,
+  Layers,
 } from 'lucide-react';
 import { useExperienceStore } from '../../store/useExperienceStore';
 import { ARTIFACTS, EXHIBITION_COLLECTIONS } from '../../data/artifacts';
@@ -17,6 +19,7 @@ import { DESTINATIONS } from '../../data/destinations';
 import { getDestinationTheme } from '../../theme/tokens';
 import { DestinationId, ArtifactCategory, HardwareStatus, ArtifactData } from '../../types';
 import { ScreenArtifactDetails } from './ScreenArtifactDetails';
+import { PlanetarySurfaceMap } from './PlanetarySurfaceMap';
 
 export const ScreenExhibition: React.FC = () => {
   const currentDestination = useExperienceStore((s) => s.currentDestination);
@@ -27,6 +30,9 @@ export const ScreenExhibition: React.FC = () => {
   const isAudioMuted = useExperienceStore((s) => s.isAudioMuted);
   const toggleAudio = useExperienceStore((s) => s.toggleAudio);
   const reducedMotion = useExperienceStore((s) => s.reducedMotion);
+
+  // Exhibition exploration mode: 'collection' (editorial card grid) or 'map' (orbital surface map)
+  const [exhibitionView, setExhibitionView] = useState<'collection' | 'map'>('collection');
 
   // Search & Filter state
   const [searchQuery, setSearchQuery] = useState('');
@@ -197,60 +203,98 @@ export const ScreenExhibition: React.FC = () => {
 
         {/* 3. Refined Multi-Dimensional Filtering & Search Bar */}
         <section aria-label="Collection search and filters" className="space-y-4 pt-2">
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-            {/* Search Input */}
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-muted" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search artifacts, missions, callsigns..."
-                aria-label="Search artifacts"
-                className="w-full bg-surface-raised border border-meteorite pl-10 pr-9 py-2.5 text-xs font-mono tracking-wider text-bone placeholder:text-stone-muted focus:outline-none focus:border-signal transition-colors rounded-sm"
-              />
-              {searchQuery && (
-                <button
-                  type="button"
-                  onClick={() => setSearchQuery('')}
-                  aria-label="Clear search"
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-muted hover:text-bone p-1"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              )}
-            </div>
-
-            {/* Filter Toggle & Results Count */}
-            <div className="flex items-center space-x-3 text-xs font-mono">
+          <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+            {/* Exploration View Mode Switcher: COLLECTION vs SURFACE MAP */}
+            <div className="inline-flex items-center p-1 bg-surface border border-meteorite rounded-sm shrink-0">
               <button
                 type="button"
-                onClick={() => setIsFilterPanelOpen(!isFilterPanelOpen)}
-                className={`inline-flex items-center space-x-2 px-3.5 py-2.5 border rounded-sm transition-colors uppercase tracking-[0.14em] ${
-                  isFilterPanelOpen || hasActiveFilters
-                    ? 'border-signal text-signal bg-signal/10'
-                    : 'border-meteorite text-stone-secondary hover:text-bone hover:bg-surface'
+                onClick={() => setExhibitionView('collection')}
+                className={`inline-flex items-center space-x-2 px-3.5 py-1.5 font-mono text-xs tracking-[0.16em] uppercase rounded-sm transition-colors ${
+                  exhibitionView === 'collection'
+                    ? 'bg-obsidian text-bone border border-meteorite/80 shadow-sm font-semibold'
+                    : 'text-stone-secondary hover:text-bone'
                 }`}
               >
-                <SlidersHorizontal className="w-3.5 h-3.5" />
-                <span>FILTERS {hasActiveFilters && '✦'}</span>
+                <Layers
+                  className="w-3.5 h-3.5"
+                  style={{ color: exhibitionView === 'collection' ? destTheme.accent : undefined }}
+                />
+                <span>COLLECTION</span>
               </button>
+              <button
+                type="button"
+                onClick={() => setExhibitionView('map')}
+                className={`inline-flex items-center space-x-2 px-3.5 py-1.5 font-mono text-xs tracking-[0.16em] uppercase rounded-sm transition-colors ${
+                  exhibitionView === 'map'
+                    ? 'bg-obsidian text-bone border border-meteorite/80 shadow-sm font-semibold'
+                    : 'text-stone-secondary hover:text-bone'
+                }`}
+              >
+                <Globe
+                  className="w-3.5 h-3.5"
+                  style={{ color: exhibitionView === 'map' ? destTheme.accent : undefined }}
+                />
+                <span>SURFACE MAP</span>
+              </button>
+            </div>
 
-              {hasActiveFilters && (
+            {/* Search Input (Collection Mode) */}
+            {exhibitionView === 'collection' && (
+              <div className="relative flex-1 max-w-md">
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-muted" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search artifacts, missions, callsigns..."
+                  aria-label="Search artifacts"
+                  className="w-full bg-surface-raised border border-meteorite pl-10 pr-9 py-2 text-xs font-mono tracking-wider text-bone placeholder:text-stone-muted focus:outline-none focus:border-signal transition-colors rounded-sm"
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery('')}
+                    aria-label="Clear search"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-muted hover:text-bone p-1"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+            )}
+
+            {/* Filter Toggle & Results Count */}
+            {exhibitionView === 'collection' && (
+              <div className="flex items-center space-x-3 text-xs font-mono">
                 <button
                   type="button"
-                  onClick={handleResetFilters}
-                  className="text-stone-muted hover:text-signal transition-colors tracking-widest uppercase text-[10px]"
+                  onClick={() => setIsFilterPanelOpen(!isFilterPanelOpen)}
+                  className={`inline-flex items-center space-x-2 px-3.5 py-2 border rounded-sm transition-colors uppercase tracking-[0.14em] ${
+                    isFilterPanelOpen || hasActiveFilters
+                      ? 'border-signal text-signal bg-signal/10'
+                      : 'border-meteorite text-stone-secondary hover:text-bone hover:bg-surface'
+                  }`}
                 >
-                  RESET
+                  <SlidersHorizontal className="w-3.5 h-3.5" />
+                  <span>FILTERS {hasActiveFilters && '✦'}</span>
                 </button>
-              )}
-            </div>
+
+                {hasActiveFilters && (
+                  <button
+                    type="button"
+                    onClick={handleResetFilters}
+                    className="text-stone-muted hover:text-signal transition-colors tracking-widest uppercase text-[10px]"
+                  >
+                    RESET
+                  </button>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Collapsible Filter Panel */}
           <AnimatePresence>
-            {isFilterPanelOpen && (
+            {exhibitionView === 'collection' && isFilterPanelOpen && (
               <motion.div
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
@@ -360,171 +404,188 @@ export const ScreenExhibition: React.FC = () => {
           </AnimatePresence>
         </section>
 
-        {/* 4. Featured Exhibit Centerpiece (when applicable) */}
-        {featuredArtifact && (
-          <motion.div
-            layoutId={`exhibit-card-${featuredArtifact.id}`}
-            onClick={() => selectArtifact(featuredArtifact.id)}
-            className="cursor-pointer group relative border border-meteorite bg-surface-raised overflow-hidden shadow-2xl transition-all duration-300 hover:border-signal"
+        {/* 4. Exploration View Canvas: Surface Map vs Collection Gallery */}
+        {exhibitionView === 'map' ? (
+          <motion.section
+            initial={reducedMotion ? { opacity: 0 } : { opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+            className="pt-2"
           >
-            <div className="grid grid-cols-1 lg:grid-cols-12 items-stretch">
-              {/* Featured Visual Image */}
-              <div className="lg:col-span-8 relative aspect-[16/10] overflow-hidden bg-surface">
-                <motion.img
-                  layoutId={`exhibit-image-${featuredArtifact.id}`}
-                  src={featuredArtifact.heroImage}
-                  alt={featuredArtifact.name}
-                  className="w-full h-full object-cover object-center filter brightness-95 group-hover:brightness-100 group-hover:scale-[1.02] transition-all duration-700 ease-out"
-                />
-                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-obsidian/80 via-transparent to-transparent lg:hidden" />
-
-                {/* Featured Badge */}
-                <span className="absolute top-4 left-4 font-mono text-[10px] tracking-[0.2em] uppercase text-obsidian bg-signal px-3 py-1 font-semibold shadow-md">
-                  FEATURED ARTIFACT
-                </span>
-
-                {/* Category Pill */}
-                <span className="absolute bottom-4 left-4 font-mono text-[9px] tracking-[0.16em] uppercase text-stone-secondary bg-surface/90 px-2.5 py-1 border border-meteorite/60">
-                  {featuredArtifact.category}
-                </span>
-              </div>
-
-              {/* Featured Exhibit Story Content */}
-              <div className="lg:col-span-4 p-8 sm:p-10 flex flex-col justify-between space-y-6">
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between font-mono text-[11px] tracking-[0.18em] uppercase">
-                    <span style={{ color: getDestinationTheme(featuredArtifact.destination).accent }} className="font-semibold">
-                      {featuredArtifact.mission}
-                    </span>
-                    <span className="text-stone-muted">{featuredArtifact.year}</span>
-                  </div>
-
-                  <motion.h2
-                    layoutId={`exhibit-title-${featuredArtifact.id}`}
-                    className="font-serif text-3xl sm:text-4xl text-bone tracking-tight leading-tight group-hover:text-signal transition-colors"
-                  >
-                    {featuredArtifact.name}
-                  </motion.h2>
-
-                  <p className="font-sans text-xs sm:text-sm text-stone-secondary leading-relaxed font-light">
-                    {featuredArtifact.shortDescription}
-                  </p>
-                </div>
-
-                <div className="pt-4 border-t border-meteorite space-y-4">
-                  <div className="font-mono text-[10px] tracking-[0.14em] text-stone-muted uppercase flex items-center space-x-2">
-                    <span
-                      className="w-1.5 h-1.5 rounded-full"
-                      style={{ backgroundColor: getDestinationTheme(featuredArtifact.destination).accent }}
-                    />
-                    <span className="truncate">{featuredArtifact.statusLabel}</span>
-                  </div>
-
-                  <div className="inline-flex items-center space-x-2.5 font-mono text-xs uppercase tracking-[0.18em] text-signal font-semibold group-hover:translate-x-1 transition-transform">
-                    <span>EXAMINE ARTIFACT</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        )}
-
-        {/* 5. Asymmetric Editorial Exhibit Gallery Grid */}
-        <section
-          aria-label="Artifact Collection"
-          className="grid grid-cols-1 lg:grid-cols-12 gap-y-16 lg:gap-x-12 items-start pt-4"
-        >
-          {supportingExhibits.length === 0 ? (
-            <div className="col-span-12 py-16 text-center space-y-3 border border-meteorite/40 bg-surface/30">
-              <Compass className="w-8 h-8 text-stone-muted mx-auto" />
-              <p className="font-serif text-2xl text-bone">No matching artifacts found.</p>
-              <p className="font-sans text-xs text-stone-secondary font-light max-w-sm mx-auto">
-                No items match your active filters. Try resetting search terms or switching destinations.
-              </p>
-              <button
-                type="button"
-                onClick={handleResetFilters}
-                className="mt-2 px-5 py-2 border border-signal text-signal text-xs font-mono uppercase tracking-widest hover:bg-signal hover:text-obsidian transition-colors"
+            <PlanetarySurfaceMap
+              initialPlanet={selectedDestFilter === 'mars' ? 'mars' : 'moon'}
+              onSelectArtifact={(id) => selectArtifact(id)}
+            />
+          </motion.section>
+        ) : (
+          <>
+            {/* Featured Exhibit Centerpiece (when applicable) */}
+            {featuredArtifact && (
+              <motion.div
+                layoutId={`exhibit-card-${featuredArtifact.id}`}
+                onClick={() => selectArtifact(featuredArtifact.id)}
+                className="cursor-pointer group relative border border-meteorite bg-surface-raised overflow-hidden shadow-2xl transition-all duration-300 hover:border-signal"
               >
-                RESET ALL FILTERS
-              </button>
-            </div>
-          ) : (
-            supportingExhibits.map((artifact, index) => {
-              const itemTheme = getDestinationTheme(artifact.destination);
-
-              return (
-                <motion.article
-                  key={artifact.id}
-                  layoutId={`exhibit-card-${artifact.id}`}
-                  onClick={() => selectArtifact(artifact.id)}
-                  initial={reducedMotion ? { opacity: 0 } : { opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{
-                    duration: 0.55,
-                    delay: reducedMotion ? 0 : index * 0.06,
-                    ease: [0.16, 1, 0.3, 1],
-                  }}
-                  className={`cursor-pointer group ${getAsymmetricLayout(index)} focus:outline-none`}
-                >
-                  {/* Photograph Plate */}
-                  <div
-                    className={`relative w-full ${getAspectClass(index)} overflow-hidden bg-surface border border-meteorite/70 group-hover:border-signal transition-colors duration-400 shadow-xl`}
-                  >
+                <div className="grid grid-cols-1 lg:grid-cols-12 items-stretch">
+                  {/* Featured Visual Image */}
+                  <div className="lg:col-span-8 relative aspect-[16/10] overflow-hidden bg-surface">
                     <motion.img
-                      layoutId={`exhibit-image-${artifact.id}`}
-                      src={artifact.heroImage}
-                      alt={`${artifact.name} — ${artifact.mission}`}
-                      className="w-full h-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-[1.03] brightness-95 group-hover:brightness-100"
-                      loading={index < 2 ? 'eager' : 'lazy'}
+                      layoutId={`exhibit-image-${featuredArtifact.id}`}
+                      src={featuredArtifact.heroImage}
+                      alt={featuredArtifact.name}
+                      className="w-full h-full object-cover object-center filter brightness-95 group-hover:brightness-100 group-hover:scale-[1.02] transition-all duration-700 ease-out"
                     />
-                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-obsidian/75 via-transparent to-transparent" />
+                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-obsidian/80 via-transparent to-transparent lg:hidden" />
 
-                    {/* Plate Index Badge */}
-                    <span className="pointer-events-none absolute top-4 left-4 font-mono text-[10px] tracking-[0.2em] text-bone bg-obsidian/85 px-2.5 py-1 border border-meteorite/70">
-                      0{index + (featuredArtifact ? 2 : 1)}
+                    {/* Featured Badge */}
+                    <span className="absolute top-4 left-4 font-mono text-[10px] tracking-[0.2em] uppercase text-obsidian bg-signal px-3 py-1 font-semibold shadow-md">
+                      FEATURED ARTIFACT
                     </span>
 
                     {/* Category Pill */}
-                    <span className="pointer-events-none absolute bottom-4 left-4 font-mono text-[9px] tracking-[0.16em] uppercase text-stone-secondary bg-surface/90 px-2 py-0.5 border border-meteorite/50">
-                      {artifact.category}
+                    <span className="absolute bottom-4 left-4 font-mono text-[9px] tracking-[0.16em] uppercase text-stone-secondary bg-surface/90 px-2.5 py-1 border border-meteorite/60">
+                      {featuredArtifact.category}
                     </span>
                   </div>
 
-                  {/* Exhibit Caption Strip */}
-                  <div className="pt-5 space-y-2.5 border-b border-meteorite pb-6 group-hover:border-stone-secondary transition-colors duration-300">
-                    <div className="flex items-center justify-between font-mono text-[11px] tracking-[0.18em] uppercase">
-                      <span style={{ color: itemTheme.accent }} className="font-semibold">
-                        {artifact.mission}
-                      </span>
-                      <span className="text-stone-muted">{artifact.year}</span>
+                  {/* Featured Exhibit Story Content */}
+                  <div className="lg:col-span-4 p-8 sm:p-10 flex flex-col justify-between space-y-6">
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between font-mono text-[11px] tracking-[0.18em] uppercase">
+                        <span style={{ color: getDestinationTheme(featuredArtifact.destination).accent }} className="font-semibold">
+                          {featuredArtifact.mission}
+                        </span>
+                        <span className="text-stone-muted">{featuredArtifact.year}</span>
+                      </div>
+
+                      <motion.h2
+                        layoutId={`exhibit-title-${featuredArtifact.id}`}
+                        className="font-serif text-3xl sm:text-4xl text-bone tracking-tight leading-tight group-hover:text-signal transition-colors"
+                      >
+                        {featuredArtifact.name}
+                      </motion.h2>
+
+                      <p className="font-sans text-xs sm:text-sm text-stone-secondary leading-relaxed font-light">
+                        {featuredArtifact.shortDescription}
+                      </p>
                     </div>
 
-                    <motion.h2
-                      layoutId={`exhibit-title-${artifact.id}`}
-                      className="font-serif text-2xl sm:text-3xl text-bone tracking-tight transition-colors duration-300 group-hover:text-signal"
-                    >
-                      {artifact.name}
-                    </motion.h2>
+                    <div className="pt-4 border-t border-meteorite space-y-4">
+                      <div className="font-mono text-[10px] tracking-[0.14em] text-stone-muted uppercase flex items-center space-x-2">
+                        <span
+                          className="w-1.5 h-1.5 rounded-full"
+                          style={{ backgroundColor: getDestinationTheme(featuredArtifact.destination).accent }}
+                        />
+                        <span className="truncate">{featuredArtifact.statusLabel}</span>
+                      </div>
 
-                    <p className="font-sans text-xs sm:text-sm text-stone-secondary leading-relaxed font-light max-w-xl">
-                      {artifact.shortDescription}
-                    </p>
-
-                    <div
-                      className="pt-2 inline-flex items-center space-x-2.5 font-mono text-[11px] tracking-[0.2em] uppercase transition-colors"
-                      style={{ color: itemTheme.accent }}
-                    >
-                      <span>EXAMINE ARTIFACT</span>
-                      <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1.5 transition-transform duration-200" />
+                      <div className="inline-flex items-center space-x-2.5 font-mono text-xs uppercase tracking-[0.18em] text-signal font-semibold group-hover:translate-x-1 transition-transform">
+                        <span>EXAMINE ARTIFACT</span>
+                        <ArrowRight className="w-4 h-4" />
+                      </div>
                     </div>
                   </div>
-                </motion.article>
-              );
-            })
-          )}
-        </section>
+                </div>
+              </motion.div>
+            )}
+
+            {/* 5. Asymmetric Editorial Exhibit Gallery Grid */}
+            <section
+              aria-label="Artifact Collection"
+              className="grid grid-cols-1 lg:grid-cols-12 gap-y-16 lg:gap-x-12 items-start pt-4"
+            >
+              {supportingExhibits.length === 0 ? (
+                <div className="col-span-12 py-16 text-center space-y-3 border border-meteorite/40 bg-surface/30">
+                  <Compass className="w-8 h-8 text-stone-muted mx-auto" />
+                  <p className="font-serif text-2xl text-bone">No matching artifacts found.</p>
+                  <p className="font-sans text-xs text-stone-secondary font-light max-w-sm mx-auto">
+                    No items match your active filters. Try resetting search terms or switching destinations.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={handleResetFilters}
+                    className="mt-2 px-5 py-2 border border-signal text-signal text-xs font-mono uppercase tracking-widest hover:bg-signal hover:text-obsidian transition-colors"
+                  >
+                    RESET ALL FILTERS
+                  </button>
+                </div>
+              ) : (
+                supportingExhibits.map((artifact, index) => {
+                  const itemTheme = getDestinationTheme(artifact.destination);
+
+                  return (
+                    <motion.article
+                      key={artifact.id}
+                      layoutId={`exhibit-card-${artifact.id}`}
+                      onClick={() => selectArtifact(artifact.id)}
+                      initial={reducedMotion ? { opacity: 0 } : { opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{
+                        duration: 0.55,
+                        delay: reducedMotion ? 0 : index * 0.06,
+                        ease: [0.16, 1, 0.3, 1],
+                      }}
+                      className={`cursor-pointer group ${getAsymmetricLayout(index)} focus:outline-none`}
+                    >
+                      {/* Photograph Plate */}
+                      <div
+                        className={`relative w-full ${getAspectClass(index)} overflow-hidden bg-surface border border-meteorite/70 group-hover:border-signal transition-colors duration-400 shadow-xl`}
+                      >
+                        <motion.img
+                          layoutId={`exhibit-image-${artifact.id}`}
+                          src={artifact.heroImage}
+                          alt={`${artifact.name} — ${artifact.mission}`}
+                          className="w-full h-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-[1.03] brightness-95 group-hover:brightness-100"
+                          loading={index < 2 ? 'eager' : 'lazy'}
+                        />
+                        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-obsidian/75 via-transparent to-transparent" />
+
+                        {/* Plate Index Badge */}
+                        <span className="pointer-events-none absolute top-4 left-4 font-mono text-[10px] tracking-[0.2em] text-bone bg-obsidian/85 px-2.5 py-1 border border-meteorite/70">
+                          0{index + (featuredArtifact ? 2 : 1)}
+                        </span>
+
+                        {/* Category Pill */}
+                        <span className="pointer-events-none absolute bottom-4 left-4 font-mono text-[9px] tracking-[0.16em] uppercase text-stone-secondary bg-surface/90 px-2 py-0.5 border border-meteorite/50">
+                          {artifact.category}
+                        </span>
+                      </div>
+
+                      {/* Exhibit Caption Strip */}
+                      <div className="pt-5 space-y-2.5 border-b border-meteorite pb-6 group-hover:border-stone-secondary transition-colors duration-300">
+                        <div className="flex items-center justify-between font-mono text-[11px] tracking-[0.18em] uppercase">
+                          <span style={{ color: itemTheme.accent }} className="font-semibold">
+                            {artifact.mission}
+                          </span>
+                          <span className="text-stone-muted">{artifact.year}</span>
+                        </div>
+
+                        <motion.h2
+                          layoutId={`exhibit-title-${artifact.id}`}
+                          className="font-serif text-2xl sm:text-3xl text-bone tracking-tight transition-colors duration-300 group-hover:text-signal"
+                        >
+                          {artifact.name}
+                        </motion.h2>
+
+                        <p className="font-sans text-xs sm:text-sm text-stone-secondary leading-relaxed font-light max-w-xl">
+                          {artifact.shortDescription}
+                        </p>
+
+                        <div
+                          className="pt-2 inline-flex items-center space-x-2.5 font-mono text-[11px] tracking-[0.2em] uppercase transition-colors"
+                          style={{ color: itemTheme.accent }}
+                        >
+                          <span>EXAMINE ARTIFACT</span>
+                          <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1.5 transition-transform duration-200" />
+                        </div>
+                      </div>
+                    </motion.article>
+                  );
+                })
+              )}
+            </section>
+          </>
+        )}
       </main>
 
       {/* 6. SIGNATURE INTERACTION — EXPANDED ARTIFACT DETAIL OVERLAY */}

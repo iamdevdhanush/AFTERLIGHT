@@ -1331,7 +1331,7 @@ export const ARTIFACTS: Record<string, ArtifactData> = {
         nasaId: 'PIA21847',
       },
     ],
-    has3DModel: false,
+    has3DModel: true,
     coordinates: {
       latitude: '4.502° N',
       longitude: '135.623° E',

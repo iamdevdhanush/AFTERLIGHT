@@ -183,50 +183,51 @@ export const ScreenArtifactDetails: React.FC<ScreenArtifactDetailsProps> = ({ on
 
             {/* Primary Visual Showcase (Archival Photography or Interactive 3D Turntable) */}
             <div className="space-y-3.5">
-              {/* Controls bar above showcase (if 3D model is available) */}
-              {artifact.has3DModel && (
-                <div className="flex items-center justify-end text-xs font-mono">
-                  <div className="inline-flex items-center space-x-4 text-[10px] tracking-[0.16em] uppercase">
-                    <button
-                      type="button"
-                      onClick={() => setViewMode('photo')}
-                      className={`inline-flex items-center space-x-1.5 pb-0.5 transition-colors ${
-                        viewMode === 'photo'
-                          ? 'border-b font-semibold'
-                          : 'text-stone-muted hover:text-bone'
-                      }`}
-                      style={{
-                        color: viewMode === 'photo' ? '#DEB275' : undefined,
-                        borderColor: viewMode === 'photo' ? '#DEB275' : 'transparent',
-                      }}
-                    >
-                      <Camera className="w-3 h-3" />
-                      <span>PHOTOGRAPH</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setViewMode('3d')}
-                      className={`inline-flex items-center space-x-1.5 pb-0.5 transition-colors ${
-                        viewMode === '3d'
-                          ? 'border-b font-semibold'
-                          : 'text-stone-muted hover:text-bone'
-                      }`}
-                      style={{
-                        color: viewMode === '3d' ? '#DEB275' : undefined,
-                        borderColor: viewMode === '3d' ? '#DEB275' : 'transparent',
-                      }}
-                    >
-                      <Box className="w-3 h-3" />
-                      <span>3D HARDWARE</span>
-                    </button>
-                  </div>
+              {/* Controls bar above showcase */}
+              <div className="flex items-center justify-end text-xs font-mono">
+                <div className="inline-flex items-center space-x-4 text-[10px] tracking-[0.16em] uppercase">
+                  <button
+                    type="button"
+                    onClick={() => setViewMode('photo')}
+                    className={`inline-flex items-center space-x-1.5 pb-0.5 transition-colors ${
+                      viewMode === 'photo'
+                        ? 'border-b font-semibold'
+                        : 'text-stone-muted hover:text-bone'
+                    }`}
+                    style={{
+                      color: viewMode === 'photo' ? '#DEB275' : undefined,
+                      borderColor: viewMode === 'photo' ? '#DEB275' : 'transparent',
+                    }}
+                  >
+                    <Camera className="w-3 h-3" />
+                    <span>PHOTOGRAPH</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setViewMode('3d')}
+                    className={`inline-flex items-center space-x-1.5 pb-0.5 transition-colors ${
+                      viewMode === '3d'
+                        ? 'border-b font-semibold'
+                        : 'text-stone-muted hover:text-bone'
+                    }`}
+                    style={{
+                      color: viewMode === '3d' ? '#DEB275' : undefined,
+                      borderColor: viewMode === '3d' ? '#DEB275' : 'transparent',
+                    }}
+                  >
+                    <Box className="w-3 h-3" />
+                    <span>{artifact.has3DModel ? '3D HARDWARE' : '3D STATUS'}</span>
+                  </button>
                 </div>
-              )}
+              </div>
 
               {/* Showcase Frame with Interactive Hotspots Overlay */}
               <div className="relative w-full aspect-[16/10] bg-surface overflow-hidden border border-meteorite shadow-2xl group">
-                {viewMode === '3d' && artifact.has3DModel ? (
-                  <Artifact3DStage artifactId={artifact.id} />
+                {viewMode === '3d' ? (
+                  <Artifact3DStage
+                    artifactId={artifact.id}
+                    onSwitchToPhoto={() => setViewMode('photo')}
+                  />
                 ) : (
                   <>
                     <motion.img
