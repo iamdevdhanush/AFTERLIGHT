@@ -21,6 +21,7 @@ import { DestinationId, ArtifactCategory, HardwareStatus, ArtifactData } from '.
 import { ScreenArtifactDetails } from './ScreenArtifactDetails';
 import { PlanetarySurfaceMap } from './PlanetarySurfaceMap';
 import { navigation } from '../../navigation/navigationController';
+import { soundManager } from '../../audio/SoundManager';
 
 export const ScreenExhibition: React.FC = () => {
   const currentDestination = useExperienceStore((s) => s.currentDestination);
@@ -31,6 +32,8 @@ export const ScreenExhibition: React.FC = () => {
   const returnToDestinations = useExperienceStore((s) => s.returnToDestinations);
   const isAudioMuted = useExperienceStore((s) => s.isAudioMuted);
   const toggleAudio = useExperienceStore((s) => s.toggleAudio);
+  const isSfxMuted = useExperienceStore((s) => s.isSfxMuted);
+  const toggleSfx = useExperienceStore((s) => s.toggleSfx);
   const reducedMotion = useExperienceStore((s) => s.reducedMotion);
 
   // Exhibition exploration mode: stored in store and synced with URL
@@ -280,7 +283,12 @@ export const ScreenExhibition: React.FC = () => {
               <div className="flex items-center space-x-3 text-xs font-mono">
                 <button
                   type="button"
-                  onClick={() => setIsFilterPanelOpen(!isFilterPanelOpen)}
+                  onClick={() => {
+                    const next = !isFilterPanelOpen;
+                    if (next) soundManager.playNavModalOpen();
+                    else soundManager.playNavModalClose();
+                    setIsFilterPanelOpen(next);
+                  }}
                   className={`inline-flex items-center space-x-2 px-3.5 py-2 border rounded-sm transition-colors uppercase tracking-[0.14em] ${
                     isFilterPanelOpen || hasActiveFilters
                       ? 'border-signal text-signal bg-signal/10'

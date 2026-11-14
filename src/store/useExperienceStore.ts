@@ -26,6 +26,7 @@ interface ExperienceStore {
 
   // Settings & Preferences
   isAudioMuted: boolean;
+  isSfxMuted: boolean;
   audioVolume: number;
   narrationVolume: number;
   graphicsQuality: 'high' | 'medium' | 'low';
@@ -59,6 +60,8 @@ interface ExperienceStore {
   navigateBack: () => void;
   setCameraAnimating: (isAnimating: boolean) => void;
   toggleAudio: () => void;
+  toggleSfx: () => void;
+  setSfxMuted: (muted: boolean) => void;
   setAudioVolume: (vol: number) => void;
   setNarrationVolume: (vol: number) => void;
   setGraphicsQuality: (quality: 'high' | 'medium' | 'low') => void;
@@ -112,6 +115,7 @@ export const useExperienceStore = create<ExperienceStore>((set, get) => ({
   isCameraAnimating: false,
 
   isAudioMuted: false,
+  isSfxMuted: soundManager.isSoundEffectsMuted(),
   audioVolume: 0.5,
   narrationVolume: guideVoiceEngine.getState().volume,
   graphicsQuality: 'high',
@@ -130,7 +134,11 @@ export const useExperienceStore = create<ExperienceStore>((set, get) => ({
   previewDestination: (destId) => {
     const validDest: DestinationId = destId === 'mars' ? 'mars' : 'moon';
     if (get().currentDestination === validDest) return;
-    soundManager.playClick();
+    if (validDest === 'mars') {
+      soundManager.playNavMarsSelected();
+    } else {
+      soundManager.playNavMoonSelected();
+    }
     set({ currentDestination: validDest });
   },
 
@@ -148,6 +156,7 @@ export const useExperienceStore = create<ExperienceStore>((set, get) => ({
   },
 
   selectArtifact: (id) => {
+    soundManager.playNavArtifactSelect();
     navigation.toArtifact(id);
   },
 
@@ -237,6 +246,17 @@ export const useExperienceStore = create<ExperienceStore>((set, get) => ({
     set({ isAudioMuted: nextMuted });
   },
 
+  toggleSfx: () => {
+    const next = !get().isSfxMuted;
+    soundManager.setSfxMuted(next);
+    set({ isSfxMuted: next });
+  },
+
+  setSfxMuted: (muted) => {
+    soundManager.setSfxMuted(muted);
+    set({ isSfxMuted: muted });
+  },
+
   setAudioVolume: (vol) => {
     soundManager.setVolume(vol);
     set({ audioVolume: vol });
@@ -257,8 +277,13 @@ export const useExperienceStore = create<ExperienceStore>((set, get) => ({
   },
 
   toggleAiGuide: (open) => {
-    soundManager.playClick();
-    set((s) => ({ isAiGuideOpen: open !== undefined ? open : !s.isAiGuideOpen }));
+    const next = open !== undefined ? open : !get().isAiGuideOpen;
+    if (next) {
+      soundManager.playNavModalOpen();
+    } else {
+      soundManager.playNavModalClose();
+    }
+    set({ isAiGuideOpen: next });
   },
 }));
 
