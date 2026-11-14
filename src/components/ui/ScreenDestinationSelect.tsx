@@ -1,10 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-<<<<<<< HEAD
-import { ArrowRight, Compass, Pause, Play } from 'lucide-react';
-=======
-import { ArrowLeft, ArrowRight, Pause, Play } from 'lucide-react';
->>>>>>> upstream/master
+import { ArrowLeft, ArrowRight, Compass, Pause, Play } from 'lucide-react';
 import { useExperienceStore } from '../../store/useExperienceStore';
 import { DESTINATIONS } from '../../data/destinations';
 import { DestinationId } from '../../types';
@@ -24,6 +20,7 @@ export const ScreenDestinationSelect: React.FC = () => {
   const destinationList: DestinationId[] = ['moon', 'mars'];
   const activeData = DESTINATIONS[currentDestination] || DESTINATIONS.moon;
   const activeTheme = getDestinationTheme(currentDestination);
+  const isOrbitalGlobe = currentDestination === 'moon' || currentDestination === 'mars';
 
   return (
     <div className="relative z-10 w-full h-full flex flex-col justify-between p-7 md:p-14 pointer-events-none select-none">

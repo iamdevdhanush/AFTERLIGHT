@@ -10,11 +10,8 @@ import { ScreenArtifactDetails } from './components/ui/ScreenArtifactDetails';
 import { ScreenDocumentary } from './components/ui/ScreenDocumentary';
 import { ScreenLegacy } from './components/ui/ScreenLegacy';
 import { ScreenLoading } from './components/ui/ScreenLoading';
-<<<<<<< HEAD
 import { PlanetaryArchaeologyModule } from './modules/planetary-archaeology';
-=======
 import { navigation } from './navigation/navigationController';
->>>>>>> upstream/master
 
 export const App: React.FC = () => {
   const state = useExperienceStore((s) => s.state);
@@ -38,7 +35,8 @@ export const App: React.FC = () => {
     state === 'ARTIFACT_APPROACH' ||
     state === 'ARTIFACT_INSPECTION' ||
     state === 'STORY_CHAPTER' ||
-    state === 'LEGACY';
+    state === 'LEGACY' ||
+    state === 'PLANETARY_ARCHAEOLOGY';
 
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-void text-starlight font-sans">
@@ -68,7 +66,6 @@ export const App: React.FC = () => {
       {state === 'STORY_CHAPTER' && <ScreenDocumentary />}
       {state === 'LEGACY' && <ScreenLegacy />}
 
-<<<<<<< HEAD
       {/* 4. ISOLATED 3D PLANETARY ARCHAEOLOGY MODULE (Moon & Mars Real Surface Data) */}
       {state === 'PLANETARY_ARCHAEOLOGY' && (
         <PlanetaryArchaeologyModule
@@ -76,10 +73,9 @@ export const App: React.FC = () => {
           onExit={() => setState('DESTINATION_SELECT')}
         />
       )}
-=======
-      {/* 4. RECOVERY FALLBACK FOR INVALID OR UNRECOGNIZED STATE */}
+
+      {/* 5. RECOVERY FALLBACK FOR INVALID OR UNRECOGNIZED STATE */}
       {!isKnownState && <ScreenArrival />}
->>>>>>> upstream/master
     </div>
   );
 };
