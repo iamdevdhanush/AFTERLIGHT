@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { SlidersHorizontal } from 'lucide-react';
 import {
   PlanetaryBody,
@@ -68,6 +68,15 @@ export const PlanetaryArchaeologyModule: React.FC<PlanetaryArchaeologyModuleProp
   // Base sites & traverses for active planet
   const allPlanetSites = useMemo(() => getSitesForPlanet(planet), [planet]);
   const activeTraverses = useMemo(() => getTraversesForPlanet(planet), [planet]);
+
+  // Expose test hook for headless verification & automated testing
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      (window as any).__selectPlanetarySite = handleSelectSite;
+      (window as any).__setHoveredSiteId = setHoveredSiteId;
+      (window as any).__allPlanetarySites = allPlanetSites;
+    }
+  }, [allPlanetSites]);
 
   // Distinct mission list for the filter dropdown
   const availableMissions = useMemo(() => {

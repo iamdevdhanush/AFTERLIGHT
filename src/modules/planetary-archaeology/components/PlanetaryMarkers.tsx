@@ -170,22 +170,15 @@ const SingleSiteMarker: React.FC<{
         <meshBasicMaterial color={pinHeadColor} />
       </mesh>
 
-      {/* HTML Micro-HUD Overlay (Always faces camera) */}
-      {(isHovered || isSelected) && (
+      {/* HTML Micro-HUD Overlay (Always faces camera, shown only on hover when not selected) */}
+      {isHovered && !isSelected && (
         <Html
-          position={[0, 0.18, 0]}
+          position={[0, stalkHeight + 0.035, 0]}
           center
-          distanceFactor={9}
           style={{ pointerEvents: 'none' }}
         >
           <div className="flex flex-col items-center select-none transform -translate-y-2 whitespace-nowrap z-50">
-            <div
-              className={`px-3 py-2 rounded bg-[#080B10]/95 backdrop-blur-md border ${
-                isSelected
-                  ? 'border-[#F59E0B] shadow-xl shadow-[#F59E0B]/25'
-                  : 'border-[#475569] shadow-lg'
-              } text-center`}
-            >
+            <div className="px-2.5 py-1.5 rounded bg-[#080B10]/95 backdrop-blur-md border border-[#F59E0B]/70 shadow-[0_4px_20px_rgba(0,0,0,0.85)] text-center">
               <div className="flex items-center justify-center space-x-1.5">
                 <span
                   className="px-1.5 py-0.2 rounded text-[8px] font-mono font-bold uppercase tracking-wider"
@@ -214,6 +207,10 @@ const SingleSiteMarker: React.FC<{
                 >
                   {site.locationConfidence.toUpperCase()}
                 </span>
+              </div>
+
+              <div className="text-[8px] font-mono tracking-wider text-amber-400/80 uppercase mt-1 pt-0.5 border-t border-white/10 flex items-center justify-center gap-1">
+                <span>CLICK TO VIEW DOSSIER ↗</span>
               </div>
             </div>
             {/* Downward Pointer */}

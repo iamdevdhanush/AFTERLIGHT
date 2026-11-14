@@ -129,27 +129,27 @@ export const RoverTraversePath3D: React.FC<RoverTraversePath3DProps> = ({
 
             {/* Waypoint Label Overlay */}
             {isHovered && (
-              <Html distanceFactor={8} position={[0, 0.06, 0]} center style={{ pointerEvents: 'none' }}>
-                <div className="bg-[#090D14]/90 backdrop-blur-md border border-[#2D3F59] p-2.5 rounded shadow-xl text-center select-none whitespace-nowrap z-50">
+              <Html position={[0, 0.05, 0]} center style={{ pointerEvents: 'none' }}>
+                <div className="bg-[#090D14]/95 backdrop-blur-md border border-[#2D3F59] p-2 rounded shadow-xl text-center select-none whitespace-nowrap z-50">
                   <div className="flex items-center justify-center space-x-1.5">
                     <span
                       className="w-1.5 h-1.5 rounded-full"
                       style={{ backgroundColor: isStart ? '#10B981' : isEnd ? '#EF4444' : traverse.color }}
                     />
-                    <span className="font-mono text-[10px] text-white font-bold uppercase tracking-wider">
+                    <span className="font-mono text-[9px] text-white font-bold uppercase tracking-wider">
                       {isStart ? 'LANDING SITE' : isEnd ? 'FINAL KNOWN POSITION' : 'TRAVERSE STATION'}
                     </span>
                   </div>
-                  <span className="font-sans text-xs text-stone-200 font-medium block mt-0.5">
+                  <span className="font-mono text-[11px] text-stone-200 font-semibold block mt-0.5">
                     {waypoint.name}
                   </span>
                   {waypoint.sol !== undefined && (
-                    <span className="font-mono text-[9px] text-[#63F0C8] block mt-0.5">
+                    <span className="font-mono text-[8.5px] text-[#63F0C8] block mt-0.5">
                       SOL {waypoint.sol} · {waypoint.latitude.toFixed(4)}°, {waypoint.longitude.toFixed(4)}°
                     </span>
                   )}
                   {waypoint.significance && (
-                    <span className="font-sans text-[10px] text-stone-400 block mt-1 max-w-xs text-left leading-snug">
+                    <span className="font-mono text-[9px] text-stone-400 block mt-1 max-w-xs text-left leading-snug">
                       {waypoint.significance}
                     </span>
                   )}
