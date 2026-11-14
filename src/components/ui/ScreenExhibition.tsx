@@ -21,6 +21,7 @@ import { DestinationId, ArtifactCategory, HardwareStatus, ArtifactData } from '.
 import { ScreenArtifactDetails } from './ScreenArtifactDetails';
 import { PlanetarySurfaceMap } from './PlanetarySurfaceMap';
 import { navigation } from '../../navigation/navigationController';
+import { soundManager } from '../../audio/SoundManager';
 
 export const ScreenExhibition: React.FC = () => {
   const currentDestination = useExperienceStore((s) => s.currentDestination);
@@ -30,6 +31,8 @@ export const ScreenExhibition: React.FC = () => {
   const returnToDestinations = useExperienceStore((s) => s.returnToDestinations);
   const isAudioMuted = useExperienceStore((s) => s.isAudioMuted);
   const toggleAudio = useExperienceStore((s) => s.toggleAudio);
+  const isSfxMuted = useExperienceStore((s) => s.isSfxMuted);
+  const toggleSfx = useExperienceStore((s) => s.toggleSfx);
   const reducedMotion = useExperienceStore((s) => s.reducedMotion);
 
   // Exhibition exploration mode: stored in store and synced with URL
@@ -158,19 +161,36 @@ export const ScreenExhibition: React.FC = () => {
           </div>
         </div>
 
-        {/* Right Tools: Ambient Audio Toggle */}
-        <button
-          type="button"
-          onClick={toggleAudio}
-          aria-label={isAudioMuted ? 'Unmute Ambient Audio' : 'Mute Ambient Audio'}
-          className="text-stone-secondary hover:text-bone transition-colors p-2"
-        >
-          {isAudioMuted ? (
-            <VolumeX className="w-4 h-4 text-stone-muted" />
-          ) : (
-            <Volume2 className="w-4 h-4" style={{ color: destTheme.accent }} />
-          )}
-        </button>
+        {/* Right Tools: Master Ambient & Navigation SFX Controls */}
+        <div className="flex items-center space-x-2.5">
+          <button
+            type="button"
+            onClick={toggleSfx}
+            aria-label={isSfxMuted ? 'Unmute Navigation Sound Effects' : 'Mute Navigation Sound Effects'}
+            title={isSfxMuted ? 'Navigation SFX: MUTED' : 'Navigation SFX: ACTIVE'}
+            className={`px-2 py-1 font-mono text-[10px] tracking-wider rounded border transition-colors uppercase ${
+              isSfxMuted
+                ? 'border-meteorite text-stone-muted hover:text-stone-secondary bg-surface/30'
+                : 'border-meteorite/80 text-bone hover:border-signal bg-surface/60'
+            }`}
+          >
+            SFX: {isSfxMuted ? 'OFF' : 'ON'}
+          </button>
+
+          <button
+            type="button"
+            onClick={toggleAudio}
+            aria-label={isAudioMuted ? 'Unmute Ambient Audio' : 'Mute Ambient Audio'}
+            title={isAudioMuted ? 'Ambient: MUTED' : 'Ambient: ACTIVE'}
+            className="text-stone-secondary hover:text-bone transition-colors p-2"
+          >
+            {isAudioMuted ? (
+              <VolumeX className="w-4 h-4 text-stone-muted" />
+            ) : (
+              <Volume2 className="w-4 h-4" style={{ color: destTheme.accent }} />
+            )}
+          </button>
+        </div>
       </header>
 
       {/* 2. Main Museum Exhibition Canvas */}
@@ -265,7 +285,12 @@ export const ScreenExhibition: React.FC = () => {
               <div className="flex items-center space-x-3 text-xs font-mono">
                 <button
                   type="button"
-                  onClick={() => setIsFilterPanelOpen(!isFilterPanelOpen)}
+                  onClick={() => {
+                    const next = !isFilterPanelOpen;
+                    if (next) soundManager.playNavModalOpen();
+                    else soundManager.playNavModalClose();
+                    setIsFilterPanelOpen(next);
+                  }}
                   className={`inline-flex items-center space-x-2 px-3.5 py-2 border rounded-sm transition-colors uppercase tracking-[0.14em] ${
                     isFilterPanelOpen || hasActiveFilters
                       ? 'border-signal text-signal bg-signal/10'

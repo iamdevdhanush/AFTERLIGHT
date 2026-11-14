@@ -68,13 +68,24 @@ class NavigationController {
       const nextNav = this.parseUrl(window.location.search, event.state);
 
       // Track depth to know if we can goBack() safely
+      const prevDepth = this.historyStackDepth;
+      let newDepth = prevDepth;
       if (event.state?._afterlightDepth !== undefined) {
-        this.historyStackDepth = event.state._afterlightDepth;
+        newDepth = event.state._afterlightDepth;
       } else {
-        this.historyStackDepth = Math.max(0, this.historyStackDepth - 1);
+        newDepth = Math.max(0, this.historyStackDepth - 1);
+      }
+      this.historyStackDepth = newDepth;
+
+      // Play intentional distinct sound based on Back vs Forward
+      if (newDepth < prevDepth) {
+        soundManager.playNavBrowserBack();
+      } else if (newDepth > prevDepth) {
+        soundManager.playNavBrowserForward();
+      } else {
+        soundManager.playNavReturnToExhibition();
       }
 
-      soundManager.playTransitionSwoosh();
       guideVoiceEngine.stop(false);
 
       // Update Zustand store
@@ -256,6 +267,7 @@ class NavigationController {
   public toArrival() {
     guideVoiceEngine.stop(false);
     soundManager.stopAmbience();
+    soundManager.playNavReturnToExhibition();
     const nav: ParsedNavState = {
       state: 'ARRIVAL',
       destination: 'moon',
@@ -275,8 +287,13 @@ class NavigationController {
    * Navigate to 3D Destination Selection Screen
    */
   public toDestinations() {
+    const prevState = useExperienceStore.getState().state;
     guideVoiceEngine.stop(false);
-    soundManager.playTransitionSwoosh();
+    if (prevState === 'ARRIVAL') {
+      soundManager.playNavArrivalToDestinations();
+    } else {
+      soundManager.playNavReturnToExhibition();
+    }
     soundManager.stopAmbience();
     const nav: ParsedNavState = {
       state: 'DESTINATION_SELECT',
@@ -300,7 +317,7 @@ class NavigationController {
   public toDestination(destId: ActiveDestination) {
     guideVoiceEngine.stop(false);
     const validDest: ActiveDestination = destId === 'mars' ? 'mars' : 'moon';
-    soundManager.playTransitionSwoosh();
+    soundManager.playNavLoadingStart();
 
     const dest = DESTINATIONS[validDest];
     if (dest) {
@@ -332,6 +349,7 @@ class NavigationController {
     // 2. Transition cleanly into Exhibition
     setTimeout(() => {
       if (useExperienceStore.getState().state === 'ENVIRONMENT_LOADING') {
+        soundManager.playNavLoadingComplete();
         useExperienceStore.setState({ state: 'EXHIBITION' });
       }
     }, transitionDuration);
@@ -341,8 +359,14 @@ class NavigationController {
    * Navigate to Exhibition (with view mode preservation)
    */
   public toExhibition(destId?: ActiveDestination, viewMode?: 'collection' | 'map') {
+    const prevState = useExperienceStore.getState().state;
     guideVoiceEngine.stop(false);
-    soundManager.playTransitionSwoosh();
+    if (prevState === 'ARTIFACT_DETAILS' || prevState === 'STORY_CHAPTER' || prevState === 'LEGACY') {
+      soundManager.playNavReturnToExhibition();
+    } else {
+      soundManager.playNavExhibitionEntry();
+    }
+
     const store = useExperienceStore.getState();
     const targetDest: ActiveDestination = destId
       ? destId === 'mars'
@@ -377,6 +401,14 @@ class NavigationController {
    */
   public setExhibitionView(viewMode: 'collection' | 'map') {
     const store = useExperienceStore.getState();
+    if (store.exhibitionView !== viewMode) {
+      if (viewMode === 'map') {
+        soundManager.playNavExplorationEnter();
+      } else {
+        soundManager.playNavExplorationExit();
+      }
+    }
+
     const nav: ParsedNavState = {
       state: 'EXHIBITION',
       destination: store.currentDestination === 'mars' ? 'mars' : 'moon',
@@ -396,7 +428,7 @@ class NavigationController {
     const artifact = ARTIFACTS[artifactId];
     if (!artifact) return;
 
-    soundManager.playArtifactChime(392);
+    soundManager.playNavArtifactDetailsOpen();
     const destination: ActiveDestination = artifact.destination === 'mars' ? 'mars' : 'moon';
 
     const discovered = new Set(useExperienceStore.getState().discoveredArtifacts);
@@ -429,7 +461,7 @@ class NavigationController {
     const artifact = ARTIFACTS[targetArtifactId];
     if (!artifact) return;
 
-    soundManager.playTransitionSwoosh();
+    soundManager.playNavDocumentaryOpen();
     const destination: ActiveDestination = artifact.destination === 'mars' ? 'mars' : 'moon';
 
     const nav: ParsedNavState = {
@@ -453,8 +485,13 @@ class NavigationController {
    * Update active story chapter
    */
   public setStoryChapter(chapterIndex: number) {
-    soundManager.playClick();
     const store = useExperienceStore.getState();
+    if (chapterIndex > store.activeStoryChapterIndex) {
+      soundManager.playNavStoryChapterNext();
+    } else if (chapterIndex < store.activeStoryChapterIndex) {
+      soundManager.playNavStoryChapterPrev();
+    }
+
     const nav: ParsedNavState = {
       state: 'STORY_CHAPTER',
       destination: store.currentDestination === 'mars' ? 'mars' : 'moon',
@@ -496,7 +533,7 @@ class NavigationController {
     const artifact = ARTIFACTS[targetArtifactId];
     if (!artifact) return;
 
-    soundManager.playArtifactChime(523.25);
+    soundManager.playNavLegacyOpen();
     const destination: ActiveDestination = artifact.destination === 'mars' ? 'mars' : 'moon';
 
     const nav: ParsedNavState = {
