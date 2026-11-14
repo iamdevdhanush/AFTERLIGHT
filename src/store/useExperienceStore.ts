@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { DestinationId, ExperienceState } from '../types';
 import { DESTINATIONS } from '../data/destinations';
 import { soundManager } from '../audio/SoundManager';
+import { guideVoiceEngine } from '../audio/GuideVoiceEngine';
 import { navigation, ActiveDestination } from '../navigation/navigationController';
 
 interface SavedCamera {
@@ -26,6 +27,7 @@ interface ExperienceStore {
   // Settings & Preferences
   isAudioMuted: boolean;
   audioVolume: number;
+  narrationVolume: number;
   graphicsQuality: 'high' | 'medium' | 'low';
   reducedMotion: boolean;
   isRotationPaused: boolean;
@@ -57,6 +59,7 @@ interface ExperienceStore {
   setCameraAnimating: (isAnimating: boolean) => void;
   toggleAudio: () => void;
   setAudioVolume: (vol: number) => void;
+  setNarrationVolume: (vol: number) => void;
   setGraphicsQuality: (quality: 'high' | 'medium' | 'low') => void;
   setReducedMotion: (reduced: boolean) => void;
   toggleRotationPaused: () => void;
@@ -104,6 +107,7 @@ export const useExperienceStore = create<ExperienceStore>((set, get) => ({
 
   isAudioMuted: false,
   audioVolume: 0.5,
+  narrationVolume: guideVoiceEngine.getState().volume,
   graphicsQuality: 'high',
   reducedMotion: initialReducedMotion,
   isRotationPaused: false,
@@ -213,12 +217,18 @@ export const useExperienceStore = create<ExperienceStore>((set, get) => ({
   toggleAudio: () => {
     const nextMuted = !get().isAudioMuted;
     soundManager.setMuted(nextMuted);
+    guideVoiceEngine.setMuted(nextMuted);
     set({ isAudioMuted: nextMuted });
   },
 
   setAudioVolume: (vol) => {
     soundManager.setVolume(vol);
     set({ audioVolume: vol });
+  },
+
+  setNarrationVolume: (vol) => {
+    guideVoiceEngine.setVolume(vol);
+    set({ narrationVolume: vol });
   },
 
   setGraphicsQuality: (quality) => set({ graphicsQuality: quality }),

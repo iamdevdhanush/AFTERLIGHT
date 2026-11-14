@@ -13,6 +13,9 @@ class SoundManager {
     sources: (AudioNode | OscillatorNode | AudioBufferSourceNode)[];
     gain: GainNode;
   } | null = null;
+  private isDucked: boolean = false;
+  private readonly NORMAL_AMBIENCE_GAIN = 0.30;
+  private readonly DUCKED_AMBIENCE_GAIN = 0.07;
 
   private initContext() {
     try {
@@ -43,6 +46,28 @@ class SoundManager {
     if (this.masterGain && this.ctx && !this.isMuted) {
       this.masterGain.gain.setTargetAtTime(Math.max(0, Math.min(1, vol)), this.ctx.currentTime, 0.1);
     }
+  }
+
+  /**
+   * Audio ducking: attenuates ambient soundscapes smoothly when the curator is speaking
+   * to provide clear vocal dominance without masking speech frequencies.
+   */
+  public duckForNarration(duck: boolean) {
+    this.isDucked = duck;
+    if (!this.ctx || !this.ambienceNodes) return;
+
+    const targetGain = duck ? this.DUCKED_AMBIENCE_GAIN : this.NORMAL_AMBIENCE_GAIN;
+    const timeConstant = duck ? 0.2 : 0.5;
+
+    try {
+      this.ambienceNodes.gain.gain.setTargetAtTime(targetGain, this.ctx.currentTime, timeConstant);
+    } catch {
+      // Ignore transition timing error if AudioContext is state-locked
+    }
+  }
+
+  public isAudioDucked(): boolean {
+    return this.isDucked;
   }
 
   // Create pink / brownian noise buffer for natural atmospheric wind
@@ -87,8 +112,9 @@ class SoundManager {
     this.currentAmbienceType = type;
 
     const ambienceGain = this.ctx.createGain();
+    const targetGain = this.isDucked ? this.DUCKED_AMBIENCE_GAIN : this.NORMAL_AMBIENCE_GAIN;
     ambienceGain.gain.setValueAtTime(0.001, this.ctx.currentTime);
-    ambienceGain.gain.exponentialRampToValueAtTime(0.35, this.ctx.currentTime + 3.0);
+    ambienceGain.gain.exponentialRampToValueAtTime(targetGain, this.ctx.currentTime + 2.5);
     ambienceGain.connect(this.masterGain);
 
     const activeNodes: (AudioNode | OscillatorNode | AudioBufferSourceNode)[] = [];
@@ -183,6 +209,7 @@ class SoundManager {
   }
 
   public stopAmbience() {
+    this.isDucked = false;
     if (this.ambienceNodes && this.ctx) {
       const { sources, gain } = this.ambienceNodes;
       gain.gain.setValueAtTime(gain.gain.value, this.ctx.currentTime);

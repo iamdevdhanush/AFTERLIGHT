@@ -139,11 +139,23 @@ const FEMALE_NAME_PATTERNS = [
 ];
 
 class GuideVoiceEngine {
+  private static getPersistedVolume(): number {
+    if (typeof window === 'undefined') return 1.0;
+    try {
+      const saved = localStorage.getItem('afterlight_narration_volume');
+      if (saved !== null) {
+        const parsed = parseFloat(saved);
+        if (!isNaN(parsed) && parsed >= 0 && parsed <= 1) return parsed;
+      }
+    } catch {}
+    return 1.0; // Default to 100% full scale for clear documentary audibility
+  }
+
   private state: VoiceState = {
     isSpeaking: false,
     isPaused: false,
     isMuted: false,
-    volume: 0.85,
+    volume: GuideVoiceEngine.getPersistedVolume(),
     progress: 0,
     currentPhraseIndex: 0,
     totalPhrases: 1,
@@ -373,6 +385,7 @@ class GuideVoiceEngine {
       utterance.onstart = () => {
         if (!this.state.isSpeaking) return;
         this.state.isPaused = false;
+        soundManager.duckForNarration(true);
         this.lastBoundaryTime = performance.now();
         this.notify();
       };
@@ -466,6 +479,7 @@ class GuideVoiceEngine {
 
     const phrase = this.phraseQueue[this.activePhraseIdx];
     this.isSimulating = true;
+    soundManager.duckForNarration(true);
     this.state.currentPhraseIndex = this.activePhraseIdx;
     this.state.currentPhraseText = phrase.text;
     this.state.currentPose = phrase.pose;
@@ -546,6 +560,7 @@ class GuideVoiceEngine {
   }
 
   private finishNarration() {
+    soundManager.duckForNarration(false);
     this.state.isSpeaking = false;
     this.state.isPaused = false;
     this.state.progress = 1.0;
@@ -574,6 +589,7 @@ class GuideVoiceEngine {
     if (!this.state.isSpeaking || this.state.isPaused) return;
     this.state.isPaused = true;
     this.state.visemeSignal = 0;
+    soundManager.duckForNarration(false);
 
     if (this.nextPhraseTimerId) {
       clearTimeout(this.nextPhraseTimerId);
@@ -594,6 +610,7 @@ class GuideVoiceEngine {
     if (!this.state.isSpeaking || !this.state.isPaused) return;
     this.state.isPaused = false;
     this.lastBoundaryTime = performance.now();
+    soundManager.duckForNarration(true);
 
     if (
       typeof window !== 'undefined' &&
@@ -618,6 +635,7 @@ class GuideVoiceEngine {
   }
 
   public stop(notify: boolean = true) {
+    soundManager.duckForNarration(false);
     if (this.animFrameId) {
       cancelAnimationFrame(this.animFrameId);
       this.animFrameId = null;
@@ -659,6 +677,11 @@ class GuideVoiceEngine {
   public setVolume(volume: number) {
     const clamped = Math.max(0, Math.min(1, volume));
     this.state.volume = clamped;
+    try {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('afterlight_narration_volume', String(clamped));
+      }
+    } catch {}
     if (this.currentUtterance && typeof window !== 'undefined' && 'speechSynthesis' in window) {
       this.currentUtterance.volume = this.state.isMuted ? 0 : clamped;
     }

@@ -24,6 +24,7 @@ export const AfterlightGuide: React.FC<AfterlightGuideProps> = ({
   onResetComponent,
 }) => {
   const isAudioMuted = useExperienceStore((s) => s.isAudioMuted);
+  const setNarrationVolume = useExperienceStore((s) => s.setNarrationVolume);
 
   // Guide voice engine state
   const [voiceState, setVoiceState] = useState<VoiceState>(guideVoiceEngine.getState());
@@ -77,7 +78,7 @@ export const AfterlightGuide: React.FC<AfterlightGuideProps> = ({
 
   const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = parseFloat(e.target.value);
-    guideVoiceEngine.setVolume(val);
+    setNarrationVolume(val);
   };
 
   // Formatted duration calculation (~135 wpm documentary cadence)
@@ -209,7 +210,13 @@ export const AfterlightGuide: React.FC<AfterlightGuideProps> = ({
               </button>
 
               {showVolumeSlider && (
-                <div className="absolute bottom-full right-0 mb-2 p-2 bg-obsidian border border-meteorite rounded shadow-xl z-30">
+                <div className="absolute bottom-full right-0 mb-2 p-2.5 bg-obsidian border border-meteorite rounded-lg shadow-xl z-30 flex flex-col items-center space-y-1.5 min-w-[110px]">
+                  <div className="flex items-center justify-between w-full font-mono text-[9px] tracking-wider text-stone-muted">
+                    <span>VOICE</span>
+                    <span className="text-[#DEB275] font-semibold">
+                      {voiceState.isMuted ? 'MUTED' : `${Math.round(voiceState.volume * 100)}%`}
+                    </span>
+                  </div>
                   <input
                     type="range"
                     min="0"
@@ -218,7 +225,7 @@ export const AfterlightGuide: React.FC<AfterlightGuideProps> = ({
                     value={voiceState.isMuted ? 0 : voiceState.volume}
                     onChange={handleVolumeChange}
                     className="w-20 accent-[#DEB275] cursor-pointer"
-                    aria-label="Curator Volume Slider"
+                    aria-label="Curator Narration Volume Slider"
                   />
                 </div>
               )}
