@@ -182,13 +182,15 @@ async function main() {
         sound[name] = function(...args) {
           const isDucked = sound.isAudioDucked ? sound.isAudioDucked() : false;
           const isSfxMuted = sound.isSoundEffectsMuted ? sound.isSoundEffectsMuted() : false;
+          const result = original(...args);
           window.__SOUND_EVENTS_LOG__.push({
             event: name,
             timestamp: performance.now(),
             isDucked: isDucked,
-            isSfxMuted: isSfxMuted
+            isSfxMuted: isSfxMuted,
+            played: result !== false
           });
-          return original(...args);
+          return result;
         };
       });
     })()`);
@@ -509,8 +511,8 @@ async function main() {
     })()`);
     await new Promise((r) => setTimeout(r, 100));
 
-    let rapidLog = await evalJS(`window.__SOUND_EVENTS_LOG__`);
-    console.log('  Rapid triggers captured:', rapidLog.length);
+    let rapidLog = await evalJS(`window.__SOUND_EVENTS_LOG__.filter(e => e.played)`);
+    console.log('  Rapid triggers actually synthesized into audio:', rapidLog.length);
     // Since rate limiter has minIntervalMs = 40ms, rapid consecutive loop calls within <1ms only trigger 1 voice
     if (rapidLog.length !== 1) {
       throw new Error(`Expected rate-limiter to allow only 1 trigger during burst, allowed ${rapidLog.length}`);

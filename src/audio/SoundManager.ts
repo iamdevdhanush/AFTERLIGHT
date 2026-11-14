@@ -325,9 +325,9 @@ class SoundManager {
    * 1. Arrival -> Destination Selection
    * Low resonant swell with gentle rising celestial overtone.
    */
-  public playNavArrivalToDestinations() {
+  public playNavArrivalToDestinations(): boolean {
     const ready = this.prepareTransition(100);
-    if (!ready) return;
+    if (!ready) return false;
     const { ctx, dest } = ready;
     const now = ctx.currentTime;
     const peakGain = this.getEffectiveSfxGain(0.12);
@@ -371,6 +371,7 @@ class SoundManager {
     sub.stop(now + 0.8);
 
     this.registerTransitionNodes(osc1, osc2, sub, filter, gain);
+    return true;
   }
 
   /**
@@ -468,6 +469,7 @@ class SoundManager {
     sub.stop(now + 0.9);
 
     this.registerTransitionNodes(osc1, osc2, sub, filter, gain);
+    return true;
   }
 
   /**
@@ -619,9 +621,9 @@ class SoundManager {
    * 7. Artifact Selection
    * Precise, understated glass/hardware card touch ping.
    */
-  public playNavArtifactSelect() {
+  public playNavArtifactSelect(): boolean {
     const ready = this.prepareTransition(40);
-    if (!ready) return;
+    if (!ready) return false;
     const { ctx, dest } = ready;
     const now = ctx.currentTime;
     const peakGain = this.getEffectiveSfxGain(0.07);
@@ -649,6 +651,7 @@ class SoundManager {
     osc2.stop(now + 0.28);
 
     this.registerTransitionNodes(osc1, osc2, gain);
+    return true;
   }
 
   /**
