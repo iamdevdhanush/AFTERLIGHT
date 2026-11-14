@@ -282,6 +282,7 @@ export const ScreenDocumentary: React.FC = () => {
         script={currentChapter.narrative}
         contextTitle={`CH ${currentChapter.chapterNumber}: ${currentChapter.chapterTitle}`}
         showControls={false}
+        variant="overlay"
       />
     </div>
   );

@@ -291,16 +291,20 @@ export const AfterlightGuide: React.FC<AfterlightGuideProps> = ({
               : artifact.brief}
           </p>
         </div>
-      </aside>
 
-      {/* B. FLOATING 2D ILLUSTRATED CURATOR PRESENTER & WHITE SPEECH BUBBLE */}
-      <CuratorPresenter2D
-        script={activeScript}
-        contextTitle={selectedComponent ? selectedComponent.name : artifact.name}
-        isComponent={!!selectedComponent}
-        onResetComponent={onResetComponent}
-        showControls={false}
-      />
+        {/* 5. DR. MAE VANCE PRESENTATION STAGE & SIGNATURE SPEECH BUBBLE */}
+        <div className="pt-2">
+          <CuratorPresenter2D
+            script={activeScript}
+            contextTitle={selectedComponent ? selectedComponent.name : artifact.name}
+            isComponent={!!selectedComponent}
+            onResetComponent={onResetComponent}
+            showControls={false}
+            showCaptions={showCaptions}
+            variant="panel"
+          />
+        </div>
+      </aside>
     </>
   );
 };
