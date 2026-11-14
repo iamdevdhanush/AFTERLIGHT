@@ -1,16 +1,23 @@
 /**
- * AFTERLIGHT 3D HARDWARE INSPECTION STUDIO
- * ==========================================
- * Apollo 11 LM Eagle (LM-5) — mesh-based BVH raycasting via three-mesh-bvh
- * Opportunity Rover (MER-B) — bounding-box region detection (single-mesh GLB fallback)
+ * AFTERLIGHT 3D HARDWARE INSPECTION STUDIO — AEROSPACE MUSEUM EDITION
+ * ====================================================================
+ * High-Fidelity Physically Based Rendering (PBR) with Three.js & R3F
  *
- * Architecture:
- *  - PartManifest: data-driven JSON loaded from /public/data/parts.moon.json|parts.mars.json
- *  - Apollo: traverses scene graph → tags each mesh → three-mesh-bvh for accurate raycast hits
- *  - Opportunity: single Mesh GLB → bounding-box region lookup from manifest regionBounds
- *  - Hotspots: drei <Html> anchored at hotspotAnchor inside model group
- *  - Camera fly-to: GSAP animation on OrbitControls target/position on part select
- *  - Exploded view: per-part explodeVector lerp in useFrame
+ * Supported Spacecraft & Planetary Hardware:
+ *  1. MOON: Apollo 11 Lunar Module "Eagle" (LM-5) — Official NASA 3D Mesh
+ *  2. MARS: Mars 2020 Perseverance Rover — Official NASA 3D Mesh (4.98 MB)
+ *  3. MARS: InSight Mars Lander — Official NASA 3D Mesh (3.95 MB)
+ *  4. MARS: Opportunity Rover (MER-B) — JPL Historical Archive
+ *
+ * Key Technical Capabilities:
+ *  - three-mesh-bvh accelerated BVH raycasting across all child meshes
+ *  - High-Dynamic-Range Environment Reflection (IBL) & 4-point aerospace studio lighting
+ *  - Soft contact shadows via Drei <ContactShadows> on circular museum pedestal
+ *  - Drei <Center> automatic bounding-box centering and elevation alignment
+ *  - Data-driven JSON manifests (/public/data/parts.*.json) with verified NASA specs
+ *  - GSAP camera cinematic fly-to on part selection
+ *  - Smooth per-part exploded view lerp
+ *  - Pulsing numbered 3D hotspot callouts anchored to actual hardware coordinates
  */
 
 import React, {
@@ -22,7 +29,7 @@ import React, {
   useCallback,
 } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { OrbitControls, useGLTF, Html } from '@react-three/drei';
+import { OrbitControls, useGLTF, Html, Center, ContactShadows, Environment } from '@react-three/drei';
 import * as THREE from 'three';
 import { computeBoundsTree, disposeBoundsTree, acceleratedRaycast } from 'three-mesh-bvh';
 import gsap from 'gsap';
@@ -35,11 +42,11 @@ import {
   Info,
   Cpu,
   ChevronRight,
-  Crosshair,
   ExternalLink,
+  Sparkles,
 } from 'lucide-react';
 
-// ── Extend THREE prototypes for BVH ──────────────────────────────────────────
+// Extend THREE prototypes for BVH accelerated raycasting
 (THREE.BufferGeometry.prototype as any).computeBoundsTree = computeBoundsTree;
 (THREE.BufferGeometry.prototype as any).disposeBoundsTree = disposeBoundsTree;
 THREE.Mesh.prototype.raycast = acceleratedRaycast;
@@ -60,7 +67,7 @@ interface RegionBounds {
 interface PartEntry {
   id: string;
   meshNames: string[];
-  regionBounds?: RegionBounds;    // Opportunity fallback
+  regionBounds?: RegionBounds;
   label: string;
   subassembly: string;
   hotspotAnchor: [number, number, number];
@@ -79,15 +86,17 @@ interface InspectionModelConfig {
   subtitle: string;
   planet: 'moon' | 'mars';
   modelPath: string;
+  modelScale: number;
   isAuthenticNasaModel: boolean;
   modelTypeLabel: string;
   modelSourceCitation: string;
   disclaimer?: string;
   manifestPath: string;
+  initialCamera: [number, number, number];
   overviewSpecs: { label: string; value: string }[];
 }
 
-// ── Static model configuration ────────────────────────────────────────────────
+// ── Model Configurations ──────────────────────────────────────────────────────
 
 const HARDWARE_CONFIGS: Record<string, InspectionModelConfig> = {
   apollo11_eagle: {
@@ -96,40 +105,90 @@ const HARDWARE_CONFIGS: Record<string, InspectionModelConfig> = {
     subtitle: 'LM-5 Descent & Ascent Hardware Stack',
     planet: 'moon',
     modelPath: '/models/apollo_lunar_module.glb',
+    modelScale: 1.0,
     isAuthenticNasaModel: true,
     modelTypeLabel: 'AUTHENTIC NASA 3D MODEL',
     modelSourceCitation: 'NASA 3D Resources / Apollo Lunar Module LM-5 (Official NASA Mesh)',
     manifestPath: '/data/parts.moon.json',
+    initialCamera: [0, 1.2, 5.4],
     overviewSpecs: [
       { label: 'Total Launch Mass', value: '15,103 kg (33,297 lb)' },
       { label: 'Descent Stage Mass', value: '10,334 kg (fueled)' },
       { label: 'Ascent Stage Mass', value: '4,769 kg (fueled)' },
       { label: 'Landing Gear Span', value: '9.45 m diagonal across pads' },
       { label: 'Descent Engine Thrust', value: '1,050–10,125 lbf throttleable' },
-      { label: 'Ascent Engine Thrust', value: '3,500 lbf hypergolic constant' },
+      { label: 'Ascent Engine Thrust', value: '3,500 lbf constant hypergolic' },
       { label: 'Habitable Volume', value: '6.7 m³ stand-up cockpit' },
-      { label: 'Lunar Status', value: 'Descent Stage at Tranquility Base' },
+      { label: 'Current Lunar Status', value: 'Descent Stage at Tranquility Base' },
+    ],
+  },
+  perseverance: {
+    id: 'perseverance',
+    name: 'Mars 2020 Perseverance Rover',
+    subtitle: 'Jezero Crater Astrobiology & Sample Caching Rover',
+    planet: 'mars',
+    modelPath: '/models/perseverance_rover.glb',
+    modelScale: 1.3,
+    isAuthenticNasaModel: true,
+    modelTypeLabel: 'AUTHENTIC NASA 3D MODEL',
+    modelSourceCitation: 'NASA Jet Propulsion Laboratory / Mars 2020 Mission (Official NASA CAD Mesh)',
+    manifestPath: '/data/parts.perseverance.json',
+    initialCamera: [0, 1.0, 4.6],
+    overviewSpecs: [
+      { label: 'Total Rover Mass', value: '1,025 kg (2,260 lb)' },
+      { label: 'Dimensions', value: '3.0 m L × 2.7 m W × 2.2 m H' },
+      { label: 'Power Source', value: 'MMRTG (110 W electrical / 2,000 W thermal)' },
+      { label: 'Science Instruments', value: '7 advanced payloads + 19 cameras' },
+      { label: 'Landing System', value: 'Sky Crane Guided Powered Descent' },
+      { label: 'Landing Date', value: 'February 18, 2021 (Sol 0)' },
+      { label: 'Landing Site', value: 'Octavia E. Butler Landing, Jezero Crater' },
+      { label: 'Active Mission Sol', value: 'Sol 1,300+ (Actively Exploring)' },
+    ],
+  },
+  insight: {
+    id: 'insight',
+    name: 'InSight Mars Lander',
+    subtitle: 'Interior Exploration using Seismic Investigations',
+    planet: 'mars',
+    modelPath: '/models/insight_lander.glb',
+    modelScale: 1.1,
+    isAuthenticNasaModel: true,
+    modelTypeLabel: 'AUTHENTIC NASA 3D MODEL',
+    modelSourceCitation: 'NASA JPL / InSight Mars Lander Flight Hardware (Official NASA Mesh)',
+    manifestPath: '/data/parts.insight.json',
+    initialCamera: [0, 1.1, 4.8],
+    overviewSpecs: [
+      { label: 'Lander Mass', value: '358 kg (789 lb)' },
+      { label: 'Solar Wing Span', value: '5.98 m (19.6 ft) UltraFlex arrays' },
+      { label: 'Primary Instrument', value: 'SEIS Ultra-Sensitive Seismometer' },
+      { label: 'Marsquakes Detected', value: '1,319 confirmed seismic events' },
+      { label: 'Deepest Quake', value: 'Magnitude 4.7 (May 4, 2022)' },
+      { label: 'Landing Date', value: 'November 26, 2018' },
+      { label: 'Mission Duration', value: '1,445 sols (4 Earth years)' },
+      { label: 'Current Mars Status', value: 'Resting on Elysium Planitia' },
     ],
   },
   opportunity: {
     id: 'opportunity',
     name: 'Opportunity Rover (MER-B)',
-    subtitle: 'Mars Exploration Rover Flight Hardware',
+    subtitle: 'Mars Exploration Rover Historical Hardware',
     planet: 'mars',
     modelPath: '/models/opportunity_rover.glb',
+    modelScale: 1.3,
     isAuthenticNasaModel: false,
     modelTypeLabel: 'ARCHIVAL RECONSTRUCTION (EDUCATIONAL MODEL)',
-    modelSourceCitation: 'Reconstructed from NASA JPL MER Blueprint Schematics & CAD Documentation',
+    modelSourceCitation: 'Reconstructed from NASA JPL MER Blueprint Schematics & Engineering CAD Documentation',
     disclaimer: 'Educational reconstruction based on official NASA JPL technical schematics. Not an authentic NASA CAD export.',
     manifestPath: '/data/parts.mars.json',
+    initialCamera: [0, 1.0, 4.8],
     overviewSpecs: [
       { label: 'Vehicle Mass', value: '185 kg (408 lb)' },
-      { label: 'Dimensions', value: '1.5 m high × 2.3 m wide × 1.6 m long' },
-      { label: 'Power Source', value: 'Triple-junction GaAs Solar (140 W peak)' },
+      { label: 'Dimensions', value: '1.5 m H × 2.3 m W × 1.6 m L' },
+      { label: 'Power Source', value: 'Triple-Junction GaAs Solar (140 W peak)' },
       { label: 'Total Distance', value: '45.16 km (28.06 mi)' },
-      { label: 'Design Lifetime', value: '90 Martian sols' },
-      { label: 'Actual Lifetime', value: '5,352 Martian sols (14 years)' },
-      { label: 'Top Speed', value: '5 cm/s (0.18 km/h)' },
+      { label: 'Design Lifetime', value: '90 Martian sols (~92.5 Earth days)' },
+      { label: 'Actual Lifetime', value: '5,352 Martian sols (14 years, 138 days)' },
+      { label: 'Top Traverse Speed', value: '5 cm/s (0.18 km/h / 0.1 mph)' },
       { label: 'Mars Status', value: 'Silent at Perseverance Valley' },
     ],
   },
@@ -147,13 +206,12 @@ function buildMeshPartMap(parts: PartEntry[]): Map<string, string> {
   return map;
 }
 
-// ── Utility: check if world point falls within regionBounds (local space) ────
+// ── Region hit test for single-mesh models ────────────────────────────────────
 
 function hitTestRegion(
   intersect: THREE.Intersection,
   parts: PartEntry[]
 ): PartEntry | null {
-  // Convert hit point to local space of the intersected object
   const localPoint = intersect.object.worldToLocal(intersect.point.clone());
   for (const part of parts) {
     if (!part.regionBounds) continue;
@@ -166,11 +224,10 @@ function hitTestRegion(
       return part;
     }
   }
-  // If no region matched, return null — will fall back to first part
-  return null;
+  return parts[0] ?? null;
 }
 
-// ── Pulsing hotspot marker ────────────────────────────────────────────────────
+// ── Pulsing Hotspot Marker ────────────────────────────────────────────────────
 
 const HotspotMarker: React.FC<{
   anchor: [number, number, number];
@@ -180,41 +237,46 @@ const HotspotMarker: React.FC<{
   onClick: () => void;
 }> = ({ anchor, label, index, isSelected, onClick }) => {
   return (
-    <Html position={anchor} center distanceFactor={undefined} zIndexRange={[10, 100]}>
+    <Html position={anchor} center zIndexRange={[10, 100]}>
       <div
         style={{ pointerEvents: 'auto', cursor: 'pointer' }}
-        onClick={(e) => { e.stopPropagation(); onClick(); }}
-        className="relative flex items-center"
+        onClick={(e) => {
+          e.stopPropagation();
+          onClick();
+        }}
+        className="relative flex items-center group"
       >
-        {/* Pulsing ring */}
+        {/* Pulsing beacon waves */}
         <div
-          className={`absolute -inset-2 rounded-full border-2 animate-ping ${
-            isSelected ? 'border-amber-300' : 'border-amber-500/60'
+          className={`absolute -inset-2.5 rounded-full border-2 animate-ping pointer-events-none ${
+            isSelected ? 'border-amber-300' : 'border-amber-500/50'
           }`}
-          style={{ animationDuration: '1.8s' }}
+          style={{ animationDuration: '2.0s' }}
         />
-        {/* Core dot */}
+        {/* Core Badge */}
         <div
-          className={`relative w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-mono font-bold border-2 shadow-lg transition-all duration-200 ${
+          className={`relative w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-mono font-bold border shadow-lg transition-all duration-200 ${
             isSelected
-              ? 'bg-amber-400 border-amber-200 text-black scale-125'
-              : 'bg-amber-500/80 border-amber-300 text-black hover:scale-110'
+              ? 'bg-amber-400 border-white text-black scale-125 shadow-amber-500/50'
+              : 'bg-black/90 border-amber-400/80 text-amber-300 group-hover:scale-110 group-hover:bg-amber-500 group-hover:text-black'
           }`}
         >
           {index + 1}
         </div>
-        {/* Tooltip label */}
-        {isSelected && (
-          <div className="absolute left-7 top-1/2 -translate-y-1/2 whitespace-nowrap bg-black/90 border border-amber-500/50 text-amber-200 text-[10px] font-mono px-2 py-0.5 rounded shadow-xl">
-            {label}
-          </div>
-        )}
+        {/* Floating Tag */}
+        <div
+          className={`absolute left-7 top-1/2 -translate-y-1/2 whitespace-nowrap bg-black/90 border border-amber-500/40 text-amber-200 text-[10px] font-mono px-2 py-0.5 rounded shadow-xl backdrop-blur-sm pointer-events-none transition-opacity duration-150 ${
+            isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+          }`}
+        >
+          {label}
+        </div>
       </div>
     </Html>
   );
 };
 
-// ── Hover tooltip (screen-space) ─────────────────────────────────────────────
+// ── Screen-space Hover Tooltip ───────────────────────────────────────────────
 
 const HoverTooltip: React.FC<{
   label: string;
@@ -226,59 +288,17 @@ const HoverTooltip: React.FC<{
     className="fixed z-50 pointer-events-none"
     style={{ left: x + 14, top: y - 36 }}
   >
-    <div className="bg-slate-950/95 border border-amber-500/50 text-amber-100 text-[11px] font-mono px-3 py-1.5 rounded shadow-xl backdrop-blur-sm max-w-[200px]">
+    <div className="bg-slate-950/95 border border-amber-500/60 text-amber-100 text-[11px] font-mono px-3 py-1.5 rounded shadow-2xl backdrop-blur-md max-w-[240px]">
       <div className="font-semibold text-amber-300 truncate">{label}</div>
       <div className="text-slate-400 text-[10px] truncate">{subassembly}</div>
     </div>
   </div>
 );
 
-// ── Camera fly-to controller ─────────────────────────────────────────────────
+// ── Reusable Authentic NASA 3D Model Renderer ─────────────────────────────────
 
-function useCameraFlyTo() {
-  const { camera } = useThree();
-  const controlsRef = useRef<any>(null);
-
-  const flyTo = useCallback(
-    (position: [number, number, number], lookAt: [number, number, number]) => {
-      if (!controlsRef.current) return;
-      const controls = controlsRef.current;
-      const targetPos = new THREE.Vector3(...position);
-      const targetLookAt = new THREE.Vector3(...lookAt);
-
-      gsap.to(camera.position, {
-        x: targetPos.x,
-        y: targetPos.y,
-        z: targetPos.z,
-        duration: 1.2,
-        ease: 'power3.inOut',
-        onUpdate: () => {
-          if (controls.target) {
-            controls.target.lerp(targetLookAt, 0.08);
-          }
-          camera.lookAt(controls.target || targetLookAt);
-          controls.update?.();
-        },
-      });
-
-      gsap.to(controls.target, {
-        x: targetLookAt.x,
-        y: targetLookAt.y,
-        z: targetLookAt.z,
-        duration: 1.2,
-        ease: 'power3.inOut',
-        onUpdate: () => controls.update?.(),
-      });
-    },
-    [camera]
-  );
-
-  return { flyTo, controlsRef };
-}
-
-// ── Apollo LM renderer (BVH mesh-based raycasting) ──────────────────────────
-
-const ApolloModelRenderer: React.FC<{
+const AuthenticNasaModelRenderer: React.FC<{
+  config: InspectionModelConfig;
   parts: PartEntry[];
   meshPartMap: Map<string, string>;
   selectedPartId: string | null;
@@ -288,6 +308,7 @@ const ApolloModelRenderer: React.FC<{
   onHoverPart: (id: string | null, x?: number, y?: number) => void;
   flyTo: (pos: [number, number, number], look: [number, number, number]) => void;
 }> = ({
+  config,
   parts,
   meshPartMap,
   selectedPartId,
@@ -297,66 +318,84 @@ const ApolloModelRenderer: React.FC<{
   onHoverPart,
   flyTo,
 }) => {
-  const { scene } = useGLTF('/models/apollo_lunar_module.glb');
+  const { scene } = useGLTF(config.modelPath);
   const groupRef = useRef<THREE.Group>(null);
 
-  // Track base positions for explode lerp
   const basePosRef = useRef<Map<string, THREE.Vector3>>(new Map());
   const explodeTargetRef = useRef<Map<string, THREE.Vector3>>(new Map());
 
+  // Deep clone scene and enhance PBR materials while preserving authentic NASA textures
   const clonedScene = useMemo(() => {
     const clone = scene.clone(true);
 
-    // Set up BVH on every mesh + store base positions + apply materials
     clone.traverse((child) => {
       if ((child as THREE.Mesh).isMesh) {
         const mesh = child as THREE.Mesh;
         mesh.castShadow = true;
         mesh.receiveShadow = true;
 
-        // Build BVH for accurate raycasting
+        // Compute BVH for pixel-perfect raycasting
         if (mesh.geometry && !mesh.geometry.boundsTree) {
           (mesh.geometry as any).computeBoundsTree();
         }
 
-        // Tag mesh with its partId
+        // Tag mesh with its manifest partId
         const partId = meshPartMap.get(mesh.name);
         mesh.userData.partId = partId ?? null;
 
-        // Store base world position (relative to group)
+        // Save base local position for exploded view lerp
         basePosRef.current.set(mesh.uuid, mesh.position.clone());
 
-        // Apply materials based on material name heuristics
-        if (mesh.material instanceof THREE.MeshStandardMaterial) {
-          const mat = mesh.material.clone();
-          const name = mat.name.toLowerCase();
-          if (
-            name.includes('blinn1') ||
-            name.includes('blinn9') ||
-            name.includes('blinn10') ||
-            (mat.color.r > 0.6 && mat.color.b < 0.2)
-          ) {
-            mat.metalness = 0.92;
-            mat.roughness = 0.25;
-            mat.color.set('#E5B342');
-          } else if (
-            name.includes('blinn6') ||
-            (mat.color.r < 0.1 && mat.color.g < 0.1 && mat.color.b < 0.1)
-          ) {
-            mat.metalness = 0.7;
-            mat.roughness = 0.4;
-            mat.color.set('#1a1a1c');
-          } else {
-            mat.metalness = 0.85;
-            mat.roughness = 0.35;
-            mat.color.set('#CBD5E1');
+        // PBR Material Enhancement
+        if (mesh.material) {
+          const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+          mesh.material = mats.map((originalMat) => {
+            if (!(originalMat instanceof THREE.MeshStandardMaterial)) {
+              return originalMat;
+            }
+            const mat = originalMat.clone();
+            mat.envMapIntensity = 1.6;
+
+            const name = mat.name.toLowerCase();
+
+            // Enhance metallic foil, thermal blankets, and aluminum surfaces
+            if (name.includes('blinn1') || name.includes('blinn9') || name.includes('blinn10') || name.includes('gold') || name.includes('foil')) {
+              mat.metalness = 0.94;
+              mat.roughness = 0.22;
+              // If there's no map texture, tint with rich Kapton gold
+              if (!mat.map) {
+                mat.color.set('#d97706');
+              }
+            } else if (name.includes('blinn6') || name.includes('heat') || name.includes('nickel') || name.includes('black') || name.includes('gunmetal')) {
+              mat.metalness = 0.65;
+              mat.roughness = 0.38;
+              if (!mat.map) {
+                mat.color.set('#1a1a1f');
+              }
+            } else if (name.includes('aluminum') || name.includes('grey') || name.includes('chassis')) {
+              mat.metalness = 0.85;
+              mat.roughness = 0.32;
+            } else if (name.includes('lens') || name.includes('glass')) {
+              mat.metalness = 0.92;
+              mat.roughness = 0.04;
+            } else if (name.includes('solar') || name.includes('panel')) {
+              mat.metalness = 0.96;
+              mat.roughness = 0.12;
+            } else {
+              mat.metalness = Math.max(mat.metalness, 0.4);
+              mat.roughness = Math.min(mat.roughness, 0.55);
+            }
+
+            return mat;
+          });
+          if (!Array.isArray(mesh.material) && (mesh.material as any).length === 1) {
+            mesh.material = (mesh.material as any)[0];
           }
-          mesh.material = mat;
         }
       }
     });
 
-    // Build explode target positions per mesh
+    // Build explode vector offsets per mesh
     clone.traverse((child) => {
       if ((child as THREE.Mesh).isMesh) {
         const mesh = child as THREE.Mesh;
@@ -375,7 +414,7 @@ const ApolloModelRenderer: React.FC<{
     return clone;
   }, [scene, meshPartMap, parts]);
 
-  // Update emissive highlight + explode lerp every frame
+  // Handle emissive glow highlights and exploded position lerping each frame
   useFrame(() => {
     if (!groupRef.current) return;
 
@@ -383,23 +422,25 @@ const ApolloModelRenderer: React.FC<{
       if ((child as THREE.Mesh).isMesh) {
         const mesh = child as THREE.Mesh;
         const partId = mesh.userData.partId as string | null;
-        const mat = mesh.material as THREE.MeshStandardMaterial;
+        const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
 
-        if (!mat || !('emissive' in mat)) return;
+        mats.forEach((m) => {
+          const mat = m as THREE.MeshStandardMaterial;
+          if (!mat || !('emissive' in mat)) return;
 
-        // Emissive highlight
-        if (partId && partId === selectedPartId) {
-          mat.emissive.set('#b45309');
-          mat.emissiveIntensity = 0.5;
-        } else if (partId && partId === hoveredPartId) {
-          mat.emissive.set('#78350f');
-          mat.emissiveIntensity = 0.3;
-        } else {
-          mat.emissive.set('#000000');
-          mat.emissiveIntensity = 0;
-        }
+          if (partId && partId === selectedPartId) {
+            mat.emissive.set('#b45309');
+            mat.emissiveIntensity = 0.55;
+          } else if (partId && partId === hoveredPartId) {
+            mat.emissive.set('#78350f');
+            mat.emissiveIntensity = 0.35;
+          } else {
+            mat.emissive.set('#000000');
+            mat.emissiveIntensity = 0;
+          }
+        });
 
-        // Exploded position lerp
+        // Smooth exploded view displacement
         const basePos = basePosRef.current.get(mesh.uuid);
         const explodeTarget = explodeTargetRef.current.get(mesh.uuid);
         if (basePos && explodeTarget) {
@@ -414,7 +455,12 @@ const ApolloModelRenderer: React.FC<{
     (e: any) => {
       e.stopPropagation();
       const hit = e.intersections?.[0];
-      if (!hit) { onHoverPart(null); return; }
+      if (!hit) {
+        onHoverPart(null);
+        return;
+      }
+
+      // Check if hit object has partId directly or in parents
       let obj: THREE.Object3D | null = hit.object;
       while (obj) {
         if (obj.userData.partId) {
@@ -423,9 +469,16 @@ const ApolloModelRenderer: React.FC<{
         }
         obj = obj.parent;
       }
-      onHoverPart(null);
+
+      // Fallback: region bounding box test for single-mesh objects
+      const regionPart = hitTestRegion(hit, parts);
+      if (regionPart) {
+        onHoverPart(regionPart.id, e.clientX, e.clientY);
+      } else {
+        onHoverPart(null);
+      }
     },
-    [onHoverPart]
+    [onHoverPart, parts]
   );
 
   const handleClick = useCallback(
@@ -433,6 +486,7 @@ const ApolloModelRenderer: React.FC<{
       e.stopPropagation();
       const hit = e.intersections?.[0];
       if (!hit) return;
+
       let obj: THREE.Object3D | null = hit.object;
       while (obj) {
         if (obj.userData.partId) {
@@ -446,159 +500,30 @@ const ApolloModelRenderer: React.FC<{
         }
         obj = obj.parent;
       }
-    },
-    [onSelectPart, parts, flyTo]
-  );
 
-  return (
-    <group ref={groupRef} position={[0, -0.4, 0]} scale={1.2}>
-      <primitive
-        object={clonedScene}
-        onPointerMove={handlePointerMove}
-        onPointerOut={() => onHoverPart(null)}
-        onClick={handleClick}
-      />
-
-      {/* Hotspot markers */}
-      {parts.map((part, i) => (
-        <HotspotMarker
-          key={part.id}
-          anchor={part.hotspotAnchor}
-          label={part.label}
-          index={i}
-          isSelected={selectedPartId === part.id}
-          onClick={() => {
-            onSelectPart(part.id);
-            flyTo(part.cameraTarget.position, part.cameraTarget.lookAt);
-          }}
-        />
-      ))}
-    </group>
-  );
-};
-
-// ── Opportunity Rover renderer (single-mesh region detection) ────────────────
-
-const OpportunityModelRenderer: React.FC<{
-  parts: PartEntry[];
-  selectedPartId: string | null;
-  hoveredPartId: string | null;
-  exploded: boolean;
-  onSelectPart: (id: string) => void;
-  onHoverPart: (id: string | null, x?: number, y?: number) => void;
-  flyTo: (pos: [number, number, number], look: [number, number, number]) => void;
-}> = ({
-  parts,
-  selectedPartId,
-  hoveredPartId,
-  exploded,
-  onSelectPart,
-  onHoverPart,
-  flyTo,
-}) => {
-  const { scene } = useGLTF('/models/opportunity_rover.glb');
-  const groupRef = useRef<THREE.Group>(null);
-
-  // Per-part group refs for explode animation
-  const partGroupRefs = useRef<Map<string, THREE.Group>>(new Map());
-
-  const clonedScene = useMemo(() => {
-    const clone = scene.clone(true);
-    clone.traverse((child) => {
-      if ((child as THREE.Mesh).isMesh) {
-        const mesh = child as THREE.Mesh;
-        mesh.castShadow = true;
-        mesh.receiveShadow = true;
-
-        // Build BVH on the single mesh (for accurate hit point)
-        if (mesh.geometry && !mesh.geometry.boundsTree) {
-          (mesh.geometry as any).computeBoundsTree();
-        }
-
-        // Apply rover materials
-        if (mesh.material) {
-          const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
-          mats.forEach((m: THREE.Material, idx: number) => {
-            const stdMat = m as THREE.MeshStandardMaterial;
-            // Rover deck: dark gold
-            if (idx === 0 || idx === 1) {
-              stdMat.color?.set('#D4AF37');
-              stdMat.metalness = 0.85;
-              stdMat.roughness = 0.35;
-            } else if (idx === 2 || idx === 3) {
-              // Wheels: dark metal
-              stdMat.color?.set('#69645E');
-              stdMat.metalness = 0.7;
-              stdMat.roughness = 0.4;
-            } else if (idx === 4 || idx === 5) {
-              // Solar panels: deep navy
-              stdMat.color?.set('#162238');
-              stdMat.metalness = 0.95;
-              stdMat.roughness = 0.15;
-            } else {
-              stdMat.color?.set('#2A2421');
-              stdMat.metalness = 0.6;
-              stdMat.roughness = 0.5;
-            }
-          });
-        }
-      }
-    });
-    return clone;
-  }, [scene]);
-
-  // Animate turntable dishes and hover effects
-  useFrame(({ clock }) => {
-    if (!groupRef.current) return;
-    // Simple idle animation on mesh
-    groupRef.current.traverse((child) => {
-      if ((child as THREE.Mesh).isMesh) {
-        const mesh = child as THREE.Mesh;
-        const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
-        mats.forEach((m: THREE.Material) => {
-          const stdMat = m as THREE.MeshStandardMaterial;
-          if (!stdMat.emissive) return;
-          // Highlight selected/hovered regions via emissive (applied globally per material slot)
-          stdMat.emissive.set('#000000');
-          stdMat.emissiveIntensity = 0;
-        });
-      }
-    });
-  });
-
-  const handlePointerMove = useCallback(
-    (e: any) => {
-      e.stopPropagation();
-      const hit = e.intersections?.[0];
-      if (!hit) { onHoverPart(null); return; }
+      // Fallback region test
       const part = hitTestRegion(hit, parts);
-      onHoverPart(part?.id ?? parts[0].id, e.clientX, e.clientY);
-    },
-    [onHoverPart, parts]
-  );
-
-  const handleClick = useCallback(
-    (e: any) => {
-      e.stopPropagation();
-      const hit = e.intersections?.[0];
-      if (!hit) return;
-      const part = hitTestRegion(hit, parts) ?? parts[0];
-      onSelectPart(part.id);
-      flyTo(part.cameraTarget.position, part.cameraTarget.lookAt);
+      if (part) {
+        onSelectPart(part.id);
+        flyTo(part.cameraTarget.position, part.cameraTarget.lookAt);
+      }
     },
     [onSelectPart, parts, flyTo]
   );
 
   return (
-    <group ref={groupRef} position={[0, -0.4, 0]} scale={1.1}>
-      <primitive
-        object={clonedScene}
-        onPointerMove={handlePointerMove}
-        onPointerOut={() => onHoverPart(null)}
-        onClick={handleClick}
-      />
+    <group ref={groupRef} scale={config.modelScale}>
+      {/* Drei Center automatically computes bounding box and centers spacecraft symmetrically */}
+      <Center>
+        <primitive
+          object={clonedScene}
+          onPointerMove={handlePointerMove}
+          onPointerOut={() => onHoverPart(null)}
+          onClick={handleClick}
+        />
+      </Center>
 
-      {/* Hotspot markers */}
+      {/* Hotspot pin markers anchored to real spacecraft locations */}
       {parts.map((part, i) => (
         <HotspotMarker
           key={part.id}
@@ -616,9 +541,9 @@ const OpportunityModelRenderer: React.FC<{
   );
 };
 
-// ── Scene wrapper (passes camera controls ref up) ────────────────────────────
+// ── Studio 3D Scene Viewport ──────────────────────────────────────────────────
 
-const SceneContent: React.FC<{
+const StudioSceneCanvas: React.FC<{
   config: InspectionModelConfig;
   parts: PartEntry[];
   meshPartMap: Map<string, string>;
@@ -641,28 +566,32 @@ const SceneContent: React.FC<{
   onHoverPart,
   controlsRef,
 }) => {
-  const { flyTo } = useCameraFlyTo();
-
-  // Merge controlsRef into local flyTo function
   const { camera } = useThree();
 
-  const flyToWrapper = useCallback(
+  const flyTo = useCallback(
     (position: [number, number, number], lookAt: [number, number, number]) => {
       const controls = controlsRef.current;
       if (!controls) return;
       const targetLookAt = new THREE.Vector3(...lookAt);
 
       gsap.to(camera.position, {
-        x: position[0], y: position[1], z: position[2],
-        duration: 1.2, ease: 'power3.inOut',
+        x: position[0],
+        y: position[1],
+        z: position[2],
+        duration: 1.2,
+        ease: 'power3.inOut',
         onUpdate: () => {
           controls.target?.lerp(targetLookAt, 0.08);
           controls.update?.();
         },
       });
+
       gsap.to(controls.target, {
-        x: lookAt[0], y: lookAt[1], z: lookAt[2],
-        duration: 1.2, ease: 'power3.inOut',
+        x: lookAt[0],
+        y: lookAt[1],
+        z: lookAt[2],
+        duration: 1.2,
+        ease: 'power3.inOut',
         onUpdate: () => controls.update?.(),
       });
     },
@@ -671,62 +600,93 @@ const SceneContent: React.FC<{
 
   return (
     <>
-      <ambientLight intensity={0.6} />
-      <directionalLight position={[6, 8, 5]} intensity={1.5} castShadow />
-      <directionalLight position={[-5, -2, -4]} intensity={0.3} color="#60a5fa" />
-      <pointLight position={[0, 3, 0]} intensity={0.5} />
+      {/* 4-Point High-Fidelity Aerospace Studio Lighting */}
+      <ambientLight intensity={0.4} />
+
+      {/* Sun / Key Light */}
+      <directionalLight
+        position={[8, 12, 6]}
+        intensity={2.0}
+        castShadow
+        shadow-mapSize={[2048, 2048]}
+        shadow-bias={-0.0001}
+      />
+
+      {/* Deep Space Fill Light (cool blue tint) */}
+      <directionalLight position={[-8, 4, -5]} intensity={0.8} color="#93c5fd" />
+
+      {/* Spacecraft Silhouette Rim Light (warm edge glow) */}
+      <directionalLight position={[0, 8, -10]} intensity={1.6} color="#fef08a" />
+
+      {/* Ground Bounce Light */}
+      <hemisphereLight args={['#ffffff', '#0f172a', 0.5]} />
+
+      {/* Image-Based Lighting Reflection Environment */}
+      <Environment preset="city" />
 
       <Suspense
         fallback={
           <Html center>
-            <div className="flex items-center space-x-3 text-amber-400 font-mono text-xs bg-slate-950/80 px-4 py-2 rounded border border-amber-500/30">
-              <div className="w-3 h-3 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" />
-              <span>LOADING NASA 3D MESH GEOMETRY...</span>
+            <div className="flex items-center space-x-3 text-amber-400 font-mono text-xs bg-slate-950/90 px-4 py-2.5 rounded-lg border border-amber-500/40 shadow-2xl backdrop-blur-md">
+              <div className="w-3.5 h-3.5 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" />
+              <span>LOADING AUTHENTIC NASA 3D MESH GEOMETRY…</span>
             </div>
           </Html>
         }
       >
-        {config.id === 'apollo11_eagle' ? (
-          <ApolloModelRenderer
-            parts={parts}
-            meshPartMap={meshPartMap}
-            selectedPartId={selectedPartId}
-            hoveredPartId={hoveredPartId}
-            exploded={exploded}
-            onSelectPart={onSelectPart}
-            onHoverPart={onHoverPart}
-            flyTo={flyToWrapper}
-          />
-        ) : (
-          <OpportunityModelRenderer
-            parts={parts}
-            selectedPartId={selectedPartId}
-            hoveredPartId={hoveredPartId}
-            exploded={exploded}
-            onSelectPart={onSelectPart}
-            onHoverPart={onHoverPart}
-            flyTo={flyToWrapper}
-          />
-        )}
+        <AuthenticNasaModelRenderer
+          config={config}
+          parts={parts}
+          meshPartMap={meshPartMap}
+          selectedPartId={selectedPartId}
+          hoveredPartId={hoveredPartId}
+          exploded={exploded}
+          onSelectPart={onSelectPart}
+          onHoverPart={onHoverPart}
+          flyTo={flyTo}
+        />
       </Suspense>
+
+      {/* Realistic Soft Contact Shadow on Pedestal */}
+      <ContactShadows
+        position={[0, -1.8, 0]}
+        opacity={0.8}
+        scale={14}
+        blur={2.2}
+        far={4.5}
+        color="#000000"
+      />
+
+      {/* Sleek Aerospace Museum Display Plinth */}
+      <mesh position={[0, -1.81, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <circleGeometry args={[5.2, 64]} />
+        <meshStandardMaterial color="#080b12" roughness={0.8} metalness={0.2} />
+      </mesh>
+      {/* Subtle Concentric Alignment Range Rings */}
+      <mesh position={[0, -1.805, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[4.6, 4.62, 64]} />
+        <meshBasicMaterial color="#334155" transparent opacity={0.35} side={THREE.DoubleSide} />
+      </mesh>
+      <mesh position={[0, -1.805, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[2.8, 2.815, 64]} />
+        <meshBasicMaterial color="#334155" transparent opacity={0.2} side={THREE.DoubleSide} />
+      </mesh>
 
       <OrbitControls
         ref={controlsRef}
         enablePan
         enableZoom
-        minDistance={1.2}
-        maxDistance={7.5}
+        minDistance={1.0}
+        maxDistance={9.0}
         autoRotate={autoRotate && !exploded}
-        autoRotateSpeed={1.0}
+        autoRotateSpeed={0.8}
         makeDefault
       />
-
-      <gridHelper args={[8, 16, '#334155', '#1e293b']} position={[0, -0.6, 0]} />
     </>
   );
 };
 
-// ── Main component ─────────────────────────────────────────────────────────────
+// ── Main Hardware Inspection Studio Component ─────────────────────────────────
 
 export const HardwareInspectionStudio: React.FC<HardwareInspectionProps> = ({
   initialArtifactId = 'apollo11_eagle',
@@ -747,7 +707,7 @@ export const HardwareInspectionStudio: React.FC<HardwareInspectionProps> = ({
 
   const activeConfig = HARDWARE_CONFIGS[selectedArtifactId] ?? HARDWARE_CONFIGS.apollo11_eagle;
 
-  // Load part manifest from JSON
+  // Load NASA part manifest
   useEffect(() => {
     setPartsLoading(true);
     setSelectedPartId(null);
@@ -764,16 +724,13 @@ export const HardwareInspectionStudio: React.FC<HardwareInspectionProps> = ({
       });
   }, [activeConfig.manifestPath]);
 
-  // Build mesh-name → partId map
   const meshPartMap = useMemo(() => buildMeshPartMap(parts), [parts]);
 
-  // Currently selected part detail
   const currentPart = useMemo(
     () => (selectedPartId ? parts.find((p) => p.id === selectedPartId) : null) ?? parts[0] ?? null,
     [selectedPartId, parts]
   );
 
-  // Hover handler
   const handleHoverPart = useCallback(
     (id: string | null, x?: number, y?: number) => {
       setHoveredPartId(id);
@@ -783,7 +740,7 @@ export const HardwareInspectionStudio: React.FC<HardwareInspectionProps> = ({
     []
   );
 
-  // Keyboard navigation: ArrowLeft / ArrowRight cycles through parts
+  // Keyboard navigation: Arrow keys cycle subsystems; Escape exits
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (!parts.length) return;
@@ -802,12 +759,9 @@ export const HardwareInspectionStudio: React.FC<HardwareInspectionProps> = ({
     return () => window.removeEventListener('keydown', handler);
   }, [parts, selectedPartId, onClose]);
 
-  // Dev-mode debug overlay
-  const isDev = (import.meta as any).env?.DEV ?? false;
-
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-[#08090D] text-slate-100 select-none overflow-hidden">
-      {/* ── Header ── */}
+    <div className="fixed inset-0 z-50 flex flex-col bg-[#05070B] text-slate-100 select-none overflow-hidden">
+      {/* ── Studio Header ── */}
       <header className="h-14 px-4 border-b border-white/10 bg-slate-950/80 backdrop-blur-md flex items-center justify-between shrink-0">
         <div className="flex items-center space-x-3 min-w-0">
           <div className="flex items-center space-x-2 shrink-0">
@@ -819,8 +773,8 @@ export const HardwareInspectionStudio: React.FC<HardwareInspectionProps> = ({
 
           <span className="hidden md:inline-block text-white/30 text-xs">|</span>
 
-          {/* Model Switcher */}
-          <div className="flex items-center bg-white/5 rounded-lg p-0.5 border border-white/10">
+          {/* Model Switcher Tabs */}
+          <div className="flex items-center bg-white/5 rounded-lg p-0.5 border border-white/10 overflow-x-auto">
             {Object.values(HARDWARE_CONFIGS).map((item) => (
               <button
                 key={item.id}
@@ -830,9 +784,9 @@ export const HardwareInspectionStudio: React.FC<HardwareInspectionProps> = ({
                   setExplodedView(false);
                   setAutoRotate(true);
                 }}
-                className={`px-3 py-1.5 rounded-md text-[10px] font-mono tracking-wider uppercase transition-all duration-200 ${
+                className={`px-3 py-1.5 rounded-md text-[10px] font-mono tracking-wider uppercase transition-all duration-200 whitespace-nowrap ${
                   selectedArtifactId === item.id
-                    ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+                    ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-sm'
                     : 'text-slate-400 hover:text-white'
                 }`}
               >
@@ -843,7 +797,7 @@ export const HardwareInspectionStudio: React.FC<HardwareInspectionProps> = ({
           </div>
         </div>
 
-        {/* Auth badge + close */}
+        {/* Authenticity Badge & Close */}
         <div className="flex items-center space-x-3 shrink-0">
           {activeConfig.isAuthenticNasaModel ? (
             <div className="hidden sm:flex items-center space-x-1.5 px-2.5 py-1 rounded-full bg-emerald-950/70 border border-emerald-500/40 text-emerald-300 text-[10px] font-mono">
@@ -853,7 +807,7 @@ export const HardwareInspectionStudio: React.FC<HardwareInspectionProps> = ({
           ) : (
             <div className="hidden sm:flex items-center space-x-1.5 px-2.5 py-1 rounded-full bg-amber-950/70 border border-amber-500/40 text-amber-300 text-[10px] font-mono">
               <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
-              <span className="font-semibold tracking-wider truncate max-w-[180px]">{activeConfig.modelTypeLabel}</span>
+              <span className="font-semibold tracking-wider truncate max-w-[200px]">{activeConfig.modelTypeLabel}</span>
             </div>
           )}
 
@@ -867,19 +821,24 @@ export const HardwareInspectionStudio: React.FC<HardwareInspectionProps> = ({
         </div>
       </header>
 
-      {/* ── Main area ── */}
+      {/* ── Main Work Area ── */}
       <div className="flex-1 flex flex-col lg:flex-row relative overflow-hidden">
-
-        {/* Left 3D viewport */}
-        <div className="flex-1 relative h-[55vh] lg:h-full bg-gradient-to-b from-[#0B0D14] via-[#07080B] to-[#040507]">
+        {/* Left 3D Viewport */}
+        <div className="flex-1 relative h-[55vh] lg:h-full bg-gradient-to-b from-[#080B11] via-[#05070B] to-[#020305]">
           <Canvas
-            camera={{ position: [2.5, 1.8, 3.2], fov: 42 }}
-            className="w-full h-full"
+            camera={{ position: activeConfig.initialCamera, fov: 40 }}
+            className="w-full h-full cursor-grab active:cursor-grabbing"
             shadows
+            gl={{
+              antialias: true,
+              toneMapping: THREE.ACESFilmicToneMapping,
+              toneMappingExposure: 1.15,
+            }}
             onPointerMissed={() => handleHoverPart(null)}
           >
             {!partsLoading && parts.length > 0 && (
-              <SceneContent
+              <StudioSceneCanvas
+                key={activeConfig.id}
                 config={activeConfig}
                 parts={parts}
                 meshPartMap={meshPartMap}
@@ -897,7 +856,7 @@ export const HardwareInspectionStudio: React.FC<HardwareInspectionProps> = ({
             )}
           </Canvas>
 
-          {/* Hover tooltip (screen-space) */}
+          {/* Floating Hover Tooltip */}
           {hoveredPartId && tooltipPos && !selectedPartId && (() => {
             const hovered = parts.find((p) => p.id === hoveredPartId);
             return hovered ? (
@@ -910,18 +869,18 @@ export const HardwareInspectionStudio: React.FC<HardwareInspectionProps> = ({
             ) : null;
           })()}
 
-          {/* Viewport controls */}
+          {/* Viewport Floating Controls */}
           <div className="absolute top-3 left-3 flex flex-wrap gap-2 z-10">
             <button
               onClick={() => setExplodedView(!explodedView)}
               className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-[10px] font-mono tracking-wider uppercase backdrop-blur-md transition-all border ${
                 explodedView
-                  ? 'bg-amber-500/30 text-amber-300 border-amber-400/60'
+                  ? 'bg-amber-500/30 text-amber-300 border-amber-400/60 shadow-lg'
                   : 'bg-black/60 text-slate-300 border-white/10 hover:bg-black/80'
               }`}
             >
               <Layers className="w-3 h-3" />
-              <span>{explodedView ? 'COLLAPSE' : 'EXPLODED VIEW'}</span>
+              <span>{explodedView ? 'COLLAPSE MODEL' : 'EXPLODED VIEW'}</span>
             </button>
 
             <button
@@ -937,24 +896,16 @@ export const HardwareInspectionStudio: React.FC<HardwareInspectionProps> = ({
             </button>
           </div>
 
-          {/* Dev debug overlay */}
-          {isDev && hoveredPartId && (
-            <div className="absolute bottom-14 left-3 bg-black/80 text-green-400 text-[9px] font-mono px-2 py-1 rounded border border-green-500/30 z-20">
-              HOVER: {hoveredPartId}
-            </div>
-          )}
-
-          {/* Bottom hint */}
+          {/* Interactive Inspection Hint Pill */}
           <div className="absolute bottom-3 left-3 right-3 lg:right-auto flex items-center space-x-2 bg-slate-950/80 backdrop-blur-md px-3 py-1.5 rounded-lg border border-white/10 text-[10px] text-slate-400 font-mono">
             <Info className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-            <span>Click mesh or hotspot pin to inspect • Drag to rotate • Scroll to zoom • ←→ keys cycle parts</span>
+            <span>Click physical hardware or beacon pin to inspect • Drag 360° • Scroll to zoom • ←→ keys cycle parts</span>
           </div>
         </div>
 
-        {/* ── Right panel ── */}
-        <div className="w-full lg:w-[440px] border-t lg:border-t-0 lg:border-l border-white/10 bg-[#0B0D14] flex flex-col overflow-y-auto max-h-[45vh] lg:max-h-full">
-
-          {/* Model identity */}
+        {/* ── Right Subsystems & Engineering Dossier Panel ── */}
+        <div className="w-full lg:w-[440px] border-t lg:border-t-0 lg:border-l border-white/10 bg-[#080B11] flex flex-col overflow-y-auto max-h-[45vh] lg:max-h-full">
+          {/* Hardware Identity Card */}
           <div className="p-5 border-b border-white/10 space-y-2.5">
             <div className="flex items-center justify-between">
               <span className="text-[10px] font-mono tracking-[0.2em] text-amber-400 uppercase">
@@ -968,7 +919,7 @@ export const HardwareInspectionStudio: React.FC<HardwareInspectionProps> = ({
             <h2 className="text-xl font-serif text-white tracking-wide">{activeConfig.name}</h2>
             <p className="text-[11px] text-slate-400 font-mono">{activeConfig.subtitle}</p>
 
-            {/* Auth badge */}
+            {/* Authenticity Citation Banner */}
             <div
               className={`p-2.5 rounded-lg border text-[11px] font-mono space-y-1 ${
                 activeConfig.isAuthenticNasaModel
@@ -993,7 +944,7 @@ export const HardwareInspectionStudio: React.FC<HardwareInspectionProps> = ({
             </div>
           </div>
 
-          {/* Part selector chips */}
+          {/* Subsystem Component Selector Chips */}
           <div className="p-3 border-b border-white/10 bg-black/20">
             <span className="text-[9px] font-mono uppercase tracking-[0.18em] text-slate-400 block mb-2">
               SELECT COMPONENT TO INSPECT
@@ -1013,7 +964,7 @@ export const HardwareInspectionStudio: React.FC<HardwareInspectionProps> = ({
                       }}
                       className={`text-left px-2 py-1.5 rounded text-[10px] font-mono transition-all truncate flex items-center justify-between border ${
                         isSelected
-                          ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                          ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-sm'
                           : 'bg-white/5 text-slate-300 border-white/5 hover:bg-white/10'
                       }`}
                     >
@@ -1029,7 +980,7 @@ export const HardwareInspectionStudio: React.FC<HardwareInspectionProps> = ({
             )}
           </div>
 
-          {/* Part detail */}
+          {/* Active Subsystem Detail Inspector */}
           {currentPart && (
             <div className="p-5 space-y-4 flex-1">
               <div className="space-y-0.5">
@@ -1048,14 +999,18 @@ export const HardwareInspectionStudio: React.FC<HardwareInspectionProps> = ({
 
               <div className="space-y-3 text-[11px] leading-relaxed text-slate-300">
                 <div className="space-y-1">
-                  <span className="text-[9px] font-mono uppercase tracking-wider text-slate-400 block">FUNCTIONAL PURPOSE</span>
+                  <span className="text-[9px] font-mono uppercase tracking-wider text-slate-400 block">
+                    FUNCTIONAL PURPOSE
+                  </span>
                   <p className="bg-white/5 p-2.5 rounded-lg border border-white/5 font-sans">
                     {currentPart.function}
                   </p>
                 </div>
 
                 <div className="space-y-1">
-                  <span className="text-[9px] font-mono uppercase tracking-wider text-slate-400 block">ENGINEERING SPECIFICATIONS</span>
+                  <span className="text-[9px] font-mono uppercase tracking-wider text-slate-400 block">
+                    ENGINEERING SPECIFICATIONS
+                  </span>
                   <div className="bg-amber-500/5 p-2.5 rounded-lg border border-amber-500/10 space-y-1">
                     {Object.entries(currentPart.specs).map(([key, val]) => (
                       <div key={key} className="flex gap-1.5 text-[10px] font-mono">
@@ -1067,7 +1022,9 @@ export const HardwareInspectionStudio: React.FC<HardwareInspectionProps> = ({
                 </div>
 
                 <div className="space-y-1">
-                  <span className="text-[9px] font-mono uppercase tracking-wider text-slate-400 block">MISSION FACTS</span>
+                  <span className="text-[9px] font-mono uppercase tracking-wider text-slate-400 block">
+                    MISSION FACTS
+                  </span>
                   <ul className="space-y-1">
                     {currentPart.missionFacts.map((fact, i) => (
                       <li key={i} className="bg-white/5 p-2 rounded border border-white/5 font-sans text-[10px] flex gap-2">
@@ -1079,6 +1036,7 @@ export const HardwareInspectionStudio: React.FC<HardwareInspectionProps> = ({
                 </div>
               </div>
 
+              {/* Verified NASA Source Document Link */}
               <div className="pt-3 border-t border-white/10">
                 <a
                   href={currentPart.source}
@@ -1087,13 +1045,13 @@ export const HardwareInspectionStudio: React.FC<HardwareInspectionProps> = ({
                   className="inline-flex items-center space-x-1.5 text-[10px] font-mono text-amber-400/80 hover:text-amber-300 transition-colors"
                 >
                   <ExternalLink className="w-3 h-3" />
-                  <span>NASA Source Document</span>
+                  <span>NASA Source Documentation</span>
                 </a>
               </div>
             </div>
           )}
 
-          {/* Overview specs */}
+          {/* Overview Mission Specifications */}
           <div className="p-4 border-t border-white/10 space-y-2 bg-black/20">
             <span className="text-[9px] font-mono uppercase tracking-[0.2em] text-slate-400 block">
               MISSION SPECIFICATIONS
