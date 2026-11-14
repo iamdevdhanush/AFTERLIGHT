@@ -25,10 +25,11 @@ import { navigation } from '../../navigation/navigationController';
 import { guideVoiceEngine } from '../../audio/GuideVoiceEngine';
 
 interface ScreenArtifactDetailsProps {
+  artifactId?: string | null;
   onClose?: () => void;
 }
 
-export const ScreenArtifactDetails: React.FC<ScreenArtifactDetailsProps> = ({ onClose }) => {
+export const ScreenArtifactDetails: React.FC<ScreenArtifactDetailsProps> = ({ artifactId, onClose }) => {
   const selectedArtifactId = useExperienceStore((s) => s.selectedArtifactId);
   const selectedComponentId = useExperienceStore((s) => s.selectedComponentId);
   const selectComponent = useExperienceStore((s) => s.selectComponent);
@@ -44,7 +45,8 @@ export const ScreenArtifactDetails: React.FC<ScreenArtifactDetailsProps> = ({ on
   const [activePhotoIndex, setActivePhotoIndex] = useState(0);
   const [hoveredHotspotId, setHoveredHotspotId] = useState<string | null>(null);
 
-  const artifact = selectedArtifactId ? ARTIFACTS[selectedArtifactId] : null;
+  const activeArtifactId = artifactId || selectedArtifactId;
+  const artifact = activeArtifactId ? ARTIFACTS[activeArtifactId] : null;
   const dest = artifact ? DESTINATIONS[artifact.destination] || DESTINATIONS.moon : DESTINATIONS.moon;
   const destTheme = artifact ? getDestinationTheme(artifact.destination) : getDestinationTheme('moon');
 
@@ -62,7 +64,7 @@ export const ScreenArtifactDetails: React.FC<ScreenArtifactDetailsProps> = ({ on
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleClose]);
+  }, [onClose]);
 
   // Cleanly silence narration when exiting the artifact screen
   useEffect(() => {
@@ -76,7 +78,7 @@ export const ScreenArtifactDetails: React.FC<ScreenArtifactDetailsProps> = ({ on
     setActivePhotoIndex(0);
     setViewMode('photo');
     setHoveredHotspotId(null);
-  }, [selectedArtifactId]);
+  }, [activeArtifactId]);
 
   if (!artifact) {
     return (
@@ -88,7 +90,7 @@ export const ScreenArtifactDetails: React.FC<ScreenArtifactDetailsProps> = ({ on
         </p>
         <button
           type="button"
-          onClick={() => navigation.toExhibition()}
+          onClick={() => navigation.goBack()}
           className="px-5 py-2.5 bg-signal text-obsidian font-mono text-xs uppercase tracking-wider font-semibold"
         >
           RETURN TO EXHIBITION

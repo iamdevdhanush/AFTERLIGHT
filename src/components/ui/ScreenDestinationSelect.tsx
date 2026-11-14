@@ -29,7 +29,7 @@ export const ScreenDestinationSelect: React.FC = () => {
         <div className="flex items-center space-x-4">
           <button
             type="button"
-            onClick={() => navigation.toArrival()}
+            onClick={() => navigation.goBack()}
             className="pointer-events-auto inline-flex items-center space-x-1.5 text-stone-muted hover:text-bone text-xs font-mono tracking-[0.16em] uppercase transition-colors"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
