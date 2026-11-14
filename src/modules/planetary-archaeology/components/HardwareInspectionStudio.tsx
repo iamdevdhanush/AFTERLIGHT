@@ -1,37 +1,76 @@
-import React, { useState, useRef, useMemo, Suspense } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
+/**
+ * AFTERLIGHT 3D HARDWARE INSPECTION STUDIO
+ * ==========================================
+ * Apollo 11 LM Eagle (LM-5) — mesh-based BVH raycasting via three-mesh-bvh
+ * Opportunity Rover (MER-B) — bounding-box region detection (single-mesh GLB fallback)
+ *
+ * Architecture:
+ *  - PartManifest: data-driven JSON loaded from /public/data/parts.moon.json|parts.mars.json
+ *  - Apollo: traverses scene graph → tags each mesh → three-mesh-bvh for accurate raycast hits
+ *  - Opportunity: single Mesh GLB → bounding-box region lookup from manifest regionBounds
+ *  - Hotspots: drei <Html> anchored at hotspotAnchor inside model group
+ *  - Camera fly-to: GSAP animation on OrbitControls target/position on part select
+ *  - Exploded view: per-part explodeVector lerp in useFrame
+ */
+
+import React, {
+  useState,
+  useRef,
+  useMemo,
+  useEffect,
+  Suspense,
+  useCallback,
+} from 'react';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls, useGLTF, Html } from '@react-three/drei';
 import * as THREE from 'three';
+import { computeBoundsTree, disposeBoundsTree, acceleratedRaycast } from 'three-mesh-bvh';
+import gsap from 'gsap';
 import {
   X,
-  Maximize2,
   RotateCw,
   Layers,
   ShieldCheck,
   AlertTriangle,
   Info,
-  CheckCircle,
-  ExternalLink,
-  ZoomIn,
-  Camera,
   Cpu,
   ChevronRight,
+  Crosshair,
+  ExternalLink,
 } from 'lucide-react';
+
+// ── Extend THREE prototypes for BVH ──────────────────────────────────────────
+(THREE.BufferGeometry.prototype as any).computeBoundsTree = computeBoundsTree;
+(THREE.BufferGeometry.prototype as any).disposeBoundsTree = disposeBoundsTree;
+THREE.Mesh.prototype.raycast = acceleratedRaycast;
+
+// ── Types ─────────────────────────────────────────────────────────────────────
 
 export interface HardwareInspectionProps {
   initialArtifactId?: string;
   onClose: () => void;
 }
 
-interface ComponentDetail {
+interface RegionBounds {
+  xMin: number; xMax: number;
+  yMin: number; yMax: number;
+  zMin: number; zMax: number;
+}
+
+interface PartEntry {
   id: string;
-  name: string;
-  category: string;
-  massOrSize: string;
-  functionDesc: string;
-  engineeringNote: string;
-  historicalContext: string;
-  explodedOffset: [number, number, number];
+  meshNames: string[];
+  regionBounds?: RegionBounds;    // Opportunity fallback
+  label: string;
+  subassembly: string;
+  hotspotAnchor: [number, number, number];
+  explodeVector: [number, number, number];
+  cameraTarget: { position: [number, number, number]; lookAt: [number, number, number] };
+  specs: Record<string, string>;
+  function: string;
+  missionFacts: string[];
+  source: string;
+  isAuthentic: boolean;
 }
 
 interface InspectionModelConfig {
@@ -39,13 +78,16 @@ interface InspectionModelConfig {
   name: string;
   subtitle: string;
   planet: 'moon' | 'mars';
+  modelPath: string;
   isAuthenticNasaModel: boolean;
   modelTypeLabel: string;
   modelSourceCitation: string;
   disclaimer?: string;
-  specs: { label: string; value: string }[];
-  components: ComponentDetail[];
+  manifestPath: string;
+  overviewSpecs: { label: string; value: string }[];
 }
+
+// ── Static model configuration ────────────────────────────────────────────────
 
 const HARDWARE_CONFIGS: Record<string, InspectionModelConfig> = {
   apollo11_eagle: {
@@ -53,85 +95,20 @@ const HARDWARE_CONFIGS: Record<string, InspectionModelConfig> = {
     name: 'Apollo 11 Lunar Module "Eagle"',
     subtitle: 'LM-5 Descent & Ascent Hardware Stack',
     planet: 'moon',
+    modelPath: '/models/apollo_lunar_module.glb',
     isAuthenticNasaModel: true,
     modelTypeLabel: 'AUTHENTIC NASA 3D MODEL',
     modelSourceCitation: 'NASA 3D Resources / Apollo Lunar Module LM-5 (Official NASA Mesh)',
-    specs: [
+    manifestPath: '/data/parts.moon.json',
+    overviewSpecs: [
       { label: 'Total Launch Mass', value: '15,103 kg (33,297 lb)' },
       { label: 'Descent Stage Mass', value: '10,334 kg (fueled)' },
       { label: 'Ascent Stage Mass', value: '4,769 kg (fueled)' },
       { label: 'Landing Gear Span', value: '9.45 m diagonal across pads' },
-      { label: 'Descent Engine Thrust', value: '1,050 to 10,125 lbf throttleable' },
-      { label: 'Ascent Engine Thrust', value: '3,500 lbf constant hypergolic' },
-      { label: 'Habitable Volume', value: '6.7 m³ (stand-up cockpit)' },
-      { label: 'Current Lunar Status', value: 'Descent Stage in situ at Tranquility Base' },
-    ],
-    components: [
-      {
-        id: 'descent_stage',
-        name: 'LM Descent Stage Chassis (LM-5)',
-        category: 'Propulsion, Structure & Landing Platform',
-        massOrSize: '10,334 kg (fueled) / 2,034 kg (dry)',
-        functionDesc:
-          'Octagonal aluminum-alloy skin construction with four thermal-shielded equipment quadrants. Housed 4 massive propellant tanks (Aerozine-50 and N2O4), helium pressurization spheres, and scientific payload stowage.',
-        engineeringNote:
-          'Insulated with 25 layers of aluminized Mylar and Kapton foil blankets to withstand extreme lunar vacuum thermal gradients between +120 °C and -130 °C.',
-        historicalContext:
-          'Served as the launch platform for the ascent stage when Neil Armstrong and Buzz Aldrin lifted off from the Moon. Remained at Tranquility Base as humanity’s first permanent planetary monument.',
-        explodedOffset: [0, -0.6, 0],
-      },
-      {
-        id: 'ascent_stage',
-        name: 'Ascent Stage Crew Cabin',
-        category: 'Pressurized Habitat & Orbital Rendezvous Stage',
-        massOrSize: '4,769 kg (fueled) / 2,150 kg (dry)',
-        functionDesc:
-          'Egg-shaped pressurized aluminum alloy cockpit for two astronauts. Integrated the Apollo Guidance Computer (AGC), flight controls, docking tunnel, forward triangular egress hatch, and reaction control systems.',
-        engineeringNote:
-          'To save critical weight, the crew cabin had no pilot seats; Armstrong and Aldrin stood throughout descent and ascent, restrained by bungee cords anchored to the deck.',
-        historicalContext:
-          'Docked with Command Module Columbia in lunar orbit after 21 hours and 36 minutes on the surface. Jettisoned in lunar orbit; eventually crashed into an unknown lunar impact site.',
-        explodedOffset: [0, 0.9, 0],
-      },
-      {
-        id: 'landing_gear',
-        name: 'Cantilever Struts & Footpads',
-        category: 'Kinetic Energy Dissipation & Regolith Footing',
-        massOrSize: '4 legs, 0.94 m pad diameter each',
-        functionDesc:
-          'Four folding landing gear assemblies made of extruded aluminum tubes containing crushable aluminum honeycomb cartridges that stroked up to 81 cm to dissipate touchdown kinetic energy.',
-        engineeringNote:
-          'Each of the forward and side footpads carried a 1.7-meter wire feeler probe that touched the regolith first, lighting the blue "LUNAR CONTACT" cockpit indicator light to command engine shutdown.',
-        historicalContext:
-          'Neil Armstrong reported "Contact light... OK, engine stop," confirming the touchdown on Mare Tranquillitatis on July 20, 1969.',
-        explodedOffset: [0, -1.0, 0],
-      },
-      {
-        id: 'dps_engine',
-        name: 'Descent Propulsion System (DPS)',
-        category: 'Deep-Throttling Gimbaled Rocket Engine',
-        massOrSize: '1,050 to 10,125 lbf throttle range',
-        functionDesc:
-          'Gimbal-mounted rocket engine manufactured by TRW. Delivered deeply throttleable thrust using hypergolic Aerozine-50 and Nitrogen Tetroxide, requiring no electrical ignition system.',
-        engineeringNote:
-          'The first throttleable rocket engine ever flown in crewed spaceflight. Allowed Armstrong to hover, translate horizontally, and manually select a safe landing site away from West Crater boulders.',
-        historicalContext:
-          'Shut down with only approximately 25 seconds of usable descent propellant remaining in the tanks.',
-        explodedOffset: [0, -0.8, 0],
-      },
-      {
-        id: 's_band_antenna',
-        name: 'S-Band Steerable High-Gain Antenna',
-        category: 'Deep Space RF Telecommunications',
-        massOrSize: '66 cm diameter parabolic dish',
-        functionDesc:
-          'Steerable dish antenna mounted on the upper front deck of the ascent stage. Transmitted live lunar surface television broadcasts, astronaut biometric telemetry, and voice to Earth.',
-        engineeringNote:
-          'Transmitted across 384,400 km directly to the 64-meter DSN dishes at Goldstone, California, and Honeysuckle Creek / Parkes Observatory in Australia.',
-        historicalContext:
-          'Beamed the iconic grainy black-and-white images of Neil Armstrong stepping onto the lunar surface to an estimated 650 million television viewers worldwide.',
-        explodedOffset: [0.5, 1.3, 0.4],
-      },
+      { label: 'Descent Engine Thrust', value: '1,050–10,125 lbf throttleable' },
+      { label: 'Ascent Engine Thrust', value: '3,500 lbf hypergolic constant' },
+      { label: 'Habitable Volume', value: '6.7 m³ stand-up cockpit' },
+      { label: 'Lunar Status', value: 'Descent Stage at Tranquility Base' },
     ],
   },
   opportunity: {
@@ -139,114 +116,219 @@ const HARDWARE_CONFIGS: Record<string, InspectionModelConfig> = {
     name: 'Opportunity Rover (MER-B)',
     subtitle: 'Mars Exploration Rover Flight Hardware',
     planet: 'mars',
+    modelPath: '/models/opportunity_rover.glb',
     isAuthenticNasaModel: false,
-    modelTypeLabel: 'ARCHIVAL RECONSTRUCTION (SIMPLIFIED EDUCATIONAL MODEL)',
-    modelSourceCitation:
-      'Reconstructed from NASA JPL MER Blueprint Schematics & Engineering CAD Documentation',
-    disclaimer:
-      'This 3D model is an educational reconstruction based on official NASA JPL technical schematics. It is not an authentic NASA CAD export.',
-    specs: [
+    modelTypeLabel: 'ARCHIVAL RECONSTRUCTION (EDUCATIONAL MODEL)',
+    modelSourceCitation: 'Reconstructed from NASA JPL MER Blueprint Schematics & CAD Documentation',
+    disclaimer: 'Educational reconstruction based on official NASA JPL technical schematics. Not an authentic NASA CAD export.',
+    manifestPath: '/data/parts.mars.json',
+    overviewSpecs: [
       { label: 'Vehicle Mass', value: '185 kg (408 lb)' },
       { label: 'Dimensions', value: '1.5 m high × 2.3 m wide × 1.6 m long' },
-      { label: 'Power Source', value: 'Triple-junction GaAs Solar Arrays (140 W peak)' },
-      { label: 'Total Distance Traveled', value: '45.16 km (28.06 mi)' },
-      { label: 'Design Lifetime', value: '90 Martian sols (~92.5 Earth days)' },
-      { label: 'Actual Lifetime', value: '5,352 Martian sols (14 years, 138 days)' },
-      { label: 'Top Traverse Speed', value: '5 cm/s (0.18 km/h / 0.1 mph)' },
-      { label: 'Current Mars Status', value: 'Resting intact at Perseverance Valley' },
-    ],
-    components: [
-      {
-        id: 'pancam_mast',
-        name: 'Pancam & Navcam Mast Assembly (PMA)',
-        category: 'Multispectral Stereo Remote Sensing',
-        massOrSize: '1.5 m periscope height above ground',
-        functionDesc:
-          'Twin high-resolution digital cameras with 8-position filter wheels spanning 400 to 1000 nm wavelengths, mounted alongside wide-angle stereoscopic navigation cameras.',
-        engineeringNote:
-          'Equipped with 360-degree azimuth and 180-degree elevation pointing capability to survey distant crater rims and determine mineralogical signatures from afar.',
-        historicalContext:
-          'Captured over 217,000 raw images of Mars, including the layered bedrock inside Eagle, Endurance, Victoria, and Endeavour craters.',
-        explodedOffset: [0, 0.8, 0.4],
-      },
-      {
-        id: 'rocker_bogie',
-        name: 'Rocker-Bogie Mobility Chassis',
-        category: 'Springless Six-Wheel Articulated Suspension',
-        massOrSize: '6 aluminum wheels (26 cm diameter)',
-        functionDesc:
-          'Articulated suspension with two rocker arms joined by an internal differential crossbar. Keeps all six wheels in contact with the ground while traversing rocks larger than wheel diameter.',
-        engineeringNote:
-          'Each wheel featured individual cleats (grousers) machined into aluminum rims, with independent steering drive actuators on front and rear wheel pairs.',
-        historicalContext:
-          'Successfully climbed out of treacherous soft sand traps like Purgatory Dune (Sol 446–510) and navigated 32-degree slopes down crater walls.',
-        explodedOffset: [0, -0.6, 0],
-      },
-      {
-        id: 'solar_array',
-        name: 'Triple-Junction GaAs Solar Array Wings',
-        category: 'Photovoltaic Electrical Power',
-        massOrSize: '1.3 m² surface area, ~140 W peak',
-        functionDesc:
-          'Gallium arsenide multi-junction solar cells mounted across the rover deck and folding side wings, charging two 8-Ah lithium-ion rechargeable batteries.',
-        engineeringNote:
-          'Expected to degrade within 90 sols due to settling atmospheric dust, but repeated Martian wind "cleaning events" (dust devils) stripped dust off the panels and renewed power for 14 years.',
-        historicalContext:
-          'Eventually silenced in June 2018 when a catastrophic planet-encircling dust storm blocked 99% of sunlight from reaching Meridiani Planum.',
-        explodedOffset: [0, 0.4, -0.2],
-      },
-      {
-        id: 'robotic_arm',
-        name: 'Instrument Deployment Device (IDD Arm)',
-        category: '5-Degree-of-Freedom In Situ Science Turret',
-        massOrSize: '1.0 m reach with 4-instrument turret',
-        functionDesc:
-          'Articulated robotic arm carrying the Mössbauer Spectrometer, Alpha Particle X-Ray Spectrometer (APXS), Microscopic Imager (MI), and Rock Abrasion Tool (RAT).',
-        engineeringNote:
-          'The RAT diamond-tipped grinding bits ground into weathered rock varnish to expose pristine subsurface mineralogy for the spectrometers.',
-        historicalContext:
-          'Ground into the "Berry Bowl" rock outcrop to confirm the hematite spherules formed inside liquid groundwater.',
-        explodedOffset: [0.6, 0.1, 0.7],
-      },
-      {
-        id: 'high_gain_antenna',
-        name: 'High-Gain Steerable Dish Antenna (HGA)',
-        category: 'Direct-to-Earth X-Band Telecommunications',
-        massOrSize: '28 cm steerable parabolic dish',
-        functionDesc:
-          'Gimbaled parabolic antenna transmitting directly to the antennas of the NASA Deep Space Network on Earth without needing an orbiter relay.',
-        engineeringNote:
-          'Operated at X-band (7 to 8 GHz) frequencies at data rates between 3.5 to 12 kbps, tracking Earth’s position across the Martian sky.',
-        historicalContext:
-          'Transmitted scientific discovery data directly to JPL engineers each afternoon following solar peak.',
-        explodedOffset: [-0.4, 0.6, -0.4],
-      },
+      { label: 'Power Source', value: 'Triple-junction GaAs Solar (140 W peak)' },
+      { label: 'Total Distance', value: '45.16 km (28.06 mi)' },
+      { label: 'Design Lifetime', value: '90 Martian sols' },
+      { label: 'Actual Lifetime', value: '5,352 Martian sols (14 years)' },
+      { label: 'Top Speed', value: '5 cm/s (0.18 km/h)' },
+      { label: 'Mars Status', value: 'Silent at Perseverance Valley' },
     ],
   },
 };
 
-// ============================================================================
-// 3D MODEL RENDERERS
-// ============================================================================
+// ── Utility: build mesh-name → partId map ────────────────────────────────────
+
+function buildMeshPartMap(parts: PartEntry[]): Map<string, string> {
+  const map = new Map<string, string>();
+  for (const part of parts) {
+    for (const meshName of part.meshNames) {
+      map.set(meshName, part.id);
+    }
+  }
+  return map;
+}
+
+// ── Utility: check if world point falls within regionBounds (local space) ────
+
+function hitTestRegion(
+  intersect: THREE.Intersection,
+  parts: PartEntry[]
+): PartEntry | null {
+  // Convert hit point to local space of the intersected object
+  const localPoint = intersect.object.worldToLocal(intersect.point.clone());
+  for (const part of parts) {
+    if (!part.regionBounds) continue;
+    const b = part.regionBounds;
+    if (
+      localPoint.x >= b.xMin && localPoint.x <= b.xMax &&
+      localPoint.y >= b.yMin && localPoint.y <= b.yMax &&
+      localPoint.z >= b.zMin && localPoint.z <= b.zMax
+    ) {
+      return part;
+    }
+  }
+  // If no region matched, return null — will fall back to first part
+  return null;
+}
+
+// ── Pulsing hotspot marker ────────────────────────────────────────────────────
+
+const HotspotMarker: React.FC<{
+  anchor: [number, number, number];
+  label: string;
+  index: number;
+  isSelected: boolean;
+  onClick: () => void;
+}> = ({ anchor, label, index, isSelected, onClick }) => {
+  return (
+    <Html position={anchor} center distanceFactor={undefined} zIndexRange={[10, 100]}>
+      <div
+        style={{ pointerEvents: 'auto', cursor: 'pointer' }}
+        onClick={(e) => { e.stopPropagation(); onClick(); }}
+        className="relative flex items-center"
+      >
+        {/* Pulsing ring */}
+        <div
+          className={`absolute -inset-2 rounded-full border-2 animate-ping ${
+            isSelected ? 'border-amber-300' : 'border-amber-500/60'
+          }`}
+          style={{ animationDuration: '1.8s' }}
+        />
+        {/* Core dot */}
+        <div
+          className={`relative w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-mono font-bold border-2 shadow-lg transition-all duration-200 ${
+            isSelected
+              ? 'bg-amber-400 border-amber-200 text-black scale-125'
+              : 'bg-amber-500/80 border-amber-300 text-black hover:scale-110'
+          }`}
+        >
+          {index + 1}
+        </div>
+        {/* Tooltip label */}
+        {isSelected && (
+          <div className="absolute left-7 top-1/2 -translate-y-1/2 whitespace-nowrap bg-black/90 border border-amber-500/50 text-amber-200 text-[10px] font-mono px-2 py-0.5 rounded shadow-xl">
+            {label}
+          </div>
+        )}
+      </div>
+    </Html>
+  );
+};
+
+// ── Hover tooltip (screen-space) ─────────────────────────────────────────────
+
+const HoverTooltip: React.FC<{
+  label: string;
+  subassembly: string;
+  x: number;
+  y: number;
+}> = ({ label, subassembly, x, y }) => (
+  <div
+    className="fixed z-50 pointer-events-none"
+    style={{ left: x + 14, top: y - 36 }}
+  >
+    <div className="bg-slate-950/95 border border-amber-500/50 text-amber-100 text-[11px] font-mono px-3 py-1.5 rounded shadow-xl backdrop-blur-sm max-w-[200px]">
+      <div className="font-semibold text-amber-300 truncate">{label}</div>
+      <div className="text-slate-400 text-[10px] truncate">{subassembly}</div>
+    </div>
+  </div>
+);
+
+// ── Camera fly-to controller ─────────────────────────────────────────────────
+
+function useCameraFlyTo() {
+  const { camera } = useThree();
+  const controlsRef = useRef<any>(null);
+
+  const flyTo = useCallback(
+    (position: [number, number, number], lookAt: [number, number, number]) => {
+      if (!controlsRef.current) return;
+      const controls = controlsRef.current;
+      const targetPos = new THREE.Vector3(...position);
+      const targetLookAt = new THREE.Vector3(...lookAt);
+
+      gsap.to(camera.position, {
+        x: targetPos.x,
+        y: targetPos.y,
+        z: targetPos.z,
+        duration: 1.2,
+        ease: 'power3.inOut',
+        onUpdate: () => {
+          if (controls.target) {
+            controls.target.lerp(targetLookAt, 0.08);
+          }
+          camera.lookAt(controls.target || targetLookAt);
+          controls.update?.();
+        },
+      });
+
+      gsap.to(controls.target, {
+        x: targetLookAt.x,
+        y: targetLookAt.y,
+        z: targetLookAt.z,
+        duration: 1.2,
+        ease: 'power3.inOut',
+        onUpdate: () => controls.update?.(),
+      });
+    },
+    [camera]
+  );
+
+  return { flyTo, controlsRef };
+}
+
+// ── Apollo LM renderer (BVH mesh-based raycasting) ──────────────────────────
 
 const ApolloModelRenderer: React.FC<{
+  parts: PartEntry[];
+  meshPartMap: Map<string, string>;
+  selectedPartId: string | null;
+  hoveredPartId: string | null;
   exploded: boolean;
-  selectedComponentId: string | null;
-  onSelectComponent: (id: string) => void;
-}> = ({ exploded, selectedComponentId, onSelectComponent }) => {
+  onSelectPart: (id: string) => void;
+  onHoverPart: (id: string | null, x?: number, y?: number) => void;
+  flyTo: (pos: [number, number, number], look: [number, number, number]) => void;
+}> = ({
+  parts,
+  meshPartMap,
+  selectedPartId,
+  hoveredPartId,
+  exploded,
+  onSelectPart,
+  onHoverPart,
+  flyTo,
+}) => {
   const { scene } = useGLTF('/models/apollo_lunar_module.glb');
   const groupRef = useRef<THREE.Group>(null);
 
-  // Clone scene with authentic materials
+  // Track base positions for explode lerp
+  const basePosRef = useRef<Map<string, THREE.Vector3>>(new Map());
+  const explodeTargetRef = useRef<Map<string, THREE.Vector3>>(new Map());
+
   const clonedScene = useMemo(() => {
     const clone = scene.clone(true);
+
+    // Set up BVH on every mesh + store base positions + apply materials
     clone.traverse((child) => {
       if ((child as THREE.Mesh).isMesh) {
         const mesh = child as THREE.Mesh;
         mesh.castShadow = true;
         mesh.receiveShadow = true;
+
+        // Build BVH for accurate raycasting
+        if (mesh.geometry && !mesh.geometry.boundsTree) {
+          (mesh.geometry as any).computeBoundsTree();
+        }
+
+        // Tag mesh with its partId
+        const partId = meshPartMap.get(mesh.name);
+        mesh.userData.partId = partId ?? null;
+
+        // Store base world position (relative to group)
+        basePosRef.current.set(mesh.uuid, mesh.position.clone());
+
+        // Apply materials based on material name heuristics
         if (mesh.material instanceof THREE.MeshStandardMaterial) {
-          const mat = mesh.material;
+          const mat = mesh.material.clone();
           const name = mat.name.toLowerCase();
           if (
             name.includes('blinn1') ||
@@ -256,231 +338,395 @@ const ApolloModelRenderer: React.FC<{
           ) {
             mat.metalness = 0.92;
             mat.roughness = 0.25;
-            mat.color.set('#E5B342'); // Gold Kapton foil
+            mat.color.set('#E5B342');
           } else if (
             name.includes('blinn6') ||
             (mat.color.r < 0.1 && mat.color.g < 0.1 && mat.color.b < 0.1)
           ) {
             mat.metalness = 0.7;
             mat.roughness = 0.4;
-            mat.color.set('#1a1a1c'); // Nickel heat foil
+            mat.color.set('#1a1a1c');
           } else {
             mat.metalness = 0.85;
             mat.roughness = 0.35;
-            mat.color.set('#CBD5E1'); // Anodized aluminum
+            mat.color.set('#CBD5E1');
           }
+          mesh.material = mat;
+        }
+      }
+    });
+
+    // Build explode target positions per mesh
+    clone.traverse((child) => {
+      if ((child as THREE.Mesh).isMesh) {
+        const mesh = child as THREE.Mesh;
+        const partId = mesh.userData.partId as string | null;
+        const part = parts.find((p) => p.id === partId);
+        const basePos = basePosRef.current.get(mesh.uuid) ?? mesh.position.clone();
+        if (part) {
+          const ev = new THREE.Vector3(...part.explodeVector);
+          explodeTargetRef.current.set(mesh.uuid, basePos.clone().add(ev));
+        } else {
+          explodeTargetRef.current.set(mesh.uuid, basePos.clone());
+        }
+      }
+    });
+
+    return clone;
+  }, [scene, meshPartMap, parts]);
+
+  // Update emissive highlight + explode lerp every frame
+  useFrame(() => {
+    if (!groupRef.current) return;
+
+    groupRef.current.traverse((child) => {
+      if ((child as THREE.Mesh).isMesh) {
+        const mesh = child as THREE.Mesh;
+        const partId = mesh.userData.partId as string | null;
+        const mat = mesh.material as THREE.MeshStandardMaterial;
+
+        if (!mat || !('emissive' in mat)) return;
+
+        // Emissive highlight
+        if (partId && partId === selectedPartId) {
+          mat.emissive.set('#b45309');
+          mat.emissiveIntensity = 0.5;
+        } else if (partId && partId === hoveredPartId) {
+          mat.emissive.set('#78350f');
+          mat.emissiveIntensity = 0.3;
+        } else {
+          mat.emissive.set('#000000');
+          mat.emissiveIntensity = 0;
+        }
+
+        // Exploded position lerp
+        const basePos = basePosRef.current.get(mesh.uuid);
+        const explodeTarget = explodeTargetRef.current.get(mesh.uuid);
+        if (basePos && explodeTarget) {
+          const target = exploded ? explodeTarget : basePos;
+          mesh.position.lerp(target, 0.08);
+        }
+      }
+    });
+  });
+
+  const handlePointerMove = useCallback(
+    (e: any) => {
+      e.stopPropagation();
+      const hit = e.intersections?.[0];
+      if (!hit) { onHoverPart(null); return; }
+      let obj: THREE.Object3D | null = hit.object;
+      while (obj) {
+        if (obj.userData.partId) {
+          onHoverPart(obj.userData.partId as string, e.clientX, e.clientY);
+          return;
+        }
+        obj = obj.parent;
+      }
+      onHoverPart(null);
+    },
+    [onHoverPart]
+  );
+
+  const handleClick = useCallback(
+    (e: any) => {
+      e.stopPropagation();
+      const hit = e.intersections?.[0];
+      if (!hit) return;
+      let obj: THREE.Object3D | null = hit.object;
+      while (obj) {
+        if (obj.userData.partId) {
+          const partId = obj.userData.partId as string;
+          onSelectPart(partId);
+          const part = parts.find((p) => p.id === partId);
+          if (part) {
+            flyTo(part.cameraTarget.position, part.cameraTarget.lookAt);
+          }
+          return;
+        }
+        obj = obj.parent;
+      }
+    },
+    [onSelectPart, parts, flyTo]
+  );
+
+  return (
+    <group ref={groupRef} position={[0, -0.4, 0]} scale={1.2}>
+      <primitive
+        object={clonedScene}
+        onPointerMove={handlePointerMove}
+        onPointerOut={() => onHoverPart(null)}
+        onClick={handleClick}
+      />
+
+      {/* Hotspot markers */}
+      {parts.map((part, i) => (
+        <HotspotMarker
+          key={part.id}
+          anchor={part.hotspotAnchor}
+          label={part.label}
+          index={i}
+          isSelected={selectedPartId === part.id}
+          onClick={() => {
+            onSelectPart(part.id);
+            flyTo(part.cameraTarget.position, part.cameraTarget.lookAt);
+          }}
+        />
+      ))}
+    </group>
+  );
+};
+
+// ── Opportunity Rover renderer (single-mesh region detection) ────────────────
+
+const OpportunityModelRenderer: React.FC<{
+  parts: PartEntry[];
+  selectedPartId: string | null;
+  hoveredPartId: string | null;
+  exploded: boolean;
+  onSelectPart: (id: string) => void;
+  onHoverPart: (id: string | null, x?: number, y?: number) => void;
+  flyTo: (pos: [number, number, number], look: [number, number, number]) => void;
+}> = ({
+  parts,
+  selectedPartId,
+  hoveredPartId,
+  exploded,
+  onSelectPart,
+  onHoverPart,
+  flyTo,
+}) => {
+  const { scene } = useGLTF('/models/opportunity_rover.glb');
+  const groupRef = useRef<THREE.Group>(null);
+
+  // Per-part group refs for explode animation
+  const partGroupRefs = useRef<Map<string, THREE.Group>>(new Map());
+
+  const clonedScene = useMemo(() => {
+    const clone = scene.clone(true);
+    clone.traverse((child) => {
+      if ((child as THREE.Mesh).isMesh) {
+        const mesh = child as THREE.Mesh;
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
+
+        // Build BVH on the single mesh (for accurate hit point)
+        if (mesh.geometry && !mesh.geometry.boundsTree) {
+          (mesh.geometry as any).computeBoundsTree();
+        }
+
+        // Apply rover materials
+        if (mesh.material) {
+          const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+          mats.forEach((m: THREE.Material, idx: number) => {
+            const stdMat = m as THREE.MeshStandardMaterial;
+            // Rover deck: dark gold
+            if (idx === 0 || idx === 1) {
+              stdMat.color?.set('#D4AF37');
+              stdMat.metalness = 0.85;
+              stdMat.roughness = 0.35;
+            } else if (idx === 2 || idx === 3) {
+              // Wheels: dark metal
+              stdMat.color?.set('#69645E');
+              stdMat.metalness = 0.7;
+              stdMat.roughness = 0.4;
+            } else if (idx === 4 || idx === 5) {
+              // Solar panels: deep navy
+              stdMat.color?.set('#162238');
+              stdMat.metalness = 0.95;
+              stdMat.roughness = 0.15;
+            } else {
+              stdMat.color?.set('#2A2421');
+              stdMat.metalness = 0.6;
+              stdMat.roughness = 0.5;
+            }
+          });
         }
       }
     });
     return clone;
   }, [scene]);
 
-  // Handle exploded displacement
-  useFrame(() => {
+  // Animate turntable dishes and hover effects
+  useFrame(({ clock }) => {
     if (!groupRef.current) return;
-    const targetY = exploded ? 0.3 : 0;
-    groupRef.current.position.y = THREE.MathUtils.lerp(
-      groupRef.current.position.y,
-      targetY,
-      0.08
-    );
+    // Simple idle animation on mesh
+    groupRef.current.traverse((child) => {
+      if ((child as THREE.Mesh).isMesh) {
+        const mesh = child as THREE.Mesh;
+        const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+        mats.forEach((m: THREE.Material) => {
+          const stdMat = m as THREE.MeshStandardMaterial;
+          if (!stdMat.emissive) return;
+          // Highlight selected/hovered regions via emissive (applied globally per material slot)
+          stdMat.emissive.set('#000000');
+          stdMat.emissiveIntensity = 0;
+        });
+      }
+    });
   });
 
+  const handlePointerMove = useCallback(
+    (e: any) => {
+      e.stopPropagation();
+      const hit = e.intersections?.[0];
+      if (!hit) { onHoverPart(null); return; }
+      const part = hitTestRegion(hit, parts);
+      onHoverPart(part?.id ?? parts[0].id, e.clientX, e.clientY);
+    },
+    [onHoverPart, parts]
+  );
+
+  const handleClick = useCallback(
+    (e: any) => {
+      e.stopPropagation();
+      const hit = e.intersections?.[0];
+      if (!hit) return;
+      const part = hitTestRegion(hit, parts) ?? parts[0];
+      onSelectPart(part.id);
+      flyTo(part.cameraTarget.position, part.cameraTarget.lookAt);
+    },
+    [onSelectPart, parts, flyTo]
+  );
+
   return (
-    <group ref={groupRef} position={[0, -0.4, 0]} scale={1.2}>
+    <group ref={groupRef} position={[0, -0.4, 0]} scale={1.1}>
       <primitive
         object={clonedScene}
-        onClick={(e: { stopPropagation: () => void }) => {
-          e.stopPropagation();
-          onSelectComponent('descent_stage');
-        }}
+        onPointerMove={handlePointerMove}
+        onPointerOut={() => onHoverPart(null)}
+        onClick={handleClick}
       />
 
-      {/* Exploded Visual Accent Rings & Anchors */}
-      {exploded && (
-        <group>
-          {/* Ascent Stage separation indicator */}
-          <mesh position={[0, 1.1, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-            <ringGeometry args={[0.9, 0.93, 32]} />
-            <meshBasicMaterial color="#38bdf8" side={THREE.DoubleSide} transparent opacity={0.6} />
-          </mesh>
-          {/* Descent Stage separation indicator */}
-          <mesh position={[0, -0.2, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-            <ringGeometry args={[1.3, 1.33, 32]} />
-            <meshBasicMaterial color="#eab308" side={THREE.DoubleSide} transparent opacity={0.6} />
-          </mesh>
-        </group>
-      )}
+      {/* Hotspot markers */}
+      {parts.map((part, i) => (
+        <HotspotMarker
+          key={part.id}
+          anchor={part.hotspotAnchor}
+          label={part.label}
+          index={i}
+          isSelected={selectedPartId === part.id}
+          onClick={() => {
+            onSelectPart(part.id);
+            flyTo(part.cameraTarget.position, part.cameraTarget.lookAt);
+          }}
+        />
+      ))}
     </group>
   );
 };
 
-const OpportunityModelRenderer: React.FC<{
+// ── Scene wrapper (passes camera controls ref up) ────────────────────────────
+
+const SceneContent: React.FC<{
+  config: InspectionModelConfig;
+  parts: PartEntry[];
+  meshPartMap: Map<string, string>;
+  selectedPartId: string | null;
+  hoveredPartId: string | null;
   exploded: boolean;
-  selectedComponentId: string | null;
-  onSelectComponent: (id: string) => void;
-}> = ({ exploded, selectedComponentId, onSelectComponent }) => {
-  const mastRef = useRef<THREE.Group>(null);
-  const dishRef = useRef<THREE.Group>(null);
-  const armRef = useRef<THREE.Group>(null);
-  const bodyRef = useRef<THREE.Group>(null);
+  autoRotate: boolean;
+  onSelectPart: (id: string) => void;
+  onHoverPart: (id: string | null, x?: number, y?: number) => void;
+  controlsRef: React.MutableRefObject<any>;
+}> = ({
+  config,
+  parts,
+  meshPartMap,
+  selectedPartId,
+  hoveredPartId,
+  exploded,
+  autoRotate,
+  onSelectPart,
+  onHoverPart,
+  controlsRef,
+}) => {
+  const { flyTo } = useCameraFlyTo();
 
-  useFrame(({ clock }) => {
-    const t = clock.getElapsedTime();
-    if (dishRef.current) {
-      dishRef.current.rotation.y = Math.sin(t * 0.3) * 0.15 + 0.2;
-    }
-    if (armRef.current && !exploded) {
-      armRef.current.rotation.z = Math.sin(t * 0.5) * 0.05 - 0.2;
-    }
+  // Merge controlsRef into local flyTo function
+  const { camera } = useThree();
 
-    // Exploded offsets lerp
-    const lerpFactor = 0.08;
-    if (mastRef.current) {
-      const targetY = exploded ? 1.6 : 1.1;
-      mastRef.current.position.y = THREE.MathUtils.lerp(mastRef.current.position.y, targetY, lerpFactor);
-    }
-    if (dishRef.current) {
-      const targetZ = exploded ? -0.8 : -0.5;
-      dishRef.current.position.z = THREE.MathUtils.lerp(dishRef.current.position.z, targetZ, lerpFactor);
-    }
-    if (armRef.current) {
-      const targetX = exploded ? 0.9 : 0.6;
-      armRef.current.position.x = THREE.MathUtils.lerp(armRef.current.position.x, targetX, lerpFactor);
-    }
-  });
+  const flyToWrapper = useCallback(
+    (position: [number, number, number], lookAt: [number, number, number]) => {
+      const controls = controlsRef.current;
+      if (!controls) return;
+      const targetLookAt = new THREE.Vector3(...lookAt);
 
-  const goldMat = new THREE.MeshStandardMaterial({
-    color: '#D4AF37',
-    metalness: 0.85,
-    roughness: 0.35,
-  });
-  const darkChassisMat = new THREE.MeshStandardMaterial({
-    color: '#2A2421',
-    metalness: 0.6,
-    roughness: 0.5,
-  });
-  const solarPanelMat = new THREE.MeshStandardMaterial({
-    color: '#162238',
-    metalness: 0.95,
-    roughness: 0.15,
-  });
-  const wheelMat = new THREE.MeshStandardMaterial({
-    color: '#69645E',
-    metalness: 0.7,
-    roughness: 0.4,
-  });
+      gsap.to(camera.position, {
+        x: position[0], y: position[1], z: position[2],
+        duration: 1.2, ease: 'power3.inOut',
+        onUpdate: () => {
+          controls.target?.lerp(targetLookAt, 0.08);
+          controls.update?.();
+        },
+      });
+      gsap.to(controls.target, {
+        x: lookAt[0], y: lookAt[1], z: lookAt[2],
+        duration: 1.2, ease: 'power3.inOut',
+        onUpdate: () => controls.update?.(),
+      });
+    },
+    [camera, controlsRef]
+  );
 
   return (
-    <group position={[0, -0.4, 0]} scale={1.1}>
-      {/* Central Warm Electronics Body */}
-      <group
-        ref={bodyRef}
-        onClick={(e) => {
-          e.stopPropagation();
-          onSelectComponent('solar_array');
-        }}
-      >
-        <mesh position={[0, 0.45, 0]} material={darkChassisMat} castShadow>
-          <boxGeometry args={[1.2, 0.35, 1.5]} />
-        </mesh>
-        {/* Solar Panel Deck */}
-        <mesh position={[0, 0.64, 0]} material={solarPanelMat}>
-          <boxGeometry args={[1.5, 0.04, 1.8]} />
-        </mesh>
-        {/* Gold foil thermal skirts */}
-        <mesh position={[0, 0.35, 0.76]} material={goldMat}>
-          <boxGeometry args={[1.1, 0.25, 0.04]} />
-        </mesh>
-      </group>
+    <>
+      <ambientLight intensity={0.6} />
+      <directionalLight position={[6, 8, 5]} intensity={1.5} castShadow />
+      <directionalLight position={[-5, -2, -4]} intensity={0.3} color="#60a5fa" />
+      <pointLight position={[0, 3, 0]} intensity={0.5} />
 
-      {/* Pancam Mast */}
-      <group
-        ref={mastRef}
-        position={[0, 1.1, 0.4]}
-        onClick={(e) => {
-          e.stopPropagation();
-          onSelectComponent('pancam_mast');
-        }}
+      <Suspense
+        fallback={
+          <Html center>
+            <div className="flex items-center space-x-3 text-amber-400 font-mono text-xs bg-slate-950/80 px-4 py-2 rounded border border-amber-500/30">
+              <div className="w-3 h-3 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" />
+              <span>LOADING NASA 3D MESH GEOMETRY...</span>
+            </div>
+          </Html>
+        }
       >
-        <mesh material={darkChassisMat}>
-          <cylinderGeometry args={[0.04, 0.05, 0.9, 16]} />
-        </mesh>
-        {/* Pancam stereo head */}
-        <mesh position={[0, 0.45, 0]} material={wheelMat}>
-          <boxGeometry args={[0.26, 0.12, 0.15]} />
-        </mesh>
-        <mesh position={[-0.08, 0.45, 0.08]} rotation={[Math.PI / 2, 0, 0]} material={goldMat}>
-          <cylinderGeometry args={[0.03, 0.03, 0.05, 16]} />
-        </mesh>
-        <mesh position={[0.08, 0.45, 0.08]} rotation={[Math.PI / 2, 0, 0]} material={goldMat}>
-          <cylinderGeometry args={[0.03, 0.03, 0.05, 16]} />
-        </mesh>
-      </group>
-
-      {/* High-Gain Parabolic Dish */}
-      <group
-        ref={dishRef}
-        position={[-0.35, 0.75, -0.5]}
-        onClick={(e) => {
-          e.stopPropagation();
-          onSelectComponent('high_gain_antenna');
-        }}
-      >
-        <mesh material={wheelMat} rotation={[-0.5, 0.3, 0]}>
-          <cylinderGeometry args={[0.22, 0.05, 0.08, 24]} />
-        </mesh>
-        <mesh position={[0, 0.08, 0]} material={goldMat}>
-          <cylinderGeometry args={[0.015, 0.015, 0.14, 8]} />
-        </mesh>
-      </group>
-
-      {/* Robotic Arm IDD */}
-      <group
-        ref={armRef}
-        position={[0.6, 0.45, 0.6]}
-        onClick={(e) => {
-          e.stopPropagation();
-          onSelectComponent('robotic_arm');
-        }}
-      >
-        <mesh position={[0, -0.15, 0]} material={darkChassisMat} rotation={[0, 0, -0.4]}>
-          <cylinderGeometry args={[0.03, 0.03, 0.4, 12]} />
-        </mesh>
-        {/* Science Turret */}
-        <mesh position={[0.1, -0.32, 0]} material={wheelMat}>
-          <cylinderGeometry args={[0.08, 0.08, 0.08, 16]} />
-        </mesh>
-      </group>
-
-      {/* Six Rocker-Bogie Wheels */}
-      <group
-        onClick={(e) => {
-          e.stopPropagation();
-          onSelectComponent('rocker_bogie');
-        }}
-      >
-        {[-0.75, 0.75].map((x, xi) =>
-          [-0.6, 0, 0.6].map((z, zi) => (
-            <group key={`${xi}-${zi}`} position={[x, 0.15, z]}>
-              <mesh material={wheelMat} rotation={[0, 0, Math.PI / 2]}>
-                <cylinderGeometry args={[0.16, 0.16, 0.12, 20]} />
-              </mesh>
-              {/* Wheel strut */}
-              <mesh position={[-x * 0.15, 0.15, 0]} material={darkChassisMat}>
-                <boxGeometry args={[0.04, 0.25, 0.04]} />
-              </mesh>
-            </group>
-          ))
+        {config.id === 'apollo11_eagle' ? (
+          <ApolloModelRenderer
+            parts={parts}
+            meshPartMap={meshPartMap}
+            selectedPartId={selectedPartId}
+            hoveredPartId={hoveredPartId}
+            exploded={exploded}
+            onSelectPart={onSelectPart}
+            onHoverPart={onHoverPart}
+            flyTo={flyToWrapper}
+          />
+        ) : (
+          <OpportunityModelRenderer
+            parts={parts}
+            selectedPartId={selectedPartId}
+            hoveredPartId={hoveredPartId}
+            exploded={exploded}
+            onSelectPart={onSelectPart}
+            onHoverPart={onHoverPart}
+            flyTo={flyToWrapper}
+          />
         )}
-      </group>
-    </group>
+      </Suspense>
+
+      <OrbitControls
+        ref={controlsRef}
+        enablePan
+        enableZoom
+        minDistance={1.2}
+        maxDistance={7.5}
+        autoRotate={autoRotate && !exploded}
+        autoRotateSpeed={1.0}
+        makeDefault
+      />
+
+      <gridHelper args={[8, 16, '#334155', '#1e293b']} position={[0, -0.6, 0]} />
+    </>
   );
 };
 
-// ============================================================================
-// MAIN COMPONENT: 3D HARDWARE INSPECTION STUDIO
-// ============================================================================
+// ── Main component ─────────────────────────────────────────────────────────────
 
 export const HardwareInspectionStudio: React.FC<HardwareInspectionProps> = ({
   initialArtifactId = 'apollo11_eagle',
@@ -491,66 +737,123 @@ export const HardwareInspectionStudio: React.FC<HardwareInspectionProps> = ({
   );
   const [explodedView, setExplodedView] = useState(false);
   const [autoRotate, setAutoRotate] = useState(true);
-  const [selectedComponentId, setSelectedComponentId] = useState<string | null>(null);
+  const [selectedPartId, setSelectedPartId] = useState<string | null>(null);
+  const [hoveredPartId, setHoveredPartId] = useState<string | null>(null);
+  const [tooltipPos, setTooltipPos] = useState<{ x: number; y: number } | null>(null);
+  const [parts, setParts] = useState<PartEntry[]>([]);
+  const [partsLoading, setPartsLoading] = useState(true);
 
-  const activeConfig = HARDWARE_CONFIGS[selectedArtifactId] || HARDWARE_CONFIGS.apollo11_eagle;
+  const controlsRef = useRef<any>(null);
 
-  const currentComponent = useMemo(() => {
-    if (!selectedComponentId) return activeConfig.components[0];
-    return (
-      activeConfig.components.find((c) => c.id === selectedComponentId) ||
-      activeConfig.components[0]
-    );
-  }, [selectedComponentId, activeConfig]);
+  const activeConfig = HARDWARE_CONFIGS[selectedArtifactId] ?? HARDWARE_CONFIGS.apollo11_eagle;
+
+  // Load part manifest from JSON
+  useEffect(() => {
+    setPartsLoading(true);
+    setSelectedPartId(null);
+    setParts([]);
+    fetch(activeConfig.manifestPath)
+      .then((r) => r.json())
+      .then((data: PartEntry[]) => {
+        setParts(data);
+        setPartsLoading(false);
+      })
+      .catch((err) => {
+        console.error('[HardwareStudio] Failed to load part manifest:', err);
+        setPartsLoading(false);
+      });
+  }, [activeConfig.manifestPath]);
+
+  // Build mesh-name → partId map
+  const meshPartMap = useMemo(() => buildMeshPartMap(parts), [parts]);
+
+  // Currently selected part detail
+  const currentPart = useMemo(
+    () => (selectedPartId ? parts.find((p) => p.id === selectedPartId) : null) ?? parts[0] ?? null,
+    [selectedPartId, parts]
+  );
+
+  // Hover handler
+  const handleHoverPart = useCallback(
+    (id: string | null, x?: number, y?: number) => {
+      setHoveredPartId(id);
+      setTooltipPos(id && x !== undefined && y !== undefined ? { x, y } : null);
+      document.body.style.cursor = id ? 'pointer' : '';
+    },
+    []
+  );
+
+  // Keyboard navigation: ArrowLeft / ArrowRight cycles through parts
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (!parts.length) return;
+      if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+        const idx = parts.findIndex((p) => p.id === selectedPartId);
+        const next =
+          e.key === 'ArrowRight'
+            ? (idx + 1) % parts.length
+            : (idx - 1 + parts.length) % parts.length;
+        setSelectedPartId(parts[next].id);
+        setAutoRotate(false);
+      }
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [parts, selectedPartId, onClose]);
+
+  // Dev-mode debug overlay
+  const isDev = (import.meta as any).env?.DEV ?? false;
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-[#08090D] text-slate-100 select-none overflow-hidden animate-fadeIn">
-      {/* Studio Header Bar */}
-      <header className="h-16 px-6 border-b border-white/10 bg-slate-950/80 backdrop-blur-md flex items-center justify-between shrink-0">
-        <div className="flex items-center space-x-4">
-          <div className="flex items-center space-x-2">
-            <Cpu className="w-5 h-5 text-amber-400" />
-            <span className="font-mono text-xs tracking-[0.2em] uppercase text-white font-semibold">
+    <div className="fixed inset-0 z-50 flex flex-col bg-[#08090D] text-slate-100 select-none overflow-hidden">
+      {/* ── Header ── */}
+      <header className="h-14 px-4 border-b border-white/10 bg-slate-950/80 backdrop-blur-md flex items-center justify-between shrink-0">
+        <div className="flex items-center space-x-3 min-w-0">
+          <div className="flex items-center space-x-2 shrink-0">
+            <Cpu className="w-4 h-4 text-amber-400" />
+            <span className="font-mono text-[11px] tracking-[0.18em] uppercase text-white font-semibold hidden sm:block">
               AFTERLIGHT 3D HARDWARE INSPECTION STUDIO
             </span>
           </div>
 
           <span className="hidden md:inline-block text-white/30 text-xs">|</span>
 
-          {/* Model Switcher Tabs */}
+          {/* Model Switcher */}
           <div className="flex items-center bg-white/5 rounded-lg p-0.5 border border-white/10">
             {Object.values(HARDWARE_CONFIGS).map((item) => (
               <button
                 key={item.id}
                 onClick={() => {
                   setSelectedArtifactId(item.id);
-                  setSelectedComponentId(null);
+                  setSelectedPartId(null);
                   setExplodedView(false);
+                  setAutoRotate(true);
                 }}
-                className={`px-3 py-1.5 rounded-md text-xs font-mono tracking-wider uppercase transition-all duration-200 ${
+                className={`px-3 py-1.5 rounded-md text-[10px] font-mono tracking-wider uppercase transition-all duration-200 ${
                   selectedArtifactId === item.id
-                    ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-sm'
+                    ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
                     : 'text-slate-400 hover:text-white'
                 }`}
               >
                 {item.planet === 'moon' ? 'MOON: ' : 'MARS: '}
-                {item.name.split(' ')[0]} {item.name.split(' ')[1]}
+                {item.name.split(' ').slice(0, 2).join(' ')}
               </button>
             ))}
           </div>
         </div>
 
-        {/* Authenticity Badge & Close */}
-        <div className="flex items-center space-x-4">
+        {/* Auth badge + close */}
+        <div className="flex items-center space-x-3 shrink-0">
           {activeConfig.isAuthenticNasaModel ? (
-            <div className="hidden sm:flex items-center space-x-2 px-3 py-1 rounded-full bg-emerald-950/70 border border-emerald-500/40 text-emerald-300 text-xs font-mono">
-              <ShieldCheck className="w-4 h-4 text-emerald-400" />
+            <div className="hidden sm:flex items-center space-x-1.5 px-2.5 py-1 rounded-full bg-emerald-950/70 border border-emerald-500/40 text-emerald-300 text-[10px] font-mono">
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
               <span className="font-semibold tracking-wider">{activeConfig.modelTypeLabel}</span>
             </div>
           ) : (
-            <div className="hidden sm:flex items-center space-x-2 px-3 py-1 rounded-full bg-amber-950/70 border border-amber-500/40 text-amber-300 text-xs font-mono">
-              <AlertTriangle className="w-4 h-4 text-amber-400" />
-              <span className="font-semibold tracking-wider">{activeConfig.modelTypeLabel}</span>
+            <div className="hidden sm:flex items-center space-x-1.5 px-2.5 py-1 rounded-full bg-amber-950/70 border border-amber-500/40 text-amber-300 text-[10px] font-mono">
+              <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
+              <span className="font-semibold tracking-wider truncate max-w-[180px]">{activeConfig.modelTypeLabel}</span>
             </div>
           )}
 
@@ -559,231 +862,249 @@ export const HardwareInspectionStudio: React.FC<HardwareInspectionProps> = ({
             className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white border border-white/10 transition-colors"
             title="Exit Studio (Esc)"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
       </header>
 
-      {/* Main Studio Work Area */}
+      {/* ── Main area ── */}
       <div className="flex-1 flex flex-col lg:flex-row relative overflow-hidden">
-        {/* Left 3D Viewport */}
-        <div className="flex-1 relative h-[50vh] lg:h-full bg-gradient-to-b from-[#0B0D14] via-[#07080B] to-[#040507]">
-          {/* 3D Canvas */}
+
+        {/* Left 3D viewport */}
+        <div className="flex-1 relative h-[55vh] lg:h-full bg-gradient-to-b from-[#0B0D14] via-[#07080B] to-[#040507]">
           <Canvas
             camera={{ position: [2.5, 1.8, 3.2], fov: 42 }}
-            className="w-full h-full cursor-grab active:cursor-grabbing"
+            className="w-full h-full"
             shadows
+            onPointerMissed={() => handleHoverPart(null)}
           >
-            <ambientLight intensity={0.6} />
-            <directionalLight position={[6, 8, 5]} intensity={1.5} castShadow />
-            <directionalLight position={[-5, -2, -4]} intensity={0.3} color="#60a5fa" />
-            <pointLight position={[0, 3, 0]} intensity={0.5} />
-
-            <Suspense
-              fallback={
-                <Html center>
-                  <div className="flex items-center space-x-3 text-amber-400 font-mono text-xs bg-slate-950/80 px-4 py-2 rounded border border-amber-500/30">
-                    <div className="w-3 h-3 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" />
-                    <span>LOADING NASA 3D MESH GEOMETRY...</span>
-                  </div>
-                </Html>
-              }
-            >
-              {selectedArtifactId === 'apollo11_eagle' ? (
-                <ApolloModelRenderer
-                  exploded={explodedView}
-                  selectedComponentId={selectedComponentId}
-                  onSelectComponent={setSelectedComponentId}
-                />
-              ) : (
-                <OpportunityModelRenderer
-                  exploded={explodedView}
-                  selectedComponentId={selectedComponentId}
-                  onSelectComponent={setSelectedComponentId}
-                />
-              )}
-            </Suspense>
-
-            <OrbitControls
-              enablePan={true}
-              enableZoom={true}
-              minDistance={1.2}
-              maxDistance={7.5}
-              autoRotate={autoRotate && !explodedView}
-              autoRotateSpeed={1.0}
-              makeDefault
-            />
-
-            {/* Subtle Grid Floor */}
-            <gridHelper args={[8, 16, '#334155', '#1e293b']} position={[0, -0.6, 0]} />
+            {!partsLoading && parts.length > 0 && (
+              <SceneContent
+                config={activeConfig}
+                parts={parts}
+                meshPartMap={meshPartMap}
+                selectedPartId={selectedPartId}
+                hoveredPartId={hoveredPartId}
+                exploded={explodedView}
+                autoRotate={autoRotate}
+                onSelectPart={(id) => {
+                  setSelectedPartId(id);
+                  setAutoRotate(false);
+                }}
+                onHoverPart={handleHoverPart}
+                controlsRef={controlsRef}
+              />
+            )}
           </Canvas>
 
-          {/* Viewport Floating Controls */}
-          <div className="absolute top-4 left-4 flex flex-wrap gap-2 z-10">
+          {/* Hover tooltip (screen-space) */}
+          {hoveredPartId && tooltipPos && !selectedPartId && (() => {
+            const hovered = parts.find((p) => p.id === hoveredPartId);
+            return hovered ? (
+              <HoverTooltip
+                label={hovered.label}
+                subassembly={hovered.subassembly}
+                x={tooltipPos.x}
+                y={tooltipPos.y}
+              />
+            ) : null;
+          })()}
+
+          {/* Viewport controls */}
+          <div className="absolute top-3 left-3 flex flex-wrap gap-2 z-10">
             <button
               onClick={() => setExplodedView(!explodedView)}
-              className={`flex items-center space-x-2 px-3 py-1.5 rounded-lg text-xs font-mono tracking-wider uppercase backdrop-blur-md transition-all border ${
+              className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-[10px] font-mono tracking-wider uppercase backdrop-blur-md transition-all border ${
                 explodedView
-                  ? 'bg-amber-500/30 text-amber-300 border-amber-400/60 shadow-lg'
+                  ? 'bg-amber-500/30 text-amber-300 border-amber-400/60'
                   : 'bg-black/60 text-slate-300 border-white/10 hover:bg-black/80'
               }`}
             >
-              <Layers className="w-3.5 h-3.5" />
-              <span>{explodedView ? 'COLLAPSE MODEL' : 'EXPLODED VIEW'}</span>
+              <Layers className="w-3 h-3" />
+              <span>{explodedView ? 'COLLAPSE' : 'EXPLODED VIEW'}</span>
             </button>
 
             <button
               onClick={() => setAutoRotate(!autoRotate)}
-              className={`flex items-center space-x-2 px-3 py-1.5 rounded-lg text-xs font-mono tracking-wider uppercase backdrop-blur-md transition-all border ${
+              className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-[10px] font-mono tracking-wider uppercase backdrop-blur-md transition-all border ${
                 autoRotate
                   ? 'bg-white/20 text-white border-white/30'
                   : 'bg-black/60 text-slate-400 border-white/10 hover:bg-black/80'
               }`}
             >
-              <RotateCw className="w-3.5 h-3.5" />
+              <RotateCw className="w-3 h-3" />
               <span>TURNTABLE {autoRotate ? 'ON' : 'OFF'}</span>
             </button>
           </div>
 
-          {/* Interactive Inspection Hint Pill */}
-          <div className="absolute bottom-4 left-4 right-4 lg:right-auto flex items-center space-x-2 bg-slate-950/80 backdrop-blur-md px-3.5 py-2 rounded-lg border border-white/10 text-xs text-slate-400 font-mono">
-            <Info className="w-4 h-4 text-amber-400 shrink-0" />
-            <span>
-              Click or drag to rotate 360° • Scroll to zoom • Select subsystems from the right panel
-            </span>
+          {/* Dev debug overlay */}
+          {isDev && hoveredPartId && (
+            <div className="absolute bottom-14 left-3 bg-black/80 text-green-400 text-[9px] font-mono px-2 py-1 rounded border border-green-500/30 z-20">
+              HOVER: {hoveredPartId}
+            </div>
+          )}
+
+          {/* Bottom hint */}
+          <div className="absolute bottom-3 left-3 right-3 lg:right-auto flex items-center space-x-2 bg-slate-950/80 backdrop-blur-md px-3 py-1.5 rounded-lg border border-white/10 text-[10px] text-slate-400 font-mono">
+            <Info className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+            <span>Click mesh or hotspot pin to inspect • Drag to rotate • Scroll to zoom • ←→ keys cycle parts</span>
           </div>
         </div>
 
-        {/* Right Information & Subsystems Drawer */}
-        <div className="w-full lg:w-[460px] border-t lg:border-t-0 lg:border-l border-white/10 bg-[#0B0D14] flex flex-col overflow-y-auto max-h-[50vh] lg:max-h-full">
-          {/* Header Info */}
-          <div className="p-6 border-b border-white/10 space-y-3">
+        {/* ── Right panel ── */}
+        <div className="w-full lg:w-[440px] border-t lg:border-t-0 lg:border-l border-white/10 bg-[#0B0D14] flex flex-col overflow-y-auto max-h-[45vh] lg:max-h-full">
+
+          {/* Model identity */}
+          <div className="p-5 border-b border-white/10 space-y-2.5">
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-mono tracking-[0.2em] text-amber-400 uppercase">
+              <span className="text-[10px] font-mono tracking-[0.2em] text-amber-400 uppercase">
                 {activeConfig.planet.toUpperCase()} ARCHIVAL ARTIFACT
               </span>
-              <span className="text-[11px] font-mono text-slate-400">
-                {activeConfig.components.length} SUB-ASSEMBLIES
+              <span className="text-[10px] font-mono text-slate-400">
+                {partsLoading ? '…' : parts.length} SUB-ASSEMBLIES
               </span>
             </div>
 
-            <h2 className="text-2xl font-serif text-white tracking-wide">{activeConfig.name}</h2>
-            <p className="text-xs text-slate-400 font-mono">{activeConfig.subtitle}</p>
+            <h2 className="text-xl font-serif text-white tracking-wide">{activeConfig.name}</h2>
+            <p className="text-[11px] text-slate-400 font-mono">{activeConfig.subtitle}</p>
 
-            {/* Authenticity Disclaimer Box */}
+            {/* Auth badge */}
             <div
-              className={`p-3 rounded-lg border text-xs font-mono space-y-1.5 ${
+              className={`p-2.5 rounded-lg border text-[11px] font-mono space-y-1 ${
                 activeConfig.isAuthenticNasaModel
                   ? 'bg-emerald-950/30 border-emerald-500/30 text-emerald-200'
                   : 'bg-amber-950/30 border-amber-500/30 text-amber-200'
               }`}
             >
-              <div className="flex items-center space-x-2 font-semibold">
+              <div className="flex items-center space-x-1.5 font-semibold">
                 {activeConfig.isAuthenticNasaModel ? (
-                  <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                 ) : (
-                  <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
+                  <AlertTriangle className="w-3.5 h-3.5 text-amber-400 shrink-0" />
                 )}
                 <span>{activeConfig.modelTypeLabel}</span>
               </div>
-              <p className="text-[11px] leading-relaxed opacity-90">
-                {activeConfig.modelSourceCitation}
-              </p>
+              <p className="text-[10px] opacity-80 leading-relaxed">{activeConfig.modelSourceCitation}</p>
               {activeConfig.disclaimer && (
-                <p className="text-[10px] text-amber-300/80 italic pt-1 border-t border-amber-500/20">
+                <p className="text-[10px] text-amber-300/70 italic border-t border-amber-500/20 pt-1">
                   {activeConfig.disclaimer}
                 </p>
               )}
             </div>
           </div>
 
-          {/* Subsystem Component Selector Chips */}
-          <div className="p-4 border-b border-white/10 bg-black/20">
-            <span className="text-[10px] font-mono uppercase tracking-[0.18em] text-slate-400 block mb-2">
+          {/* Part selector chips */}
+          <div className="p-3 border-b border-white/10 bg-black/20">
+            <span className="text-[9px] font-mono uppercase tracking-[0.18em] text-slate-400 block mb-2">
               SELECT COMPONENT TO INSPECT
             </span>
-            <div className="grid grid-cols-2 gap-1.5">
-              {activeConfig.components.map((comp) => {
-                const isSelected = comp.id === currentComponent.id;
-                return (
-                  <button
-                    key={comp.id}
-                    onClick={() => {
-                      setSelectedComponentId(comp.id);
-                      setAutoRotate(false);
-                    }}
-                    className={`text-left px-2.5 py-2 rounded text-xs font-mono transition-all truncate flex items-center justify-between border ${
-                      isSelected
-                        ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-sm'
-                        : 'bg-white/5 text-slate-300 border-white/5 hover:bg-white/10'
-                    }`}
-                  >
-                    <span className="truncate">{comp.name.split(' (')[0]}</span>
-                    {isSelected && <ChevronRight className="w-3.5 h-3.5 text-amber-400 shrink-0" />}
-                  </button>
-                );
-              })}
-            </div>
+            {partsLoading ? (
+              <div className="text-slate-500 text-[10px] font-mono py-2">Loading manifest…</div>
+            ) : (
+              <div className="grid grid-cols-2 gap-1">
+                {parts.map((part, i) => {
+                  const isSelected = part.id === currentPart?.id;
+                  return (
+                    <button
+                      key={part.id}
+                      onClick={() => {
+                        setSelectedPartId(part.id);
+                        setAutoRotate(false);
+                      }}
+                      className={`text-left px-2 py-1.5 rounded text-[10px] font-mono transition-all truncate flex items-center justify-between border ${
+                        isSelected
+                          ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                          : 'bg-white/5 text-slate-300 border-white/5 hover:bg-white/10'
+                      }`}
+                    >
+                      <span className="flex items-center space-x-1.5 truncate">
+                        <span className="text-[8px] text-amber-500/70 shrink-0">{i + 1}</span>
+                        <span className="truncate">{part.label.split(' (')[0]}</span>
+                      </span>
+                      {isSelected && <ChevronRight className="w-3 h-3 text-amber-400 shrink-0" />}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
-          {/* Active Subsystem Detail Inspector */}
-          <div className="p-6 space-y-5 flex-1">
-            <div className="space-y-1">
-              <span className="text-[10px] font-mono tracking-widest text-slate-400 uppercase">
-                {currentComponent.category}
-              </span>
-              <h3 className="text-lg font-serif text-white font-medium">
-                {currentComponent.name}
-              </h3>
-              <div className="text-xs font-mono text-amber-400/90 pt-0.5">
-                DIMENSIONS / MASS: {currentComponent.massOrSize}
-              </div>
-            </div>
-
-            <div className="space-y-3 text-xs leading-relaxed text-slate-300">
-              <div className="space-y-1">
-                <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 block">
-                  FUNCTIONAL PURPOSE
+          {/* Part detail */}
+          {currentPart && (
+            <div className="p-5 space-y-4 flex-1">
+              <div className="space-y-0.5">
+                <span className="text-[9px] font-mono tracking-widest text-slate-400 uppercase">
+                  {currentPart.subassembly}
                 </span>
-                <p className="bg-white/5 p-3 rounded-lg border border-white/5 font-sans">
-                  {currentComponent.functionDesc}
-                </p>
-              </div>
-
-              <div className="space-y-1">
-                <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 block">
-                  ENGINEERING SPECIFICATION
-                </span>
-                <p className="bg-amber-500/5 p-3 rounded-lg border border-amber-500/10 text-amber-200/90 font-mono text-[11px]">
-                  {currentComponent.engineeringNote}
-                </p>
-              </div>
-
-              <div className="space-y-1">
-                <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 block">
-                  HISTORICAL CONTEXT
-                </span>
-                <p className="bg-white/5 p-3 rounded-lg border border-white/5 font-sans text-slate-300">
-                  {currentComponent.historicalContext}
-                </p>
-              </div>
-            </div>
-
-            {/* Quick Specs Grid */}
-            <div className="pt-4 border-t border-white/10 space-y-2">
-              <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-slate-400 block">
-                MISSION SPECIFICATIONS
-              </span>
-              <div className="grid grid-cols-2 gap-2 text-xs font-mono">
-                {activeConfig.specs.map((spec, i) => (
-                  <div key={i} className="bg-white/5 p-2 rounded border border-white/5 space-y-0.5">
-                    <div className="text-[10px] text-slate-400 uppercase truncate">
-                      {spec.label}
-                    </div>
-                    <div className="text-white font-medium text-[11px] truncate">{spec.value}</div>
+                <h3 className="text-base font-serif text-white font-medium leading-snug">
+                  {currentPart.label}
+                </h3>
+                {currentPart.specs.mass && (
+                  <div className="text-[10px] font-mono text-amber-400/90">
+                    MASS: {currentPart.specs.mass}
                   </div>
-                ))}
+                )}
               </div>
+
+              <div className="space-y-3 text-[11px] leading-relaxed text-slate-300">
+                <div className="space-y-1">
+                  <span className="text-[9px] font-mono uppercase tracking-wider text-slate-400 block">FUNCTIONAL PURPOSE</span>
+                  <p className="bg-white/5 p-2.5 rounded-lg border border-white/5 font-sans">
+                    {currentPart.function}
+                  </p>
+                </div>
+
+                <div className="space-y-1">
+                  <span className="text-[9px] font-mono uppercase tracking-wider text-slate-400 block">ENGINEERING SPECIFICATIONS</span>
+                  <div className="bg-amber-500/5 p-2.5 rounded-lg border border-amber-500/10 space-y-1">
+                    {Object.entries(currentPart.specs).map(([key, val]) => (
+                      <div key={key} className="flex gap-1.5 text-[10px] font-mono">
+                        <span className="text-slate-400 uppercase shrink-0">{key.replace(/_/g, ' ')}:</span>
+                        <span className="text-amber-200/90">{val}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <span className="text-[9px] font-mono uppercase tracking-wider text-slate-400 block">MISSION FACTS</span>
+                  <ul className="space-y-1">
+                    {currentPart.missionFacts.map((fact, i) => (
+                      <li key={i} className="bg-white/5 p-2 rounded border border-white/5 font-sans text-[10px] flex gap-2">
+                        <span className="text-amber-500/60 shrink-0 font-mono">•</span>
+                        <span>{fact}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+
+              <div className="pt-3 border-t border-white/10">
+                <a
+                  href={currentPart.source}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center space-x-1.5 text-[10px] font-mono text-amber-400/80 hover:text-amber-300 transition-colors"
+                >
+                  <ExternalLink className="w-3 h-3" />
+                  <span>NASA Source Document</span>
+                </a>
+              </div>
+            </div>
+          )}
+
+          {/* Overview specs */}
+          <div className="p-4 border-t border-white/10 space-y-2 bg-black/20">
+            <span className="text-[9px] font-mono uppercase tracking-[0.2em] text-slate-400 block">
+              MISSION SPECIFICATIONS
+            </span>
+            <div className="grid grid-cols-2 gap-1.5">
+              {activeConfig.overviewSpecs.map((spec, i) => (
+                <div key={i} className="bg-white/5 p-2 rounded border border-white/5 space-y-0.5">
+                  <div className="text-[9px] text-slate-400 uppercase truncate font-mono">{spec.label}</div>
+                  <div className="text-white font-medium text-[10px] font-mono">{spec.value}</div>
+                </div>
+              ))}
             </div>
           </div>
         </div>

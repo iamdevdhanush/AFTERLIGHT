@@ -1,0 +1,148 @@
+[
+  {
+    "id": "mer-pancam-mast",
+    "meshNames": ["Mesh"],
+    "regionBounds": { "yMin": 0.6, "yMax": 1.8, "zMin": 0.1, "zMax": 0.8, "xMin": -0.3, "xMax": 0.3 },
+    "label": "Pancam Mast Assembly (PMA)",
+    "subassembly": "Remote Sensing Mast",
+    "hotspotAnchor": [0, 1.4, 0.5],
+    "explodeVector": [0, 0.9, 0.4],
+    "cameraTarget": {
+      "position": [0, 1.8, 2.5],
+      "lookAt": [0, 1.3, 0.3]
+    },
+    "specs": {
+      "mass": "~4 kg (mast + head assembly)",
+      "dimensions": "1.5 m periscope height above ground",
+      "pancam_resolution": "1024 × 1024 pixels per eye",
+      "wavelengths": "400–1100 nm (8-position filter wheels per camera)",
+      "navcam_fov": "45° × 45° stereo navigation",
+      "pointing": "360° azimuth / -90° to +90° elevation"
+    },
+    "function": "Twin multispectral stereo Panoramic Cameras (Pancam) with 8-position filter wheels for geological mineralogy mapping, plus wide-angle monochrome Navigation Cameras (Navcam) for autonomous path planning and hazard detection.",
+    "missionFacts": [
+      "Captured over 217,000 raw images during 5,352 Martian sols of operation",
+      "Pancam images revealed hematite-rich 'blueberries' at Eagle Crater confirming ancient standing water",
+      "Navcam enabled autonomous navigation — Opportunity could drive several meters per command cycle",
+      "Last Pancam color panorama captured from Perseverance Valley in April 2018 before the global dust storm"
+    ],
+    "source": "https://mars.nasa.gov/mer/mission/instruments/pancam/",
+    "isAuthentic": false
+  },
+  {
+    "id": "mer-rocker-bogie",
+    "meshNames": ["Mesh"],
+    "regionBounds": { "yMin": -0.5, "yMax": 0.3, "xMin": -1.0, "xMax": 1.0, "zMin": -0.9, "zMax": 0.9 },
+    "label": "Rocker-Bogie Mobility System",
+    "subassembly": "Mobility Chassis",
+    "hotspotAnchor": [0.9, -0.1, 0],
+    "explodeVector": [0, -0.6, 0],
+    "cameraTarget": {
+      "position": [2.0, 0.2, 2.0],
+      "lookAt": [0.5, -0.2, 0]
+    },
+    "specs": {
+      "mass": "Not documented separately (rover total 185 kg)",
+      "wheel_diameter": "26 cm aluminum wheels with 19 machined cleats",
+      "wheel_count": "6 (4 steerable: front and rear pairs)",
+      "max_obstacle": "25 cm rocks (rover half-wheel height)",
+      "top_speed": "5 cm/s (0.18 km/h)",
+      "total_distance": "45.16 km over 5,352 sols"
+    },
+    "function": "Springless articulated six-wheel mobility system. Two rocker arms joined by an internal differential crossbar passively distribute weight across all wheels on uneven terrain without any active suspension control.",
+    "missionFacts": [
+      "Successfully escaped the 'Purgatory Dune' sand trap on Sol 446 after 37 days of carefully planned extraction",
+      "Climbed and descended the 32-degree inner slope of Victoria Crater during 1-year crater rim investigation",
+      "Total traverse of 45.16 km — the longest distance driven on another planet at the time of mission end",
+      "Wheels left visible tracks in Martian regolith observed in HiRISE imagery from Mars Reconnaissance Orbiter"
+    ],
+    "source": "https://mars.nasa.gov/mer/mission/rover/wheels/",
+    "isAuthentic": false
+  },
+  {
+    "id": "mer-solar-arrays",
+    "meshNames": ["Mesh"],
+    "regionBounds": { "yMin": 0.3, "yMax": 0.65, "xMin": -1.0, "xMax": 1.0, "zMin": -1.0, "zMax": 1.0 },
+    "label": "Triple-Junction GaAs Solar Arrays",
+    "subassembly": "Electrical Power System",
+    "hotspotAnchor": [0, 0.65, -0.5],
+    "explodeVector": [0, 0.5, -0.3],
+    "cameraTarget": {
+      "position": [0, 1.8, 2.5],
+      "lookAt": [0, 0.5, 0]
+    },
+    "specs": {
+      "peak_power": "~140 W at beginning of mission (Mars solar constant)",
+      "cell_type": "Triple-junction GaAs (gallium arsenide) photovoltaic",
+      "total_area": "1.3 m² (rover deck + deployable side panels)",
+      "battery_backup": "2× 8-Ah lithium-ion secondary batteries",
+      "degradation": "~0.14% per sol dust accumulation (between cleaning events)"
+    },
+    "function": "Gallium arsenide multi-junction photovoltaic panels converting sunlight to electricity. Charged two 8-Ah lithium-ion batteries providing power during night survival and peak demand operations.",
+    "missionFacts": [
+      "Designed for 90-sol life before expected fatal dust accumulation — far exceeded by 14+ years",
+      "Martian dust devil cleaning events repeatedly restored panel output to near-beginning-of-mission levels",
+      "Power dropped from 900 watt-hours to <45 watt-hours per sol as global dust storm peaked in June 2018",
+      "Final power failure occurred ~15:00 PDT June 10, 2018 when storm blocked ~99% of incoming sunlight"
+    ],
+    "source": "https://mars.nasa.gov/mer/mission/rover/power/",
+    "isAuthentic": false
+  },
+  {
+    "id": "mer-robotic-arm",
+    "meshNames": ["Mesh"],
+    "regionBounds": { "yMin": 0.1, "yMax": 0.65, "xMin": 0.4, "xMax": 1.0, "zMin": 0.3, "zMax": 1.0 },
+    "label": "Instrument Deployment Device (IDD)",
+    "subassembly": "Robotic Arm",
+    "hotspotAnchor": [0.7, 0.4, 0.7],
+    "explodeVector": [0.7, 0.1, 0.8],
+    "cameraTarget": {
+      "position": [2.0, 0.6, 1.5],
+      "lookAt": [0.5, 0.3, 0.5]
+    },
+    "specs": {
+      "degrees_of_freedom": "5 (shoulder azimuth, shoulder elevation, elbow, wrist azimuth, wrist elevation)",
+      "reach": "~1.0 m from rover body",
+      "mass": "~4.0 kg (arm) + instruments",
+      "turret_instruments": "MI + APXS + Mössbauer Spectrometer + Rock Abrasion Tool (RAT)"
+    },
+    "function": "Five degree-of-freedom robotic arm deploying a science turret carrying four in-situ contact instruments. Precisely placed instruments against rock and soil targets chosen by scientists on Earth.",
+    "missionFacts": [
+      "Ground into over 100 rock targets using the RAT diamond-bit grinding tool during the 14-year mission",
+      "APXS analysis of Eagle Crater outcrop rocks confirmed sulfate minerals formed in standing liquid water",
+      "Mössbauer Spectrometer identified hematite and jarosite — minerals requiring acidic aqueous environments",
+      "IDD was last commanded on Sol 5109; arm position at mission end is consistent with its final survey pose"
+    ],
+    "source": "https://mars.nasa.gov/mer/mission/instruments/idd/",
+    "isAuthentic": false
+  },
+  {
+    "id": "mer-high-gain-antenna",
+    "meshNames": ["Mesh"],
+    "regionBounds": { "yMin": 0.5, "yMax": 1.0, "xMin": -0.7, "xMax": -0.2, "zMin": -0.8, "zMax": -0.3 },
+    "label": "High-Gain Steerable Dish Antenna (HGA)",
+    "subassembly": "Telecommunications",
+    "hotspotAnchor": [-0.5, 0.75, -0.6],
+    "explodeVector": [-0.5, 0.6, -0.5],
+    "cameraTarget": {
+      "position": [-2.0, 1.0, 1.5],
+      "lookAt": [-0.4, 0.7, -0.3]
+    },
+    "specs": {
+      "mass": "Not documented separately",
+      "dimensions": "28 cm diameter parabolic dish",
+      "frequency": "X-band 7.0–8.4 GHz",
+      "data_rate": "3.5–12 kbps direct-to-Earth",
+      "pointing": "2-axis gimbal, tracks Earth position across Martian sky"
+    },
+    "function": "Gimbaled parabolic dish antenna providing direct X-band communication to NASA Deep Space Network stations on Earth, independent of orbiter relay infrastructure.",
+    "missionFacts": [
+      "Transmitted directly to DSN stations at Goldstone (California), Canberra (Australia), and Madrid (Spain)",
+      "Used for primary science data downlink each afternoon sol following peak solar power period",
+      "Signal travel time to Earth ranged from 3.0 to 21.0 minutes depending on Mars-Earth orbital geometry",
+      "Supplemented by UHF relay through Mars Odyssey and Mars Reconnaissance Orbiter for higher data rates"
+    ],
+    "source": "https://mars.nasa.gov/mer/mission/instruments/antennas/",
+    "isAuthentic": false
+  }
+]
