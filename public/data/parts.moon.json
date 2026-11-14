@@ -10,11 +10,11 @@
     ],
     "label": "Ascent Stage Crew Cabin & Cockpit",
     "subassembly": "Ascent Stage",
-    "hotspotAnchor": [0, 1.3, 0.4],
-    "explodeVector": [0, 1.2, 0],
+    "hotspotAnchor": [0, 3.8, 0.4],
+    "explodeVector": [0, 1.4, 0],
     "cameraTarget": {
-      "position": [0, 1.5, 3.2],
-      "lookAt": [0, 1.1, 0]
+      "position": [0, 1.4, 3.2],
+      "lookAt": [0, 1.2, 0]
     },
     "specs": {
       "mass": "4,769 kg (fueled) / 2,150 kg (dry)",
@@ -44,10 +44,10 @@
     ],
     "label": "LM Descent Stage Chassis & Propellant Tanks",
     "subassembly": "Descent Stage",
-    "hotspotAnchor": [0, -0.2, 0.7],
+    "hotspotAnchor": [0, 2.3, 0.8],
     "explodeVector": [0, -0.8, 0],
     "cameraTarget": {
-      "position": [0, -0.3, 3.6],
+      "position": [0, -0.2, 3.5],
       "lookAt": [0, -0.2, 0]
     },
     "specs": {
@@ -80,11 +80,11 @@
     ],
     "label": "Cantilever Struts & Regolith Footpads",
     "subassembly": "Landing Gear",
-    "hotspotAnchor": [1.4, -1.5, 1.4],
+    "hotspotAnchor": [1.6, 0.9, 1.6],
     "explodeVector": [0.8, -0.9, 0.8],
     "cameraTarget": {
-      "position": [2.6, -1.2, 2.6],
-      "lookAt": [1.2, -1.4, 1.2]
+      "position": [2.6, -1.0, 2.6],
+      "lookAt": [1.2, -1.3, 1.2]
     },
     "specs": {
       "span": "9.45 m diagonal footprint across dish pads",
@@ -97,7 +97,7 @@
       "\"Contact light! OK, engine stop.\" — reported by Buzz Aldrin at 20:17:40 UTC, July 20, 1969",
       "Touchdown was so gentle that the crushable honeycomb barely compressed, leaving the ladder higher than expected",
       "Armstrong had to take a 1-meter jump from the final ladder rung to the footpad dish",
-      "Landing gear remains perfectly intact on the Moon, visible in LRO satellite photography"
+      "Landing gear remains permanently deployed on the Moon, visible in LRO satellite photography"
     ],
     "source": "https://ntrs.nasa.gov/citations/19710015566",
     "isAuthentic": true
@@ -109,10 +109,10 @@
     ],
     "label": "Descent Propulsion System (DPS Gimbaled Nozzle)",
     "subassembly": "Descent Propulsion",
-    "hotspotAnchor": [0, -1.3, 0],
+    "hotspotAnchor": [0, 1.2, 0],
     "explodeVector": [0, -1.2, 0],
     "cameraTarget": {
-      "position": [0, -1.6, 2.8],
+      "position": [0, -1.4, 2.8],
       "lookAt": [0, -1.2, 0]
     },
     "specs": {
@@ -138,11 +138,11 @@
     ],
     "label": "Forward Egress Hatch & Crew Ladder",
     "subassembly": "Crew Systems",
-    "hotspotAnchor": [0, -0.6, 1.8],
+    "hotspotAnchor": [0, 1.6, 2.2],
     "explodeVector": [0, 0, 0.9],
     "cameraTarget": {
       "position": [0.5, -0.6, 3.2],
-      "lookAt": [0, -0.6, 1.8]
+      "lookAt": [0, -0.8, 1.8]
     },
     "specs": {
       "hatch_dimensions": "81 cm × 81 cm (32 in × 32 in) square with rounded corners",
@@ -172,11 +172,11 @@
     ],
     "label": "S-Band Steerable High-Gain Antenna & Upper Deck",
     "subassembly": "Telecommunications",
-    "hotspotAnchor": [0.6, 2.1, 0.6],
+    "hotspotAnchor": [0.5, 4.6, 0.6],
     "explodeVector": [0.6, 1.2, 0.4],
     "cameraTarget": {
-      "position": [1.8, 2.4, 2.4],
-      "lookAt": [0.5, 2.0, 0.5]
+      "position": [1.8, 2.2, 2.4],
+      "lookAt": [0.4, 1.9, 0.5]
     },
     "specs": {
       "dish_diameter": "66 cm (26 in) parabolic mesh reflector",

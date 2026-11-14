@@ -11,9 +11,10 @@
  *
  * Key Technical Capabilities:
  *  - three-mesh-bvh accelerated BVH raycasting across all child meshes
- *  - High-Dynamic-Range Environment Reflection (IBL) & 4-point aerospace studio lighting
+ *  - Guaranteed offline-safe 5-point studio lighting (zero external CDN hangs)
+ *  - Correct material single/array unwrapping (ensures 100% visible polygons)
  *  - Soft contact shadows via Drei <ContactShadows> on circular museum pedestal
- *  - Drei <Center> automatic bounding-box centering and elevation alignment
+ *  - Direct elevation offsets so spacecraft rests naturally on pedestal
  *  - Data-driven JSON manifests (/public/data/parts.*.json) with verified NASA specs
  *  - GSAP camera cinematic fly-to on part selection
  *  - Smooth per-part exploded view lerp
@@ -29,7 +30,7 @@ import React, {
   useCallback,
 } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { OrbitControls, useGLTF, Html, Center, ContactShadows, Environment } from '@react-three/drei';
+import { OrbitControls, useGLTF, Html, ContactShadows } from '@react-three/drei';
 import * as THREE from 'three';
 import { computeBoundsTree, disposeBoundsTree, acceleratedRaycast } from 'three-mesh-bvh';
 import gsap from 'gsap';
@@ -43,7 +44,6 @@ import {
   Cpu,
   ChevronRight,
   ExternalLink,
-  Sparkles,
 } from 'lucide-react';
 
 // Extend THREE prototypes for BVH accelerated raycasting
@@ -87,6 +87,7 @@ interface InspectionModelConfig {
   planet: 'moon' | 'mars';
   modelPath: string;
   modelScale: number;
+  modelPosition: [number, number, number];
   isAuthenticNasaModel: boolean;
   modelTypeLabel: string;
   modelSourceCitation: string;
@@ -106,11 +107,12 @@ const HARDWARE_CONFIGS: Record<string, InspectionModelConfig> = {
     planet: 'moon',
     modelPath: '/models/apollo_lunar_module.glb',
     modelScale: 1.0,
+    modelPosition: [0, -2.5, 0],
     isAuthenticNasaModel: true,
     modelTypeLabel: 'AUTHENTIC NASA 3D MODEL',
     modelSourceCitation: 'NASA 3D Resources / Apollo Lunar Module LM-5 (Official NASA Mesh)',
     manifestPath: '/data/parts.moon.json',
-    initialCamera: [0, 1.2, 5.4],
+    initialCamera: [0, 0.8, 5.6],
     overviewSpecs: [
       { label: 'Total Launch Mass', value: '15,103 kg (33,297 lb)' },
       { label: 'Descent Stage Mass', value: '10,334 kg (fueled)' },
@@ -129,11 +131,12 @@ const HARDWARE_CONFIGS: Record<string, InspectionModelConfig> = {
     planet: 'mars',
     modelPath: '/models/perseverance_rover.glb',
     modelScale: 1.3,
+    modelPosition: [0, -0.85, 0],
     isAuthenticNasaModel: true,
     modelTypeLabel: 'AUTHENTIC NASA 3D MODEL',
     modelSourceCitation: 'NASA Jet Propulsion Laboratory / Mars 2020 Mission (Official NASA CAD Mesh)',
     manifestPath: '/data/parts.perseverance.json',
-    initialCamera: [0, 1.0, 4.6],
+    initialCamera: [0, 0.9, 4.8],
     overviewSpecs: [
       { label: 'Total Rover Mass', value: '1,025 kg (2,260 lb)' },
       { label: 'Dimensions', value: '3.0 m L × 2.7 m W × 2.2 m H' },
@@ -151,12 +154,13 @@ const HARDWARE_CONFIGS: Record<string, InspectionModelConfig> = {
     subtitle: 'Interior Exploration using Seismic Investigations',
     planet: 'mars',
     modelPath: '/models/insight_lander.glb',
-    modelScale: 1.1,
+    modelScale: 0.15,
+    modelPosition: [0, 0.6, 0],
     isAuthenticNasaModel: true,
     modelTypeLabel: 'AUTHENTIC NASA 3D MODEL',
     modelSourceCitation: 'NASA JPL / InSight Mars Lander Flight Hardware (Official NASA Mesh)',
     manifestPath: '/data/parts.insight.json',
-    initialCamera: [0, 1.1, 4.8],
+    initialCamera: [0, 0.8, 5.0],
     overviewSpecs: [
       { label: 'Lander Mass', value: '358 kg (789 lb)' },
       { label: 'Solar Wing Span', value: '5.98 m (19.6 ft) UltraFlex arrays' },
@@ -174,13 +178,14 @@ const HARDWARE_CONFIGS: Record<string, InspectionModelConfig> = {
     subtitle: 'Mars Exploration Rover Historical Hardware',
     planet: 'mars',
     modelPath: '/models/opportunity_rover.glb',
-    modelScale: 1.3,
+    modelScale: 1.1,
+    modelPosition: [0, -0.4, 0],
     isAuthenticNasaModel: false,
     modelTypeLabel: 'ARCHIVAL RECONSTRUCTION (EDUCATIONAL MODEL)',
     modelSourceCitation: 'Reconstructed from NASA JPL MER Blueprint Schematics & Engineering CAD Documentation',
     disclaimer: 'Educational reconstruction based on official NASA JPL technical schematics. Not an authentic NASA CAD export.',
     manifestPath: '/data/parts.mars.json',
-    initialCamera: [0, 1.0, 4.8],
+    initialCamera: [0, 0.8, 4.8],
     overviewSpecs: [
       { label: 'Vehicle Mass', value: '185 kg (408 lb)' },
       { label: 'Dimensions', value: '1.5 m H × 2.3 m W × 1.6 m L' },
@@ -346,41 +351,58 @@ const AuthenticNasaModelRenderer: React.FC<{
         // Save base local position for exploded view lerp
         basePosRef.current.set(mesh.uuid, mesh.position.clone());
 
-        // PBR Material Enhancement
+        // PBR Material Enhancement (CRITICAL: preserve single/array material shape!)
         if (mesh.material) {
-          const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
-          mesh.material = mats.map((originalMat) => {
+          const isArray = Array.isArray(mesh.material);
+          const mats = isArray
+            ? (mesh.material as THREE.Material[])
+            : [mesh.material as THREE.Material];
+
+          const newMats = mats.map((originalMat) => {
             if (!(originalMat instanceof THREE.MeshStandardMaterial)) {
               return originalMat;
             }
             const mat = originalMat.clone();
-            mat.envMapIntensity = 1.6;
-
             const name = mat.name.toLowerCase();
 
             // Enhance metallic foil, thermal blankets, and aluminum surfaces
-            if (name.includes('blinn1') || name.includes('blinn9') || name.includes('blinn10') || name.includes('gold') || name.includes('foil')) {
-              mat.metalness = 0.94;
-              mat.roughness = 0.22;
-              // If there's no map texture, tint with rich Kapton gold
+            if (
+              name.includes('blinn1') ||
+              name.includes('blinn9') ||
+              name.includes('blinn10') ||
+              name.includes('gold') ||
+              name.includes('foil')
+            ) {
+              mat.metalness = 0.92;
+              mat.roughness = 0.25;
               if (!mat.map) {
                 mat.color.set('#d97706');
               }
-            } else if (name.includes('blinn6') || name.includes('heat') || name.includes('nickel') || name.includes('black') || name.includes('gunmetal')) {
+            } else if (
+              name.includes('blinn6') ||
+              name.includes('heat') ||
+              name.includes('nickel') ||
+              name.includes('black') ||
+              name.includes('gunmetal')
+            ) {
               mat.metalness = 0.65;
-              mat.roughness = 0.38;
+              mat.roughness = 0.4;
               if (!mat.map) {
                 mat.color.set('#1a1a1f');
               }
-            } else if (name.includes('aluminum') || name.includes('grey') || name.includes('chassis')) {
+            } else if (
+              name.includes('aluminum') ||
+              name.includes('grey') ||
+              name.includes('chassis')
+            ) {
               mat.metalness = 0.85;
-              mat.roughness = 0.32;
+              mat.roughness = 0.35;
             } else if (name.includes('lens') || name.includes('glass')) {
               mat.metalness = 0.92;
-              mat.roughness = 0.04;
+              mat.roughness = 0.05;
             } else if (name.includes('solar') || name.includes('panel')) {
-              mat.metalness = 0.96;
-              mat.roughness = 0.12;
+              mat.metalness = 0.95;
+              mat.roughness = 0.15;
             } else {
               mat.metalness = Math.max(mat.metalness, 0.4);
               mat.roughness = Math.min(mat.roughness, 0.55);
@@ -388,9 +410,9 @@ const AuthenticNasaModelRenderer: React.FC<{
 
             return mat;
           });
-          if (!Array.isArray(mesh.material) && (mesh.material as any).length === 1) {
-            mesh.material = (mesh.material as any)[0];
-          }
+
+          // Unpack single material so BufferGeometry draws faces properly!
+          mesh.material = isArray ? newMats : newMats[0];
         }
       }
     });
@@ -512,16 +534,13 @@ const AuthenticNasaModelRenderer: React.FC<{
   );
 
   return (
-    <group ref={groupRef} scale={config.modelScale}>
-      {/* Drei Center automatically computes bounding box and centers spacecraft symmetrically */}
-      <Center>
-        <primitive
-          object={clonedScene}
-          onPointerMove={handlePointerMove}
-          onPointerOut={() => onHoverPart(null)}
-          onClick={handleClick}
-        />
-      </Center>
+    <group ref={groupRef} position={config.modelPosition} scale={config.modelScale}>
+      <primitive
+        object={clonedScene}
+        onPointerMove={handlePointerMove}
+        onPointerOut={() => onHoverPart(null)}
+        onClick={handleClick}
+      />
 
       {/* Hotspot pin markers anchored to real spacecraft locations */}
       {parts.map((part, i) => (
@@ -600,29 +619,29 @@ const StudioSceneCanvas: React.FC<{
 
   return (
     <>
-      {/* 4-Point High-Fidelity Aerospace Studio Lighting */}
-      <ambientLight intensity={0.4} />
+      {/* 5-Point Offline-Safe Aerospace Studio Lighting Rig */}
+      <ambientLight intensity={0.65} />
 
-      {/* Sun / Key Light */}
+      {/* Main Solar / Key Spotlight */}
       <directionalLight
         position={[8, 12, 6]}
-        intensity={2.0}
+        intensity={2.2}
         castShadow
-        shadow-mapSize={[2048, 2048]}
+        shadow-mapSize={[1024, 1024]}
         shadow-bias={-0.0001}
       />
 
       {/* Deep Space Fill Light (cool blue tint) */}
-      <directionalLight position={[-8, 4, -5]} intensity={0.8} color="#93c5fd" />
+      <directionalLight position={[-8, 4, -5]} intensity={1.1} color="#93c5fd" />
 
-      {/* Spacecraft Silhouette Rim Light (warm edge glow) */}
-      <directionalLight position={[0, 8, -10]} intensity={1.6} color="#fef08a" />
+      {/* Spacecraft Silhouette Rim Light (warm golden highlight) */}
+      <directionalLight position={[0, 8, -10]} intensity={1.8} color="#fef08a" />
 
-      {/* Ground Bounce Light */}
-      <hemisphereLight args={['#ffffff', '#0f172a', 0.5]} />
+      {/* Front Accent Fill Light */}
+      <pointLight position={[0, 3, 3]} intensity={0.8} />
 
-      {/* Image-Based Lighting Reflection Environment */}
-      <Environment preset="city" />
+      {/* Soft Ground & Sky Hemisphere Ambient */}
+      <hemisphereLight args={['#ffffff', '#0f172a', 0.65]} />
 
       <Suspense
         fallback={
@@ -649,25 +668,25 @@ const StudioSceneCanvas: React.FC<{
 
       {/* Realistic Soft Contact Shadow on Pedestal */}
       <ContactShadows
-        position={[0, -1.8, 0]}
-        opacity={0.8}
+        position={[0, -2.48, 0]}
+        opacity={0.75}
         scale={14}
-        blur={2.2}
+        blur={2.0}
         far={4.5}
         color="#000000"
       />
 
       {/* Sleek Aerospace Museum Display Plinth */}
-      <mesh position={[0, -1.81, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+      <mesh position={[0, -2.49, 0]} rotation={[-Math.PI / 2, 0, 0]}>
         <circleGeometry args={[5.2, 64]} />
         <meshStandardMaterial color="#080b12" roughness={0.8} metalness={0.2} />
       </mesh>
       {/* Subtle Concentric Alignment Range Rings */}
-      <mesh position={[0, -1.805, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+      <mesh position={[0, -2.485, 0]} rotation={[-Math.PI / 2, 0, 0]}>
         <ringGeometry args={[4.6, 4.62, 64]} />
         <meshBasicMaterial color="#334155" transparent opacity={0.35} side={THREE.DoubleSide} />
       </mesh>
-      <mesh position={[0, -1.805, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+      <mesh position={[0, -2.485, 0]} rotation={[-Math.PI / 2, 0, 0]}>
         <ringGeometry args={[2.8, 2.815, 64]} />
         <meshBasicMaterial color="#334155" transparent opacity={0.2} side={THREE.DoubleSide} />
       </mesh>
@@ -826,7 +845,7 @@ export const HardwareInspectionStudio: React.FC<HardwareInspectionProps> = ({
         {/* Left 3D Viewport */}
         <div className="flex-1 relative h-[55vh] lg:h-full bg-gradient-to-b from-[#080B11] via-[#05070B] to-[#020305]">
           <Canvas
-            camera={{ position: activeConfig.initialCamera, fov: 40 }}
+            camera={{ position: activeConfig.initialCamera, fov: 42 }}
             className="w-full h-full cursor-grab active:cursor-grabbing"
             shadows
             gl={{
