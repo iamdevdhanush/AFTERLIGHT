@@ -10,7 +10,8 @@ export type ExperienceState =
   | 'ARTIFACT_INSPECTION'
   | 'STORY_CHAPTER'
   | 'LEGACY'
-  | 'RETURN_TO_EXPLORATION';
+  | 'RETURN_TO_EXPLORATION'
+  | 'PLANETARY_ARCHAEOLOGY';
 
 export type DestinationId = 'moon' | 'mars' | 'deep_space';
 

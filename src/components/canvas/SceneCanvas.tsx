@@ -21,12 +21,13 @@ export const SceneCanvas: React.FC = () => {
     (state === 'DESTINATION_SELECT' || state === 'ENVIRONMENT_LOADING') &&
     (activeEnvironment === 'moon' || activeEnvironment === 'mars');
 
-  // Museum exhibition & detail screens render dedicated photography/models over #080B10
+  // Museum exhibition, detail screens & dedicated 3D planetary archaeology render dedicated views
   const isMuseumEditorialView =
     state === 'EXHIBITION' ||
     state === 'ARTIFACT_DETAILS' ||
     state === 'STORY_CHAPTER' ||
-    state === 'LEGACY';
+    state === 'LEGACY' ||
+    state === 'PLANETARY_ARCHAEOLOGY';
 
   if (isMuseumEditorialView) {
     return <div className="absolute inset-0 w-full h-full z-0 bg-[#080B10]" />;
