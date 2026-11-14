@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useExperienceStore } from './store/useExperienceStore';
 import { SceneCanvas } from './components/canvas/SceneCanvas';
 import { ScreenArrival } from './components/ui/ScreenArrival';
@@ -10,12 +10,35 @@ import { ScreenArtifactDetails } from './components/ui/ScreenArtifactDetails';
 import { ScreenDocumentary } from './components/ui/ScreenDocumentary';
 import { ScreenLegacy } from './components/ui/ScreenLegacy';
 import { ScreenLoading } from './components/ui/ScreenLoading';
+<<<<<<< HEAD
 import { PlanetaryArchaeologyModule } from './modules/planetary-archaeology';
+=======
+import { navigation } from './navigation/navigationController';
+>>>>>>> upstream/master
 
 export const App: React.FC = () => {
   const state = useExperienceStore((s) => s.state);
   const currentDestination = useExperienceStore((s) => s.currentDestination);
   const setState = useExperienceStore((s) => s.setState);
+
+  // Initialize browser history and route synchronization
+  useEffect(() => {
+    navigation.init();
+  }, []);
+
+  const isKnownState =
+    state === 'ARRIVAL' ||
+    state === 'DESTINATION_SELECT' ||
+    state === 'ENVIRONMENT_LOADING' ||
+    state === 'EXHIBITION' ||
+    state === 'ARTIFACT_DETAILS' ||
+    state === 'GUIDED_INTRO' ||
+    state === 'FREE_EXPLORATION' ||
+    state === 'RETURN_TO_EXPLORATION' ||
+    state === 'ARTIFACT_APPROACH' ||
+    state === 'ARTIFACT_INSPECTION' ||
+    state === 'STORY_CHAPTER' ||
+    state === 'LEGACY';
 
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-void text-starlight font-sans">
@@ -45,6 +68,7 @@ export const App: React.FC = () => {
       {state === 'STORY_CHAPTER' && <ScreenDocumentary />}
       {state === 'LEGACY' && <ScreenLegacy />}
 
+<<<<<<< HEAD
       {/* 4. ISOLATED 3D PLANETARY ARCHAEOLOGY MODULE (Moon & Mars Real Surface Data) */}
       {state === 'PLANETARY_ARCHAEOLOGY' && (
         <PlanetaryArchaeologyModule
@@ -52,6 +76,10 @@ export const App: React.FC = () => {
           onExit={() => setState('DESTINATION_SELECT')}
         />
       )}
+=======
+      {/* 4. RECOVERY FALLBACK FOR INVALID OR UNRECOGNIZED STATE */}
+      {!isKnownState && <ScreenArrival />}
+>>>>>>> upstream/master
     </div>
   );
 };

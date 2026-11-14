@@ -26,7 +26,7 @@ export const ApolloEagleModel: React.FC<ApolloEagleModelProps> = ({
   const isExploration = state === 'FREE_EXPLORATION';
 
   // Load official NASA 3D model
-  const { scene } = useGLTF('/models/apollo_lunar_module.glb');
+  const { scene } = useGLTF('/models/apollo_lunar_module.glb', '/draco/');
 
   // Clone and configure materials with physically accurate lunar PBR
   const clonedScene = useMemo(() => {

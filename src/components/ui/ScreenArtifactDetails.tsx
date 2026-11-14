@@ -21,6 +21,8 @@ import { ARTIFACTS } from '../../data/artifacts';
 import { DESTINATIONS } from '../../data/destinations';
 import { getDestinationTheme } from '../../theme/tokens';
 import { ArtifactComponent } from '../../types';
+import { navigation } from '../../navigation/navigationController';
+import { guideVoiceEngine } from '../../audio/GuideVoiceEngine';
 
 interface ScreenArtifactDetailsProps {
   onClose?: () => void;
@@ -44,17 +46,28 @@ export const ScreenArtifactDetails: React.FC<ScreenArtifactDetailsProps> = ({ on
   const dest = artifact ? DESTINATIONS[artifact.destination] || DESTINATIONS.moon : DESTINATIONS.moon;
   const destTheme = artifact ? getDestinationTheme(artifact.destination) : getDestinationTheme('moon');
 
+  const handleClose = () => {
+    if (onClose) onClose();
+    else navigation.goBack();
+  };
+
   // Keyboard navigation: Escape key closes the detail overlay
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        if (onClose) onClose();
-        else returnToExhibition();
+        handleClose();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onClose, returnToExhibition]);
+  }, [handleClose]);
+
+  // Cleanly silence narration when exiting the artifact screen
+  useEffect(() => {
+    return () => {
+      guideVoiceEngine.stop(false);
+    };
+  }, []);
 
   // Reset active photo if artifact switches
   useEffect(() => {
@@ -63,12 +76,24 @@ export const ScreenArtifactDetails: React.FC<ScreenArtifactDetailsProps> = ({ on
     setHoveredHotspotId(null);
   }, [selectedArtifactId]);
 
-  if (!artifact) return null;
-
-  const handleClose = () => {
-    if (onClose) onClose();
-    else returnToExhibition();
-  };
+  if (!artifact) {
+    return (
+      <div className="fixed inset-0 z-50 bg-obsidian text-bone flex flex-col items-center justify-center p-8 space-y-4 text-center select-none">
+        <Compass className="w-8 h-8 text-[#DEB275] animate-pulse" />
+        <h2 className="font-serif text-2xl text-bone">Artifact Not Found in Sector Archive</h2>
+        <p className="font-sans text-xs text-stone-secondary max-w-sm">
+          The requested artifact ID could not be located in the current planetary telemetry.
+        </p>
+        <button
+          type="button"
+          onClick={() => navigation.toExhibition()}
+          className="px-5 py-2.5 bg-signal text-obsidian font-mono text-xs uppercase tracking-wider font-semibold"
+        >
+          RETURN TO EXHIBITION
+        </button>
+      </div>
+    );
+  }
 
   const gallery =
     artifact.galleryImages && artifact.galleryImages.length > 0
@@ -183,50 +208,51 @@ export const ScreenArtifactDetails: React.FC<ScreenArtifactDetailsProps> = ({ on
 
             {/* Primary Visual Showcase (Archival Photography or Interactive 3D Turntable) */}
             <div className="space-y-3.5">
-              {/* Controls bar above showcase (if 3D model is available) */}
-              {artifact.has3DModel && (
-                <div className="flex items-center justify-end text-xs font-mono">
-                  <div className="inline-flex items-center space-x-4 text-[10px] tracking-[0.16em] uppercase">
-                    <button
-                      type="button"
-                      onClick={() => setViewMode('photo')}
-                      className={`inline-flex items-center space-x-1.5 pb-0.5 transition-colors ${
-                        viewMode === 'photo'
-                          ? 'border-b font-semibold'
-                          : 'text-stone-muted hover:text-bone'
-                      }`}
-                      style={{
-                        color: viewMode === 'photo' ? '#DEB275' : undefined,
-                        borderColor: viewMode === 'photo' ? '#DEB275' : 'transparent',
-                      }}
-                    >
-                      <Camera className="w-3 h-3" />
-                      <span>PHOTOGRAPH</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setViewMode('3d')}
-                      className={`inline-flex items-center space-x-1.5 pb-0.5 transition-colors ${
-                        viewMode === '3d'
-                          ? 'border-b font-semibold'
-                          : 'text-stone-muted hover:text-bone'
-                      }`}
-                      style={{
-                        color: viewMode === '3d' ? '#DEB275' : undefined,
-                        borderColor: viewMode === '3d' ? '#DEB275' : 'transparent',
-                      }}
-                    >
-                      <Box className="w-3 h-3" />
-                      <span>3D HARDWARE</span>
-                    </button>
-                  </div>
+              {/* Controls bar above showcase */}
+              <div className="flex items-center justify-end text-xs font-mono">
+                <div className="inline-flex items-center space-x-4 text-[10px] tracking-[0.16em] uppercase">
+                  <button
+                    type="button"
+                    onClick={() => setViewMode('photo')}
+                    className={`inline-flex items-center space-x-1.5 pb-0.5 transition-colors ${
+                      viewMode === 'photo'
+                        ? 'border-b font-semibold'
+                        : 'text-stone-muted hover:text-bone'
+                    }`}
+                    style={{
+                      color: viewMode === 'photo' ? '#DEB275' : undefined,
+                      borderColor: viewMode === 'photo' ? '#DEB275' : 'transparent',
+                    }}
+                  >
+                    <Camera className="w-3 h-3" />
+                    <span>PHOTOGRAPH</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setViewMode('3d')}
+                    className={`inline-flex items-center space-x-1.5 pb-0.5 transition-colors ${
+                      viewMode === '3d'
+                        ? 'border-b font-semibold'
+                        : 'text-stone-muted hover:text-bone'
+                    }`}
+                    style={{
+                      color: viewMode === '3d' ? '#DEB275' : undefined,
+                      borderColor: viewMode === '3d' ? '#DEB275' : 'transparent',
+                    }}
+                  >
+                    <Box className="w-3 h-3" />
+                    <span>{artifact.has3DModel ? '3D HARDWARE' : '3D STATUS'}</span>
+                  </button>
                 </div>
-              )}
+              </div>
 
               {/* Showcase Frame with Interactive Hotspots Overlay */}
               <div className="relative w-full aspect-[16/10] bg-surface overflow-hidden border border-meteorite shadow-2xl group">
-                {viewMode === '3d' && artifact.has3DModel ? (
-                  <Artifact3DStage artifactId={artifact.id} />
+                {viewMode === '3d' ? (
+                  <Artifact3DStage
+                    artifactId={artifact.id}
+                    onSwitchToPhoto={() => setViewMode('photo')}
+                  />
                 ) : (
                   <>
                     <motion.img

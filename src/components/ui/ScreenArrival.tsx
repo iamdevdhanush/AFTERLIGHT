@@ -22,7 +22,7 @@ export const ScreenArrival: React.FC = () => {
           </span>
         </div>
         <div className="hidden md:flex items-center space-x-6 text-xs font-mono tracking-wider text-stone-secondary">
-          <span>APOLLO 11 · MER-B · VOYAGER 1</span>
+          <span>APOLLO 11 · MER-B · INSIGHT</span>
           <span>SOLAR SYSTEM HISTORICAL REGISTER</span>
         </div>
       </motion.div>
@@ -53,7 +53,7 @@ export const ScreenArrival: React.FC = () => {
         >
           An interactive archive of the machines that changed our understanding of space.
           Explore the rovers, landers, and scientific hardware humanity left behind across
-          the Moon, Mars, and interstellar space.
+          the Moon and Mars.
         </motion.p>
 
         {/* Primary Action Button (Signal Vermilion) */}
@@ -93,11 +93,6 @@ export const ScreenArrival: React.FC = () => {
           <span className="flex items-center space-x-1.5">
             <span className="text-signal">02.</span>
             <span>MARS</span>
-          </span>
-          <span className="text-meteorite">•</span>
-          <span className="flex items-center space-x-1.5">
-            <span className="text-oxidized">03.</span>
-            <span>DEEP SPACE</span>
           </span>
         </div>
         <div className="mt-3 md:mt-0 text-stone-muted">

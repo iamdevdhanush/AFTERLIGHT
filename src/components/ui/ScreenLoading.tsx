@@ -1,33 +1,51 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
+import { ArrowRight } from 'lucide-react';
 import { useExperienceStore } from '../../store/useExperienceStore';
 import { DESTINATIONS } from '../../data/destinations';
 import { getDestinationTheme } from '../../theme/tokens';
+import { navigation } from '../../navigation/navigationController';
 
 export const ScreenLoading: React.FC = () => {
   const currentDestination = useExperienceStore((s) => s.currentDestination);
   const reducedMotion = useExperienceStore((s) => s.reducedMotion);
-  const destData = DESTINATIONS[currentDestination];
-  const destTheme = getDestinationTheme(currentDestination);
+  const validDest = currentDestination === 'mars' ? 'mars' : 'moon';
+  const destData = DESTINATIONS[validDest] || DESTINATIONS.moon;
+  const destTheme = getDestinationTheme(validDest);
 
-  const isOrbitalDescent = currentDestination === 'moon' || currentDestination === 'mars';
+  const [showManualSkip, setShowManualSkip] = useState(false);
+
+  // Safety timer to prevent any stuck loading screens
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowManualSkip(true);
+    }, 1800);
+
+    const forceTimer = setTimeout(() => {
+      navigation.toExhibition(validDest);
+    }, 3200);
+
+    return () => {
+      clearTimeout(timer);
+      clearTimeout(forceTimer);
+    };
+  }, [validDest]);
+
   const subtitle =
-    currentDestination === 'moon'
+    validDest === 'moon'
       ? 'DESCENDING TO MARE TRANQUILLITATIS'
-      : currentDestination === 'mars'
-      ? 'ENTERING MARTIAN ORBIT'
-      : 'ALIGNING DEEP SPACE TRAJECTORY';
+      : 'ENTERING MARTIAN ORBIT';
 
   return (
     <div className="absolute inset-0 z-30 pointer-events-none select-none overflow-hidden">
       {/* Smooth crossfade veil timed cleanly into the exhibition transition */}
       <motion.div
-        initial={{ opacity: isOrbitalDescent ? 0 : 0.85 }}
+        initial={{ opacity: 0 }}
         animate={{ opacity: 0.98 }}
         exit={{ opacity: 0 }}
         transition={{
-          delay: isOrbitalDescent && !reducedMotion ? 0.35 : 0,
-          duration: isOrbitalDescent && !reducedMotion ? 0.75 : 0.4,
+          delay: !reducedMotion ? 0.35 : 0,
+          duration: !reducedMotion ? 0.75 : 0.4,
           ease: 'easeInOut',
         }}
         className="absolute inset-0 bg-obsidian"
@@ -62,13 +80,31 @@ export const ScreenLoading: React.FC = () => {
               initial={{ scaleX: 0 }}
               animate={{ scaleX: 1 }}
               transition={{
-                duration: isOrbitalDescent && !reducedMotion ? 1.1 : 0.55,
+                duration: !reducedMotion ? 1.1 : 0.55,
                 ease: [0.22, 1, 0.36, 1],
               }}
               style={{ transformOrigin: 'left', backgroundColor: destTheme.accent }}
               className="h-full"
             />
           </div>
+
+          {/* Safety proceed button for user recovery */}
+          {showManualSkip && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="pt-2"
+            >
+              <button
+                type="button"
+                onClick={() => navigation.toExhibition(validDest)}
+                className="pointer-events-auto inline-flex items-center space-x-1.5 font-mono text-[10px] tracking-wider text-stone-secondary hover:text-bone uppercase border border-meteorite px-2.5 py-1 bg-surface"
+              >
+                <span>PROCEED TO EXHIBITION</span>
+                <ArrowRight className="w-3 h-3" />
+              </button>
+            </motion.div>
+          )}
         </div>
       </motion.div>
     </div>

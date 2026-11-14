@@ -6,6 +6,8 @@ import { ARTIFACTS } from '../../data/artifacts';
 import { soundManager } from '../../audio/SoundManager';
 import { getDestinationTheme } from '../../theme/tokens';
 import { CuratorPresenter2D } from './CuratorPresenter2D';
+import { navigation } from '../../navigation/navigationController';
+import { guideVoiceEngine } from '../../audio/GuideVoiceEngine';
 
 export const ScreenDocumentary: React.FC = () => {
   const selectedArtifactId = useExperienceStore((s) => s.selectedArtifactId);
@@ -42,12 +44,19 @@ export const ScreenDocumentary: React.FC = () => {
       } else if (e.key === 'ArrowLeft') {
         prevStoryChapter();
       } else if (e.key === 'Escape') {
-        returnToArtifactDetails();
+        navigation.goBack();
       }
     };
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
-  }, [isLastChapter, nextStoryChapter, prevStoryChapter, enterLegacy, returnToArtifactDetails]);
+  }, [isLastChapter, nextStoryChapter, prevStoryChapter, enterLegacy]);
+
+  // Clean up narration audio when leaving documentary
+  useEffect(() => {
+    return () => {
+      guideVoiceEngine.stop(false);
+    };
+  }, []);
 
   // Optional auto-play progression
   useEffect(() => {
@@ -60,7 +69,23 @@ export const ScreenDocumentary: React.FC = () => {
     return () => clearTimeout(timer);
   }, [isAutoPlaying, activeChapterIndex, isLastChapter, nextStoryChapter]);
 
-  if (!artifact || !currentChapter) return null;
+  if (!artifact || !currentChapter) {
+    return (
+      <div className="fixed inset-0 z-50 bg-obsidian text-bone flex flex-col items-center justify-center p-8 space-y-4 text-center select-none">
+        <h2 className="font-serif text-2xl text-bone">Documentary Chapter Unavailable</h2>
+        <p className="font-sans text-xs text-stone-secondary max-w-sm">
+          The requested story chapter could not be found for this artifact.
+        </p>
+        <button
+          type="button"
+          onClick={() => navigation.toExhibition()}
+          className="px-5 py-2.5 bg-signal text-obsidian font-mono text-xs uppercase tracking-wider font-semibold"
+        >
+          RETURN TO EXHIBITION
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-40 bg-obsidian text-bone overflow-hidden select-none flex flex-col justify-between">

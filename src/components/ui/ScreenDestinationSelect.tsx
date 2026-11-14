@@ -1,10 +1,15 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+<<<<<<< HEAD
 import { ArrowRight, Compass, Pause, Play } from 'lucide-react';
+=======
+import { ArrowLeft, ArrowRight, Pause, Play } from 'lucide-react';
+>>>>>>> upstream/master
 import { useExperienceStore } from '../../store/useExperienceStore';
 import { DESTINATIONS } from '../../data/destinations';
 import { DestinationId } from '../../types';
 import { getDestinationTheme } from '../../theme/tokens';
+import { navigation } from '../../navigation/navigationController';
 
 export const ScreenDestinationSelect: React.FC = () => {
   const selectDestination = useExperienceStore((s) => s.selectDestination);
@@ -15,23 +20,36 @@ export const ScreenDestinationSelect: React.FC = () => {
   const toggleRotationPaused = useExperienceStore((s) => s.toggleRotationPaused);
   const reducedMotion = useExperienceStore((s) => s.reducedMotion);
 
-  const destinationList: DestinationId[] = ['moon', 'mars', 'deep_space'];
+  // Exclusively Moon and Mars
+  const destinationList: DestinationId[] = ['moon', 'mars'];
   const activeData = DESTINATIONS[currentDestination] || DESTINATIONS.moon;
   const activeTheme = getDestinationTheme(currentDestination);
-  const isOrbitalGlobe = currentDestination === 'moon' || currentDestination === 'mars';
 
   return (
     <div className="relative z-10 w-full h-full flex flex-col justify-between p-7 md:p-14 pointer-events-none select-none">
       {/* Top Minimal Header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-3">
-          <div
-            className="w-2 h-2 rounded-full transition-colors duration-500"
-            style={{ backgroundColor: activeTheme.accent }}
-          />
-          <span className="font-mono text-xs uppercase tracking-[0.2em] text-bone font-medium">
-            AFTERLIGHT
-          </span>
+        <div className="flex items-center space-x-4">
+          <button
+            type="button"
+            onClick={() => navigation.toArrival()}
+            className="pointer-events-auto inline-flex items-center space-x-1.5 text-stone-muted hover:text-bone text-xs font-mono tracking-[0.16em] uppercase transition-colors"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            <span>ARRIVAL</span>
+          </button>
+
+          <span className="text-meteorite font-mono text-xs hidden sm:inline">/</span>
+
+          <div className="flex items-center space-x-3">
+            <div
+              className="w-2 h-2 rounded-full transition-colors duration-500"
+              style={{ backgroundColor: activeTheme.accent }}
+            />
+            <span className="font-mono text-xs uppercase tracking-[0.2em] text-bone font-medium">
+              AFTERLIGHT
+            </span>
+          </div>
         </div>
 
         {/* Destination-Specific Nav with Active Accent Underline */}
@@ -177,32 +195,26 @@ export const ScreenDestinationSelect: React.FC = () => {
 
       {/* Bottom Telemetry Bar + Rotation Control */}
       <div className="flex items-center justify-between text-[11px] font-mono tracking-[0.16em] text-stone-muted pt-4 border-t border-meteorite">
-        <span>
-          {isOrbitalGlobe
-            ? 'DRAG GLOBE TO ROTATE · SCROLL TO ZOOM SURFACE'
-            : 'DEEP SPACE INTERSTELLAR TELEMETRY ESTABLISHED'}
-        </span>
+        <span>DRAG GLOBE TO ROTATE · SCROLL TO ZOOM SURFACE</span>
 
-        {isOrbitalGlobe && (
-          <button
-            type="button"
-            onClick={toggleRotationPaused}
-            aria-pressed={isRotationPaused}
-            className="pointer-events-auto inline-flex items-center space-x-2 text-stone-secondary hover:text-bone transition-colors duration-200 uppercase"
-          >
-            {isRotationPaused || reducedMotion ? (
-              <>
-                <Play className="w-3.5 h-3.5" style={{ color: activeTheme.accent }} />
-                <span>{reducedMotion ? 'REDUCED MOTION' : 'RESUME ROTATION'}</span>
-              </>
-            ) : (
-              <>
-                <Pause className="w-3.5 h-3.5" style={{ color: activeTheme.accent }} />
-                <span>PAUSE ROTATION</span>
-              </>
-            )}
-          </button>
-        )}
+        <button
+          type="button"
+          onClick={toggleRotationPaused}
+          aria-pressed={isRotationPaused}
+          className="pointer-events-auto inline-flex items-center space-x-2 text-stone-secondary hover:text-bone transition-colors duration-200 uppercase"
+        >
+          {isRotationPaused || reducedMotion ? (
+            <>
+              <Play className="w-3.5 h-3.5" style={{ color: activeTheme.accent }} />
+              <span>{reducedMotion ? 'REDUCED MOTION' : 'RESUME ROTATION'}</span>
+            </>
+          ) : (
+            <>
+              <Pause className="w-3.5 h-3.5" style={{ color: activeTheme.accent }} />
+              <span>PAUSE ROTATION</span>
+            </>
+          )}
+        </button>
       </div>
     </div>
   );

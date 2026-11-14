@@ -4,14 +4,50 @@ import { ArrowLeft, ExternalLink } from 'lucide-react';
 import { useExperienceStore } from '../../store/useExperienceStore';
 import { ARTIFACTS } from '../../data/artifacts';
 import { getDestinationTheme } from '../../theme/tokens';
+import { navigation } from '../../navigation/navigationController';
+import { guideVoiceEngine } from '../../audio/GuideVoiceEngine';
 
 export const ScreenLegacy: React.FC = () => {
   const selectedArtifactId = useExperienceStore((s) => s.selectedArtifactId);
   const returnToExhibition = useExperienceStore((s) => s.returnToExhibition);
   const returnToArtifactDetails = useExperienceStore((s) => s.returnToArtifactDetails);
 
+  // Escape key handler
+  React.useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        navigation.goBack();
+      }
+    };
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, []);
+
+  // Clean up any narration audio when leaving legacy screen
+  React.useEffect(() => {
+    return () => {
+      guideVoiceEngine.stop(false);
+    };
+  }, []);
+
   const artifact = selectedArtifactId ? ARTIFACTS[selectedArtifactId] : null;
-  if (!artifact) return null;
+  if (!artifact) {
+    return (
+      <div className="fixed inset-0 z-50 bg-obsidian text-bone flex flex-col items-center justify-center p-8 space-y-4 text-center select-none">
+        <h2 className="font-serif text-2xl text-bone">Legacy Record Unavailable</h2>
+        <p className="font-sans text-xs text-stone-secondary max-w-sm">
+          No legacy telemetry record could be found for this artifact.
+        </p>
+        <button
+          type="button"
+          onClick={() => navigation.toExhibition()}
+          className="px-5 py-2.5 bg-signal text-obsidian font-mono text-xs uppercase tracking-wider font-semibold"
+        >
+          RETURN TO EXHIBITION
+        </button>
+      </div>
+    );
+  }
 
   const destTheme = getDestinationTheme(artifact.destination);
 
