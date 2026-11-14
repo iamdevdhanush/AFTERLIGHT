@@ -50,6 +50,7 @@ interface ExperienceStore {
   returnToExhibition: () => void;
   returnToExploration: () => void;
   returnToDestinations: () => void;
+  enterPlanetaryArchaeology: () => void;
   setCameraAnimating: (isAnimating: boolean) => void;
   toggleAudio: () => void;
   setAudioVolume: (vol: number) => void;
@@ -65,7 +66,11 @@ const getInitialFromUrl = (): { state: ExperienceState; dest: DestinationId; art
   const params = new URLSearchParams(window.location.search);
   const rawState = params.get('state');
   const rawDest = params.get('dest');
-  const state: ExperienceState = (rawState as ExperienceState) || 'ARRIVAL';
+  const moduleParam = params.get('module');
+  const state: ExperienceState =
+    moduleParam === 'planetary3d' || rawState === 'PLANETARY_ARCHAEOLOGY'
+      ? 'PLANETARY_ARCHAEOLOGY'
+      : (rawState as ExperienceState) || 'ARRIVAL';
   const dest: DestinationId = (rawDest as DestinationId) || 'moon';
   const artifact = params.get('artifact') || (state.includes('ARTIFACT') || state === 'LEGACY' || state === 'STORY_CHAPTER' ? 'apollo11_eagle' : null);
   return { state, dest, artifact };
@@ -232,6 +237,16 @@ export const useExperienceStore = create<ExperienceStore>((set, get) => ({
       selectedComponentId: null,
       hoveredArtifactId: null,
       savedCamera: null,
+    });
+  },
+
+  enterPlanetaryArchaeology: () => {
+    soundManager.playTransitionSwoosh();
+    set({
+      state: 'PLANETARY_ARCHAEOLOGY',
+      selectedArtifactId: null,
+      selectedComponentId: null,
+      hoveredArtifactId: null,
     });
   },
 

@@ -10,9 +10,12 @@ import { ScreenArtifactDetails } from './components/ui/ScreenArtifactDetails';
 import { ScreenDocumentary } from './components/ui/ScreenDocumentary';
 import { ScreenLegacy } from './components/ui/ScreenLegacy';
 import { ScreenLoading } from './components/ui/ScreenLoading';
+import { PlanetaryArchaeologyModule } from './modules/planetary-archaeology';
 
 export const App: React.FC = () => {
   const state = useExperienceStore((s) => s.state);
+  const currentDestination = useExperienceStore((s) => s.currentDestination);
+  const setState = useExperienceStore((s) => s.setState);
 
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-void text-starlight font-sans">
@@ -41,6 +44,14 @@ export const App: React.FC = () => {
 
       {state === 'STORY_CHAPTER' && <ScreenDocumentary />}
       {state === 'LEGACY' && <ScreenLegacy />}
+
+      {/* 4. ISOLATED 3D PLANETARY ARCHAEOLOGY MODULE (Moon & Mars Real Surface Data) */}
+      {state === 'PLANETARY_ARCHAEOLOGY' && (
+        <PlanetaryArchaeologyModule
+          initialPlanet={currentDestination === 'mars' ? 'mars' : 'moon'}
+          onExit={() => setState('DESTINATION_SELECT')}
+        />
+      )}
     </div>
   );
 };

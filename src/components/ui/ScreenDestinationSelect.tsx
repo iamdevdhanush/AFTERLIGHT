@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowRight, Pause, Play } from 'lucide-react';
+import { ArrowRight, Compass, Pause, Play } from 'lucide-react';
 import { useExperienceStore } from '../../store/useExperienceStore';
 import { DESTINATIONS } from '../../data/destinations';
 import { DestinationId } from '../../types';
@@ -10,6 +10,7 @@ export const ScreenDestinationSelect: React.FC = () => {
   const selectDestination = useExperienceStore((s) => s.selectDestination);
   const previewDestination = useExperienceStore((s) => s.previewDestination);
   const currentDestination = useExperienceStore((s) => s.currentDestination);
+  const enterPlanetaryArchaeology = useExperienceStore((s) => s.enterPlanetaryArchaeology);
   const isRotationPaused = useExperienceStore((s) => s.isRotationPaused);
   const toggleRotationPaused = useExperienceStore((s) => s.toggleRotationPaused);
   const reducedMotion = useExperienceStore((s) => s.reducedMotion);
@@ -126,21 +127,49 @@ export const ScreenDestinationSelect: React.FC = () => {
               </div>
             </div>
 
-            {/* Destination Accent Descent CTA */}
-            <div className="pt-3">
-              <button
-                type="button"
-                onClick={() => selectDestination(activeData.id)}
-                className="pointer-events-auto group inline-flex items-center space-x-3.5 px-7 py-3.5 text-obsidian font-semibold transition-all duration-300 shadow-lg"
-                style={{
-                  backgroundColor: activeTheme.accent,
-                }}
-              >
-                <span className="font-mono text-xs uppercase tracking-[0.18em] font-semibold text-obsidian">
-                  ENTER {activeData.name}
-                </span>
-                <ArrowRight className="w-4 h-4 text-obsidian group-hover:translate-x-1 transition-transform duration-200" />
-              </button>
+            {/* Destination Accent Descent CTA & 3D Planetary Archaeology */}
+            <div className="pt-3 flex flex-wrap items-center gap-3">
+              {isOrbitalGlobe ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={enterPlanetaryArchaeology}
+                    className="pointer-events-auto group inline-flex items-center space-x-3.5 px-7 py-3.5 text-obsidian font-semibold transition-all duration-300 shadow-lg"
+                    style={{
+                      backgroundColor: activeTheme.accent,
+                    }}
+                    title="Launch Interactive 3D Planetary Orbital Map"
+                  >
+                    <Compass className="w-4 h-4 text-obsidian group-hover:rotate-45 transition-transform duration-300" />
+                    <span className="font-mono text-xs uppercase tracking-[0.18em] font-semibold text-obsidian">
+                      3D {activeData.name} MAP
+                    </span>
+                    <ArrowRight className="w-4 h-4 text-obsidian group-hover:translate-x-1 transition-transform duration-200" />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => selectDestination(activeData.id)}
+                    className="pointer-events-auto group inline-flex items-center space-x-2 px-5 py-3.5 bg-black/60 hover:bg-black/90 text-stone-200 hover:text-white border border-[#2A374A] hover:border-amber-400/50 font-mono text-xs uppercase tracking-[0.16em] transition-all duration-300 shadow-lg"
+                  >
+                    <span>MUSEUM CATALOG</span>
+                  </button>
+                </>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => selectDestination(activeData.id)}
+                  className="pointer-events-auto group inline-flex items-center space-x-3.5 px-7 py-3.5 text-obsidian font-semibold transition-all duration-300 shadow-lg"
+                  style={{
+                    backgroundColor: activeTheme.accent,
+                  }}
+                >
+                  <span className="font-mono text-xs uppercase tracking-[0.18em] font-semibold text-obsidian">
+                    ENTER {activeData.name}
+                  </span>
+                  <ArrowRight className="w-4 h-4 text-obsidian group-hover:translate-x-1 transition-transform duration-200" />
+                </button>
+              )}
             </div>
           </motion.div>
         </AnimatePresence>
