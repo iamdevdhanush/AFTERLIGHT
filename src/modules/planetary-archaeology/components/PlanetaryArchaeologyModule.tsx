@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { SlidersHorizontal } from 'lucide-react';
+import { SlidersHorizontal, GraduationCap } from 'lucide-react';
 import {
   PlanetaryBody,
   ImageryLayerType,
@@ -15,6 +15,8 @@ import { HardwareFilterDrawer } from './HardwareFilterDrawer';
 import { MissionStorytellingExperience } from './MissionStorytellingExperience';
 import { HardwareInspectionStudio } from './HardwareInspectionStudio';
 import { EducationalHubModal } from './EducationalHubModal';
+import { LanguageSwitcher } from '../../../components/ui/LanguageSwitcher';
+import { useExperienceStore } from '../../../store/useExperienceStore';
 
 interface PlanetaryArchaeologyModuleProps {
   initialPlanet?: PlanetaryBody;
@@ -25,6 +27,7 @@ export const PlanetaryArchaeologyModule: React.FC<PlanetaryArchaeologyModuleProp
   initialPlanet = 'moon',
   onExit,
 }) => {
+  const toggleTeacherMode = useExperienceStore((s) => s.toggleTeacherMode);
   const [planet, setPlanet] = useState<PlanetaryBody>(initialPlanet);
   const [activeLayerType, setActiveLayerType] = useState<ImageryLayerType>('visible');
   const [terrainExaggeration, setTerrainExaggeration] = useState<number>(1.0);
@@ -244,22 +247,35 @@ export const PlanetaryArchaeologyModule: React.FC<PlanetaryArchaeologyModuleProp
         </div>
       </div>
 
-      {/* Top-right: Planet Switcher & Minimal Phase 3 Explorer Links */}
+      {/* Top-right: Language Switcher, Planet Switcher & Minimal Phase 3 Explorer Links */}
       <div className="absolute top-6 right-6 z-30 flex flex-col items-end gap-2 pointer-events-auto select-none">
-        <div className="flex items-center gap-1.5 bg-black/50 border border-stone-800/80 p-0.5 shadow-md">
-          {(['moon', 'mars'] as PlanetaryBody[]).map((p) => (
-            <button
-              key={p}
-              onClick={() => handleSelectPlanet(p)}
-              className={`font-mono text-[10px] tracking-[0.16em] uppercase px-3 py-1 transition-all duration-200 ${
-                planet === p
-                  ? 'bg-amber-500/20 text-amber-400 font-semibold border border-amber-500/50 shadow-[0_0_10px_rgba(245,158,11,0.2)]'
-                  : 'text-stone-500 hover:text-stone-300 border border-transparent'
-              }`}
-            >
-              {p === 'moon' ? 'MOON' : 'MARS'}
-            </button>
-          ))}
+        <div className="flex items-center gap-2">
+          <LanguageSwitcher />
+
+          <button
+            onClick={() => toggleTeacherMode(true)}
+            className="hidden sm:flex items-center gap-1 px-2.5 py-1 bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 rounded text-amber-300 font-mono text-[9px] uppercase tracking-wider transition-colors shadow-sm"
+            title="Classroom assignments, lesson sheets, and LMS quiz export"
+          >
+            <GraduationCap className="w-3.5 h-3.5 text-amber-400" />
+            <span>TEACHER</span>
+          </button>
+
+          <div className="flex items-center gap-1.5 bg-black/50 border border-stone-800/80 p-0.5 shadow-md">
+            {(['moon', 'mars'] as PlanetaryBody[]).map((p) => (
+              <button
+                key={p}
+                onClick={() => handleSelectPlanet(p)}
+                className={`font-mono text-[10px] tracking-[0.16em] uppercase px-3 py-1 transition-all duration-200 ${
+                  planet === p
+                    ? 'bg-amber-500/20 text-amber-400 font-semibold border border-amber-500/50 shadow-[0_0_10px_rgba(245,158,11,0.2)]'
+                    : 'text-stone-500 hover:text-stone-300 border border-transparent'
+                }`}
+              >
+                {p === 'moon' ? 'MOON' : 'MARS'}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Minimal Explorer Action Shortcuts */}
