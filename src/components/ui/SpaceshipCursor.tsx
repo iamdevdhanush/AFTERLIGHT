@@ -94,9 +94,9 @@ export const SpaceshipCursor: React.FC = () => {
       // Interactive clickable elements (buttons, links, tab items, clickable cards, 3D canvases)
       const isClickable = !isText && !!(
         target.closest(
-          'button, a, [role="button"], [role="tab"], [role="switch"], [role="menuitem"], [data-interactive="true"], .cursor-pointer'
+          'button, a, [role="button"], [role="tab"], [role="switch"], [role="menuitem"], [data-interactive="true"], [data-clickable="true"], .cursor-pointer, .cursor-grab, .cursor-grabbing, summary, [tabindex]:not([tabindex="-1"]), [onclick], input[type="button"], input[type="submit"], input[type="checkbox"], input[type="radio"], input[type="range"]'
         ) ||
-        window.getComputedStyle(target).cursor === 'pointer'
+        (target.closest('canvas') && !!useExperienceStore.getState().hoveredArtifactId)
       );
       setIsInteractive(isClickable);
     };

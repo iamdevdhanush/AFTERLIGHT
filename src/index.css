@@ -42,34 +42,38 @@
 }
 
 /* =========================================================================
-   CUSTOM SPACESHIP CURSOR BASELINE & FALLBACKS
+   CUSTOM SPACESHIP CURSOR: HIDE NATIVE CURSOR GLOBALLY ON DESKTOP
    ========================================================================= */
 
-/* Desktop pointer devices: hide default system cursor in favor of custom spaceship */
 @media (hover: hover) and (pointer: fine) {
+  /* Enforce cursor: none across ALL elements, pseudoelements, and containers */
+  *,
+  *::before,
+  *::after,
   html,
   body,
   button,
   a,
+  canvas,
+  svg,
   [role="button"],
   [role="tab"],
   [role="switch"],
-  .cursor-pointer {
-    cursor: none;
+  [role="menuitem"],
+  .cursor-pointer,
+  .cursor-grab,
+  .cursor-grabbing,
+  .cursor-crosshair,
+  .cursor-not-allowed {
+    cursor: none !important;
   }
-}
 
-/* CSS fallback cursor with calibrated nose tip hotspot at (33, 0) */
-body {
-  cursor: url('/cursors/spaceship-cursor-28.png') 33 0, auto;
-}
-
-/* Strictly preserve native text selection & I-beam cursor inside inputs */
-input:not([type="button"]):not([type="submit"]):not([type="checkbox"]):not([type="radio"]),
-textarea,
-select,
-[contenteditable="true"] {
-  cursor: text !important;
+  /* Exception: Strictly preserve native I-beam text selection while editing text */
+  input:not([type="button"]):not([type="submit"]):not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  textarea,
+  [contenteditable="true"] {
+    cursor: text !important;
+  }
 }
 
 /* Restrained Film Texture for Documentary Depth */

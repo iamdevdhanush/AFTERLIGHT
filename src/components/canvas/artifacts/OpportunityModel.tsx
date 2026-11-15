@@ -46,14 +46,12 @@ export const OpportunityModel: React.FC<OpportunityModelProps> = ({
     if (isExploration) {
       setHovered(true);
       hoverArtifact(artifactId);
-      document.body.style.cursor = 'pointer';
     }
   };
 
   const handlePointerOut = () => {
     setHovered(false);
     hoverArtifact(null);
-    document.body.style.cursor = 'default';
   };
 
   const handleClick = (e: ThreeEvent<MouseEvent>) => {

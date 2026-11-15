@@ -36,14 +36,12 @@ export const VoyagerModel: React.FC<VoyagerModelProps> = ({
     if (isExploration) {
       setHovered(true);
       hoverArtifact('voyager1');
-      document.body.style.cursor = 'pointer';
     }
   };
 
   const handlePointerOut = () => {
     setHovered(false);
     hoverArtifact(null);
-    document.body.style.cursor = 'default';
   };
 
   const handleClick = (e: ThreeEvent<MouseEvent>) => {

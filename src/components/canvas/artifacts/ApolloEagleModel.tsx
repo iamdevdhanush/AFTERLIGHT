@@ -106,14 +106,12 @@ export const ApolloEagleModel: React.FC<ApolloEagleModelProps> = ({
     if (isExploration) {
       setHovered(true);
       hoverArtifact('apollo11_eagle');
-      document.body.style.cursor = 'pointer';
     }
   };
 
   const handlePointerOut = () => {
     setHovered(false);
     hoverArtifact(null);
-    document.body.style.cursor = 'default';
   };
 
   const handleClick = (e: ThreeEvent<MouseEvent>) => {
