@@ -1,169 +1,250 @@
-# AFTERLIGHT — Interactive Space Artifact Museum
+# AFTERLIGHT — 3D Planetary Archaeology & Aerospace Museum
 
 > *Every machine leaves a story.*
 
-**AFTERLIGHT** is an interactive 3D digital museum and space documentary experience exploring human-made spacecraft, rovers, and landers left across the Moon, Mars, and interstellar Deep Space. Built with React, TypeScript, Three.js (`@react-three/fiber` & `@react-three/drei`), GSAP, Framer Motion, Zustand, and a procedural Web Audio synthesizer, it pairs real-time 3D planetary environments with restrained editorial storytelling and NASA archival metadata.
+**AFTERLIGHT** is an aerospace-grade 3D digital museum and planetary archaeology suite exploring human-made spacecraft, landers, rovers, and relics across **The Moon**, **Mars**, and **Deep Space**. 
+
+Powered by React 18, TypeScript, Three.js (`@react-three/fiber` & `@react-three/drei`), `three-mesh-bvh`, GSAP, Framer Motion, and procedural Web Audio, AFTERLIGHT pairs real-time scientific 3D planetary globes with museum-grade physical hardware inspection, authentic NASA JPL CAD models, and archival mission telemetry.
 
 ---
 
-## Experience Flow & State Machine
+## 🌟 Comprehensive Feature Index
 
-User progression is governed by a deterministic Zustand state machine ([useExperienceStore.ts](src/store/useExperienceStore.ts)) with types defined in [src/types/index.ts](src/types/index.ts):
+### 1. 🪐 3D Planetary Archaeology Module (`PLANETARY_ARCHAEOLOGY`)
+Real-time 3D planetary exploration powered by NASA Planetary Data System (PDS) and USGS Astrogeology Science Center data:
+- **Unified Astronomical Celestial Rotation**: Both the Moon and Mars globes rotate continuously around their real astronomical axial tilts (`-1.54°` for Moon, `-25.19°` for Mars) with smooth orbital velocity.
+- **Synchronous Multi-Layer Rotation**: Globe terrain, LOLA DEM relief displacement, geospatial coordinate graticules, rover traversal paths, and 3D beacon pins all spin in 1:1 physical synchrony.
+- **Interactive Orbit Spin Toggle**: Instant toggle between `ORBIT SPIN: ACTIVE` and `PAUSED`, with momentum inertia decay and automatic resume after inspecting sites.
+- **Scientific Altimetry Sampler**: Live raycasting calculates instantaneous latitude, longitude, and topographic elevation in meters under the cursor.
+- **Authentic PBR Terrain Shading**:
+  - **Moon**: NASA SVS CGI Moon Kit LROC 2K color + LOLA 8-bit DEM elevation map with procedural displacement and angular breccia rock formations.
+  - **Mars**: MOLA elevation data + Viking color mosaic with real-time limb atmospheric scattering shader simulating Rayleigh scattering in the thin carbon dioxide atmosphere.
+- **3D Rover Traversal Routes (`RoverTraversePath3D.tsx`)**: Exact historical drive paths for Apollo 15/16/17 LRVs, Opportunity (45.16 km), Curiosity, and Perseverance with clickable GPS waypoints.
+- **Hardware Site Discovery Reticles (`PlanetaryMarkers.tsx`)**: Numbered pulsing 3D beacon callouts color-coded by vehicle category (Rovers, Landers, Descent Stages, Science Instruments, ALSEP stations, Impact Sites) and confidence levels (*Confirmed*, *Approximate*, *Unverified*).
+
+### 2. 🔬 3D Hardware Inspection Studio (Aerospace Museum Edition)
+A dedicated virtual laboratory for examining historical spacecraft hardware at microscopic fidelity:
+- **Official NASA JPL 3D CAD Models**:
+  - **Apollo 11 Lunar Module "Eagle" (LM-5)**: 134 individual mesh nodes including Descent Stage, Ascent Cabin, Mylar/Kapton thermal blankets, Aesthetically gold-foiled landing struts, and Aerozine-50 hypergolic nozzles.
+  - **Mars 2020 Perseverance Rover**: Official 4.98 MB NASA JPL CAD model featuring Mastcam-Z, MMRTG nuclear generator, SuperCam, titanium chevron wheels, and the robotic sample-caching arm.
+  - **InSight Mars Lander**: High-detail NASA CAD model with dual UltraFlex solar arrays, SEIS seismometer dome, and HP³ heat flow probe.
+- **`three-mesh-bvh` Accelerated BVH Raycasting**: Pixel-perfect mesh-level part detection across complex 100+ node scene graphs—eliminating guessed bounding boxes or screen-space approximations.
+- **NASA-Accurate Procedural PBR Material Engine**:
+  - Real-world physical properties tailored per subsystem: Gold Kapton foil (`metalness: 0.72, roughness: 0.28`), aircraft aluminum alloy 2219, blackened Inconel heat shields, titanium engine bells, and deep-blue solar array cells.
+  - Correct single/array material unwrapping ensuring 100% visible polygons without draw-call loss.
+- **7-Point Aerospace Studio Lighting Rig**:
+  - Soft cold-space ambient base.
+  - Key solar spotlight with soft shadow penumbra (`bias: -0.0003`, `normalBias: 0.04`).
+  - Cool-blue deep-space bounce light.
+  - Golden rim highlight tracing the rear spacecraft silhouette.
+  - Under-vehicle anti-black bounce fill.
+  - Overhead museum spotlight and ACES Filmic tone mapping (`exposure: 1.35`).
+- **Smooth Exploded Subassembly View**: Lerps each subsystem along its specific mechanical explode vector while 3D numbered hotspot beacons smoothly glide with their hardware anchors.
+- **Synchronized Camera Fly-To**: Smooth GSAP camera choreography triggered by mesh clicks, hotspot pins, right-hand drawer buttons, or arrow keys.
+- **Data-Driven JSON Manifests**: Verified NASA engineering specifications, launch mass, dimensions, functional descriptions, mission facts, and source citations stored in `/public/data/parts.*.json`.
+- **Authenticity Badging**: Prominent green `AUTHENTIC NASA 3D MODEL` shields vs. amber `ARCHIVAL RECONSTRUCTION` badges detailing model provenance.
+
+### 3. 📖 7-Chapter Mission Storytelling Experience (`MissionStorytellingExperience.tsx`)
+Interactive narrative engine providing deep chronological retrospectives:
+- Chaptered documentary format with archival photography, transcripts, and telemetry metrics.
+- Synchronized camera choreography: selecting narrative chapters automatically flies the camera to the historical surface site on the globe.
+- Direct entry points into the 3D Hardware Inspection Studio for related vehicles.
+
+### 4. 🎓 Space Archaeology Educational Hub (`EducationalHubModal.tsx`)
+A full-featured educational resource built directly into the application:
+- **Aerospace Glossary**: Indexed glossary of terms from ALSEP and Hypergolic Propellants to Regolith and Mass Spectrometry.
+- **Spacecraft Comparison Matrix**: Side-by-side comparison of lunar and martian landers, rovers, masses, power sources, and operational lifespans.
+- **Knowledge Challenge**: Interactive interactive trivia challenge testing users on mission history and planetary science.
+
+### 5. 🎛️ Forgotten Hardware Filter Drawer (`HardwareFilterDrawer.tsx`)
+Comprehensive spatial filtering tool:
+- Filter by **Category** (Rovers, Landers, Descent Stages, Instruments, ALSEPs, Impact Sites).
+- Filter by **Disposition** (Intentionally Left Behind, Operational Abandonment, Crash/Impact).
+- Filter by **Operational Status** (Active, Inactive/Silent, Destroyed).
+- Filter by **Location Confidence** (Confirmed to ±0.5m, Approximate, Unverified).
+- Dual-slider **Launch Year Range Filter** (1959 – 2024).
+- Dedicated search bar with instant autocomplete across all historical missions.
+
+### 6. 🚀 Cinematic Scroll-Driven Arrival (`ScreenArrival.tsx`)
+- Full-viewport lunar establishing shot featuring the Apollo 11 Lunar Module on the regolith with Earth rising above the limb.
+- Asymmetric editorial typography and smooth transitions into the Destination Selector.
+
+### 7. 🛰️ Custom Spaceship Cursor (`SpaceshipCursor.tsx`)
+- Hardware-accelerated custom mouse cursor modeled as an exploration spacecraft with calibrated click hotspot, thruster particle glow, and interactive button-hover states.
+
+---
+
+## 🗺️ Experience Flow & Navigation State Machine
+
+The user journey is governed by a deterministic Zustand state machine (`useExperienceStore.ts`):
 
 ```
-ARRIVAL ➔ DESTINATION_SELECT ➔ ENVIRONMENT_LOADING ➔ GUIDED_INTRO ➔ FREE_EXPLORATION
-   ➔ ARTIFACT_APPROACH ➔ ARTIFACT_INSPECTION ➔ STORY_CHAPTER ➔ LEGACY ➔ RETURN_TO_EXPLORATION
+ARRIVAL ➔ DESTINATION_SELECT ➔ PLANETARY_ARCHAEOLOGY ➔ 3D HARDWARE STUDIO
+   │                  │                      │
+   ▼                  ▼                      ▼
+EXHIBITION ➔ ARTIFACT_INSPECTION ➔ STORY_CHAPTER ➔ LEGACY
 ```
 
-1. **Screen 01 — Cinematic Arrival ([ScreenArrival.tsx](src/components/ui/ScreenArrival.tsx)):** Full-viewport lunar establishing shot featuring the Apollo 11 Lunar Module on the regolith with Earth suspended above the horizon, camera drift, editorial headline, and a direct `BEGIN EXPLORATION` entry action.
-2. **Screen 02 — Destination Selection ([ScreenDestinationSelect.tsx](src/components/ui/ScreenDestinationSelect.tsx)):** Asymmetric editorial selector covering **The Moon**, **Mars**, and **Deep Space**, displaying epoch, surface atmosphere, temperature, and acoustic profile metadata.
-3. **Screen 03 — Planetary Exploration ([ScreenExplorationUI.tsx](src/components/ui/ScreenExplorationUI.tsx)):** Full-viewport Three.js scene with minimal HUD controls (`SECTOR SELECTOR`, `ASK THE ARCHIVE`, audio mute toggle, graphics fidelity selector `low` / `medium` / `high`, artifact hover card, navigation controls, and discovery progress meter).
-4. **Screen 04 — Artifact Inspection ([ScreenArtifactInspection.tsx](src/components/ui/ScreenArtifactInspection.tsx)):** GSAP-choreographed camera transition into an asymmetric, camera-safe three-quarter framing—keeping the 3D hardware unobstructed on the right while presenting mission hook, metadata, and `EXPLORE ITS STORY` on the left.
-5. **Screen 05 — Cinematic Documentary ([ScreenDocumentary.tsx](src/components/ui/ScreenDocumentary.tsx)):** Full-screen chaptered narrative (`01 THE BEGINNING` through `05 THE LEGACY`) with historical context callouts, key metrics, auto-play mode, keyboard navigation (`ArrowRight` / `Space`, `ArrowLeft`, `Escape`), archival captions, and per-chapter tonal chimes.
-6. **Screen 06 — Legacy ([ScreenLegacy.tsx](src/components/ui/ScreenLegacy.tsx)):** Documentary conclusion presenting what remains in situ, coordinates, status, primary NASA archive link, and `RETURN TO EXPLORATION` (smoothly restoring the saved exploration camera).
-7. **Ask the Archive ([AskArchiveModal.tsx](src/components/ui/AskArchiveModal.tsx)):** Optional offline-capable mission guide offering curated NASA/JPL-cited Q&A and local keyword inquiry matching without external API dependencies.
+| State | Component | Key User Capabilities |
+| :--- | :--- | :--- |
+| `ARRIVAL` | `ScreenArrival.tsx` | Prologue narrative, Earthrise vista, entry CTA |
+| `DESTINATION_SELECT` | `ScreenDestinationSelect.tsx` | Switch between Moon and Mars, view atmospheric specs, choose Museum Catalog or 3D Map |
+| `PLANETARY_ARCHAEOLOGY` | `PlanetaryArchaeologyModule.tsx` | Full 3D orbital globe, surface coordinates, landing site beacons, rover traverses, altimetry |
+| `HARDWARE_STUDIO` | `HardwareInspectionStudio.tsx` | 3D exploded view, BVH raycasting, PBR materials, turntable, engineering dossier |
+| `EXHIBITION` | `ScreenExhibition.tsx` | Museum catalog grid with high-resolution photography and historical provenance |
+| `ARTIFACT_INSPECTION` | `ScreenArtifactInspection.tsx` | Oblique 3/4 hardware inspection with telemetry cards |
+| `STORY_CHAPTER` | `ScreenDocumentary.tsx` | Chaptered documentary with audio chimes and archival photo galleries |
+| `LEGACY` | `ScreenLegacy.tsx` | Final status of in-situ relics, coordinates, and NASA archival links |
 
 ---
 
-## Destinations & Featured Artifacts
+## ⌨️ Controls & Interaction Quick Reference
 
-Defined in [src/data/destinations.ts](src/data/destinations.ts) and [src/data/artifacts.ts](src/data/artifacts.ts):
+### 3D Orbital Globe (Moon & Mars)
+- **Rotate Globe**: Left-click + drag (with smooth inertial release).
+- **Zoom Surface**: Mouse wheel scroll / pinch-to-zoom.
+- **Inspect Landing Site**: Click any glowing numbered beacon pin.
+- **Toggle Auto-Rotation**: Click `ORBIT SPIN: ACTIVE / PAUSED` in top-left or bottom telemetry bar.
+- **Switch Worlds**: Click `MOON` or `MARS` in the top-right selector.
+- **Open Filter Drawer**: Click `FILTERS` or the circular tools icon in the bottom right.
 
-| Destination | Environment Implementation | Artifacts in Scene / Archive | Coordinates / Context |
-| :--- | :--- | :--- | :--- |
-| **The Moon** *(default)* | [MoonEnvironment.tsx](src/components/canvas/environments/MoonEnvironment.tsx): Zero-fog vacuum sky, unfiltered solar directional light + cool Earthshine fill, procedural 512×512 regolith normal map, sculpted craters (West Crater, Little West Crater), angular faceted breccia boulders, Earth above the horizon | **Apollo 11 Eagle (`apollo11_eagle`)** via official NASA `.glb` model ([ApolloEagleModel.tsx](src/components/canvas/artifacts/ApolloEagleModel.tsx)), accompanied by EASEP package, US flag, and bootprint trail | Mare Tranquillitatis (`0.67408° N, 23.47297° E`) |
-| **Mars** | [MarsEnvironment.tsx](src/components/canvas/environments/MarsEnvironment.tsx): Simplex-noise fBm terrain with basalt/ochre/sulfate vertex coloring, Endeavour Crater rim rise, scattered boulders, drifting dust particles, atmospheric fog | **Opportunity (`opportunity`)** & **Spirit (`spirit`)** via procedural 6-wheel rocker-bogie rover mesh ([OpportunityModel.tsx](src/components/canvas/artifacts/OpportunityModel.tsx)) | Opportunity: Perseverance Valley (`2.34° S, 354.67° E`); Spirit: Gusev Crater (`14.57° S, 175.47° E`) |
-| **Deep Space** | [DeepSpaceEnvironment.tsx](src/components/canvas/environments/DeepSpaceEnvironment.tsx): 4,000 multi-spectral stars, distant pinpoint Sun, dashed hyperbolic escape trajectory spline | **Voyager 1 (`voyager1`)** via procedural spacecraft mesh with 3.7m dish, RTG boom, magnetometer boom, scan platform, and Golden Record ([VoyagerModel.tsx](src/components/canvas/artifacts/VoyagerModel.tsx)) | Interstellar Space / Ophiuchus (`+12° 08′, 17h 15m`, `163.2 AU`) |
-
----
-
-## Controls & Interaction
-
-During `FREE_EXPLORATION` (managed by [CameraDirector.tsx](src/components/canvas/CameraDirector.tsx)):
-
-- **Rotate Camera:** Left-click and drag (or touch drag)
-- **Zoom:** Mouse wheel scroll
-- **Pan:** `W` / `A` / `S` / `D` or `Arrow` keys
-- **Inspect Artifact:** Hover over a spacecraft to reveal its contextual beacon and card, then click the artifact or card
-
-During `STORY_CHAPTER` ([ScreenDocumentary.tsx](src/components/ui/ScreenDocumentary.tsx)):
-- **Next Chapter / Proceed to Legacy:** `ArrowRight` or `Space`
-- **Previous Chapter:** `ArrowLeft`
-- **Exit Documentary:** `Escape`
-
-### URL Deep-Linking (for Testing & Direct Entry)
-[useExperienceStore.ts](src/store/useExperienceStore.ts) reads optional query parameters on load:
-- `?state=<ExperienceState>` (e.g., `ARRIVAL`, `DESTINATION_SELECT`, `FREE_EXPLORATION`, `ARTIFACT_INSPECTION`, `STORY_CHAPTER`, `LEGACY`)
-- `&dest=<moon|mars|deep_space>`
-- `&artifact=<apollo11_eagle|opportunity|spirit|voyager1>`
+### 3D Hardware Inspection Studio
+- **Pick Part**: Click directly on physical hardware geometry or hotspot pin.
+- **Rotate Vehicle**: Left-click + drag around the museum pedestal.
+- **Cycle Subassemblies**: Press `←` (Left Arrow) or `→` (Right Arrow) keys.
+- **Toggle Exploded View**: Click `EXPLODED VIEW` in top-left toolbar.
+- **Toggle Turntable**: Click `TURNTABLE ON / OFF`.
+- **Exit Studio**: Press `Escape` or click `✕` in header.
 
 ---
 
-## Project Structure
+## 📁 Repository File Structure
 
 ```text
-.
-├── index.html
+AFTERLIGHT/
+├── public/
+│   ├── data/
+│   │   ├── parts.moon.json              # Apollo 11 LM NASA hardware manifest
+│   │   ├── parts.perseverance.json      # Perseverance Rover NASA CAD manifest
+│   │   ├── parts.insight.json           # InSight Lander hardware manifest
+│   │   └── parts.mars.json              # Opportunity Rover hardware manifest
+│   ├── models/
+│   │   ├── apollo_lunar_module.glb      # Official NASA Apollo LM-5 (0.68 MB)
+│   │   ├── perseverance_rover.glb       # Official NASA JPL Perseverance CAD (4.98 MB)
+│   │   ├── insight_lander.glb           # Official NASA JPL InSight Lander (3.77 MB)
+│   │   └── voyager_probe.glb            # Interstellar Voyager 1 CAD (1.64 MB)
+│   └── textures/
+│       ├── moon/                        # NASA LROC color & LOLA DEM displacement maps
+│       └── mars/                        # NASA Viking color & MOLA elevation maps
+├── scripts/
+│   └── audit-glb-meshes.mjs             # Node CLI utility to inspect & validate GLB mesh graphs
+├── src/
+│   ├── App.tsx                          # Root state router & custom cursor overlay
+│   ├── audio/
+│   │   ├── SoundManager.ts              # Web Audio procedural planetary ambient synthesizer
+│   │   └── GuideVoiceEngine.ts          # Archival audio narration controller
+│   ├── components/
+│   │   ├── canvas/                      # Global environment Three.js components
+│   │   │   ├── PlanetSphere.tsx         # 3D interactive destination selector globe
+│   │   │   └── SceneCanvas.tsx          # R3F canvas wrapper & camera director
+│   │   └── ui/                          # Arrival, Destination, Exhibition & Legacy screens
+│   ├── modules/
+│   │   └── planetary-archaeology/       # Complete 3D Planetary Archaeology Suite
+│   │       ├── components/
+│   │       │   ├── ArtifactDiscoveryPanel.tsx     # Site dossier with archival photo & specs
+│   │       │   ├── EducationalHubModal.tsx        # Glossary, comparisons, trivia quiz
+│   │       │   ├── HardwareFilterDrawer.tsx       # Multi-criteria hardware filter drawer
+│   │       │   ├── HardwareInspectionStudio.tsx   # 3D PBR studio, BVH raycast, exploded view
+│   │       │   ├── MissionStorytellingExperience.tsx # 7-chapter storytelling overlay
+│   │       │   ├── PlanetaryArchaeologyModule.tsx # Top-level 3D orbital controller & HUD
+│   │       │   ├── PlanetaryGlobe.tsx             # PBR planetary terrain mesh & DEM displacement
+│   │       │   ├── PlanetaryGlobeCanvas.tsx       # R3F Canvas, starfield, unified spin group
+│   │       │   ├── PlanetaryMarkers.tsx           # 3D pulsing hardware beacon pins
+│   │       │   ├── RegionalTerrainInspector.tsx   # Topographic cross-section altimetry
+│   │       │   └── RoverTraversePath3D.tsx        # 3D historical rover paths & GPS waypoints
+│   │       ├── data/
+│   │       │   ├── planetarySites.ts              # 60+ verified lunar & martian landing sites
+│   │       │   └── roverTraverses.ts              # GPS coordinate tracks for rovers & LRVs
+│   │       └── services/
+│   │           ├── nasaTrekService.ts             # Elevation samplers & NASA WMTS tile mappings
+│   │           └── planetaryMath.ts               # Spherical lat/lon to Cartesian vector math
+│   ├── store/
+│   │   └── useExperienceStore.ts        # Zustand global state store & query sync
+│   └── types/
+│       ├── index.ts                     # Core destination & artifact interfaces
+│       └── planetary.ts                 # Planetary archaeological & GIS interfaces
 ├── package.json
 ├── tailwind.config.js
 ├── tsconfig.json
-├── vite.config.ts
-├── public/
-│   ├── images/
-│   │   └── apollo11_surface.jpg          # NASA archival photo (as11-40-5927)
-│   ├── models/
-│   │   └── apollo_lunar_module.glb       # Official NASA-3D-Resources Apollo LM
-│   └── textures/moon/
-│       ├── ldem_3_8bit.jpg               # NASA SVS CGI Moon Kit elevation map (stored asset)
-│       └── lroc_color_2k.jpg             # NASA SVS CGI Moon Kit LROC color map (stored asset)
-├── scripts/
-│   └── capture_screenshots.cjs           # Headless Edge CDP screenshot validation script
-└── src/
-    ├── App.tsx
-    ├── main.tsx
-    ├── index.css
-    ├── audio/
-    │   └── SoundManager.ts               # Web Audio API planetary & UI sound synthesizer
-    ├── components/
-    │   ├── canvas/
-    │   │   ├── CameraDirector.tsx        # GSAP & free-orbit camera ownership controller
-    │   │   ├── SceneCanvas.tsx           # R3F Canvas container & environment switcher
-    │   │   ├── artifacts/
-    │   │   │   ├── ApolloEagleModel.tsx
-    │   │   │   ├── OpportunityModel.tsx
-    │   │   │   └── VoyagerModel.tsx
-    │   │   └── environments/
-    │   │       ├── DeepSpaceEnvironment.tsx
-    │   │       ├── MarsEnvironment.tsx
-    │   │       └── MoonEnvironment.tsx
-    │   └── ui/
-    │       ├── AskArchiveModal.tsx
-    │       ├── ScreenArrival.tsx
-    │       ├── ScreenArtifactInspection.tsx
-    │       ├── ScreenDestinationSelect.tsx
-    │       ├── ScreenDocumentary.tsx
-    │       ├── ScreenExplorationUI.tsx
-    │       ├── ScreenLegacy.tsx
-    │       └── ScreenLoading.tsx
-    ├── data/
-    │   ├── artifacts.ts                  # Mission specs, coordinates, story chapters, legacy, Q&A
-    │   └── destinations.ts               # Planetary metadata & initial camera targets
-    ├── store/
-    │   └── useExperienceStore.ts         # Zustand state machine
-    └── types/
-        └── index.ts                      # TypeScript interfaces
+└── vite.config.ts
 ```
 
 ---
 
-## Visual Direction & Audio
+## 🛠️ Technology Stack
 
-### Palette & Typography ([tailwind.config.js](tailwind.config.js), [index.html](index.html))
-- **Void Black:** `#080B10` (`void` / `space-900`)
-- **Space Grey:** `#171E28` (`space-700`)
-- **Starlight:** `#E8E3D9` (`starlight`)
-- **Dust Grey:** `#A5A7A9` (`dust`)
-- **Mission Gold:** `#D99A63` (`gold`)
-- **Optional Emerald:** `#63F0C8` (`emerald-accent`)
-- **Fonts:** `Instrument Serif` (editorial headlines), `Inter` (narrative & UI), `JetBrains Mono` (coordinates & mission metadata)
-
-### Procedural Audio ([SoundManager.ts](src/audio/SoundManager.ts))
-Zero external audio files are required. Web Audio API nodes synthesize:
-- `lunar_vacuum`: 60 Hz & 120.5 Hz filtered suit-circulation hum
-- `martian_wind`: Brownian noise through an LFO-modulated bandpass filter + 55 Hz drone
-- `deep_telemetry`: 43.65 Hz low-pass cosmic drone
-- Interaction cues: transition swooshes, harmonic artifact chimes, and click feedback
+- **Frontend Core**: React 18.3, TypeScript 5.6, Tailwind CSS 3.4
+- **3D Graphics & WebGL**: Three.js 0.169, `@react-three/fiber` 8.17, `@react-three/drei` 9.117
+- **Raycasting & Geometry**: `three-mesh-bvh` 0.8.0 (Bounding Volume Hierarchy spatial acceleration)
+- **Animation & Transitions**: GSAP 3.12, Framer Motion 11.11
+- **State & Architecture**: Zustand 5.0
+- **Audio Synthesis**: Procedural Web Audio API (zero external `.mp3` dependencies)
+- **Build System**: Vite 5.4
 
 ---
 
-## Tech Stack
-
-- **UI & State:** React `18.3`, TypeScript `5.6`, Zustand `5.0`, Framer Motion `11.11`, Lucide React, Tailwind CSS `3.4`
-- **3D & Motion:** Three.js `0.169`, `@react-three/fiber` `8.17`, `@react-three/drei` `9.117`, GSAP `3.12`, `simplex-noise` `4.0`
-- **Build Tooling:** Vite `5.4`
-
----
-
-## Getting Started
+## 🚀 Getting Started
 
 ### Prerequisites
-- Node.js (v18+ recommended; tested on v22) and `npm`
+- Node.js (v18 or higher recommended)
+- `npm`
 
-### Development
+### Installation
 ```bash
+# Clone the repository
+git clone https://github.com/shettyadi57/AFTERLIGHT.git
+cd AFTERLIGHT
+
+# Install dependencies
 npm install
-npm run dev
 ```
-The Vite dev server is configured in [vite.config.ts](vite.config.ts) to run on port `3000` (`http://localhost:3000`).
 
-### Type-Check & Production Build
+### Running Locally
 ```bash
+# Start Vite development server
+npm run dev
+
+# Open in browser:
+http://localhost:3000/
+# Or directly access the 3D Planetary Map:
+http://localhost:3000/?state=destinations
+```
+
+### Production Build & Type Checking
+```bash
+# Run TypeScript validation and compile bundle
 npm run build
+
+# Preview production build locally
 npm run preview
 ```
 
-### Visual Screenshot Capture (Windows / Edge)
-After running `npm run build`, [scripts/capture_screenshots.cjs](scripts/capture_screenshots.cjs) launches `vite preview` on `127.0.0.1:5050` and uses headless Microsoft Edge (`--remote-debugging-port=9222`, `--enable-webgl`) to capture 1920×1080 PNG screenshots of the Arrival, Artifact Inspection, Legacy, and Free Exploration states:
+### Auditing 3D GLB Meshes
+To inspect the scene graph, mesh names, and node hierarchies of any spacecraft model:
 ```bash
-node scripts/capture_screenshots.cjs
+node scripts/audit-glb-meshes.mjs public/models/perseverance_rover.glb
 ```
+
+---
+
+## 📜 Citations & Authentic Sources
+
+- **NASA 3D Resources**: Apollo Lunar Module LM-5, Perseverance Rover CAD, InSight Lander Mesh (`nasa/NASA-3D-Resources`).
+- **NASA Planetary Data System (PDS)**: LOLA (Lunar Orbiter Laser Altimeter) & LROC datasets.
+- **USGS Astrogeology Science Center & NASA Solar System Treks**: Topographic DEM and albedo map tiles (`trek.nasa.gov`).
+- **NASA Jet Propulsion Laboratory (JPL)**: Mars Exploration Rover & Mars 2020 mission engineering documentation.
+
+---
+
+*Designed and engineered for humanity's permanent archaeological record.*
+
