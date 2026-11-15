@@ -1,0 +1,43 @@
+{
+  "short_name": "AFTERLIGHT",
+  "name": "AFTERLIGHT: Abandoned but Not Forgotten — NASA Discarded Equipment Storytelling",
+  "description": "Interactive 3D digital museum and planetary archaeology suite exploring human-made spacecraft on the Moon and Mars.",
+  "start_url": "/?source=pwa",
+  "display": "standalone",
+  "theme_color": "#080B10",
+  "background_color": "#000000",
+  "orientation": "any",
+  "categories": ["education", "science", "museum"],
+  "icons": [
+    {
+      "src": "/images/spaceship-cursor-isolated.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "/images/spaceship-cursor-isolated.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "3D Moon Orbital Map",
+      "short_name": "Moon Map",
+      "description": "Explore relics across the lunar surface",
+      "url": "/?state=PLANETARY_ARCHAEOLOGY&dest=moon"
+    },
+    {
+      "name": "3D Mars Orbital Map",
+      "short_name": "Mars Map",
+      "description": "Explore rovers and landers across the Red Planet",
+      "url": "/?state=PLANETARY_ARCHAEOLOGY&dest=mars"
+    },
+    {
+      "name": "Story Mode",
+      "short_name": "Stories",
+      "description": "Listen to the forgotten robotic explorers",
+      "url": "/?state=STORY"
+    }
+  ]
+}

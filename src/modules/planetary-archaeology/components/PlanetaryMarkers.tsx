@@ -164,9 +164,19 @@ const SingleSiteMarker: React.FC<{
         <meshBasicMaterial color={beaconGold} />
       </mesh>
 
-      {/* Glowing beacon pin head */}
+      {/* Glowing beacon pin head — color-blind-safe geometric dual encoding */}
       <mesh position={[0, stalkHeight, 0]}>
-        <sphereGeometry args={[0.008, 12, 12]} />
+        {site.category === 'rover' ? (
+          <boxGeometry args={[0.012, 0.012, 0.012]} />
+        ) : site.category === 'lander' ? (
+          <coneGeometry args={[0.009, 0.014, 4]} />
+        ) : site.category === 'scientific_instrument' || site.category === 'alsep' ? (
+          <octahedronGeometry args={[0.008]} />
+        ) : site.category === 'impact_site' ? (
+          <torusGeometry args={[0.007, 0.0025, 8, 16]} />
+        ) : (
+          <sphereGeometry args={[0.008, 12, 12]} />
+        )}
         <meshBasicMaterial color={pinHeadColor} />
       </mesh>
 
@@ -181,10 +191,11 @@ const SingleSiteMarker: React.FC<{
             <div className="px-2.5 py-1.5 rounded bg-[#080B10]/95 backdrop-blur-md border border-[#F59E0B]/70 shadow-[0_4px_20px_rgba(0,0,0,0.85)] text-center">
               <div className="flex items-center justify-center space-x-1.5">
                 <span
-                  className="px-1.5 py-0.2 rounded text-[8px] font-mono font-bold uppercase tracking-wider"
+                  className="px-1.5 py-0.5 rounded text-[8px] font-mono font-bold uppercase tracking-wider flex items-center gap-1"
                   style={{ backgroundColor: `${catStyle.primary}25`, color: catStyle.primary }}
                 >
-                  {catStyle.label}
+                  <span>{catStyle.glyph}</span>
+                  <span>{catStyle.label}</span>
                 </span>
                 <span className="font-mono text-[11px] text-white font-semibold">
                   {site.name}

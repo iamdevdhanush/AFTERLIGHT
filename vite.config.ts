@@ -6,28 +6,19 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 3000,
-    host: true,
+    host: true
   },
   build: {
+    chunkSizeWarningLimit: 1000,
     rollupOptions: {
       output: {
-        manualChunks(id) {
-          if (id.includes('node_modules')) {
-            if (id.includes('three') || id.includes('@react-three')) {
-              return 'vendor-three';
-            }
-            if (id.includes('framer-motion') || id.includes('gsap')) {
-              return 'vendor-motion';
-            }
-            if (id.includes('lucide-react')) {
-              return 'vendor-icons';
-            }
-            return 'vendor-core';
-          }
-        },
-      },
-    },
-    chunkSizeWarningLimit: 1200,
-  },
+        manualChunks: {
+          'vendor-three': ['three', '@react-three/fiber', '@react-three/drei', 'three-mesh-bvh'],
+          'vendor-animation': ['gsap', 'framer-motion'],
+          'vendor-i18n': ['i18next', 'react-i18next', 'i18next-browser-languagedetector'],
+          'vendor-state': ['zustand', 'lucide-react']
+        }
+      }
+    }
+  }
 });
-

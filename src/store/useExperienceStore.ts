@@ -33,7 +33,10 @@ interface ExperienceStore {
   reducedMotion: boolean;
   isRotationPaused: boolean;
   isAiGuideOpen: boolean;
-  isArrivalHeroVisible: boolean;
+  unitSystem: 'metric' | 'imperial';
+  isTeacherModeOpen: boolean;
+  isLowBandwidthMode: boolean;
+  webglAvailable: boolean;
 
   // Progress tracking
   discoveredArtifacts: string[];
@@ -70,6 +73,10 @@ interface ExperienceStore {
   setReducedMotion: (reduced: boolean) => void;
   toggleRotationPaused: () => void;
   toggleAiGuide: (open?: boolean) => void;
+  toggleUnitSystem: () => void;
+  toggleTeacherMode: (open?: boolean) => void;
+  toggleLowBandwidthMode: (enabled?: boolean) => void;
+  setWebglAvailable: (available: boolean) => void;
 }
 
 // Initial state resolution with URL query synchronization & planetary module support
@@ -124,7 +131,10 @@ export const useExperienceStore = create<ExperienceStore>((set, get) => ({
   reducedMotion: initialReducedMotion,
   isRotationPaused: false,
   isAiGuideOpen: false,
-  isArrivalHeroVisible: true,
+  unitSystem: 'metric',
+  isTeacherModeOpen: false,
+  isLowBandwidthMode: false,
+  webglAvailable: true,
 
   discoveredArtifacts: initial.artifact ? [initial.artifact] : [],
 
@@ -292,6 +302,22 @@ export const useExperienceStore = create<ExperienceStore>((set, get) => ({
       soundManager.playNavModalClose();
     }
     set({ isAiGuideOpen: next });
+  },
+
+  toggleUnitSystem: () => {
+    set((state) => ({ unitSystem: state.unitSystem === 'metric' ? 'imperial' : 'metric' }));
+  },
+
+  toggleTeacherMode: (open) => {
+    set((state) => ({ isTeacherModeOpen: open !== undefined ? open : !state.isTeacherModeOpen }));
+  },
+
+  toggleLowBandwidthMode: (enabled) => {
+    set((state) => ({ isLowBandwidthMode: enabled !== undefined ? enabled : !state.isLowBandwidthMode }));
+  },
+
+  setWebglAvailable: (available) => {
+    set({ webglAvailable: available });
   },
 }));
 

@@ -45,6 +45,7 @@ import {
   ChevronRight,
   ExternalLink,
 } from 'lucide-react';
+import { LanguageSwitcher } from '../../../components/ui/LanguageSwitcher';
 
 // Extend THREE prototypes for BVH accelerated raycasting
 (THREE.BufferGeometry.prototype as any).computeBoundsTree = computeBoundsTree;
@@ -861,6 +862,8 @@ export const HardwareInspectionStudio: React.FC<HardwareInspectionProps> = ({
 
         {/* Authenticity Badge & Close */}
         <div className="flex items-center space-x-3 shrink-0">
+          <LanguageSwitcher />
+
           {activeConfig.isAuthenticNasaModel ? (
             <div className="hidden sm:flex items-center space-x-1.5 px-2.5 py-1 rounded-full bg-emerald-950/70 border border-emerald-500/40 text-emerald-300 text-[10px] font-mono">
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
@@ -1100,15 +1103,24 @@ export const HardwareInspectionStudio: React.FC<HardwareInspectionProps> = ({
               </div>
 
               {/* Verified NASA Source Document Link */}
-              <div className="pt-3 border-t border-white/10">
+              <div className="pt-3 border-t border-white/10 flex items-center justify-between text-[10px] font-mono">
                 <a
                   href={currentPart.source}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center space-x-1.5 text-[10px] font-mono text-amber-400/80 hover:text-amber-300 transition-colors"
+                  className="inline-flex items-center space-x-1.5 text-amber-400/80 hover:text-amber-300 transition-colors"
                 >
                   <ExternalLink className="w-3 h-3" />
                   <span>NASA Source Documentation</span>
+                </a>
+                <a
+                  href="https://github.com/adithyasshetty/AFTERLIGHT/issues/new?title=Scientific+Data+Correction&labels=scientific-integrity"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-slate-400 hover:text-amber-400 underline decoration-slate-600 underline-offset-2 transition-colors text-[9px]"
+                  title="Report a discrepancy, coordinate deviation, or citation error"
+                >
+                  Report correction
                 </a>
               </div>
             </div>
