@@ -407,14 +407,12 @@ export const PlanetSphere: React.FC<PlanetSphereProps> = ({ planetId }) => {
       isDraggingRef.current = true;
       lastPointerRef.current = { x: e.clientX, y: e.clientY };
       dragVelocityRef.current = { x: 0, y: 0 };
-      dom.style.cursor = 'grabbing';
     };
 
     const onPointerMove = (e: PointerEvent) => {
       if (!isDraggingRef.current) return;
       if (useExperienceStore.getState().state !== 'DESTINATION_SELECT') {
         isDraggingRef.current = false;
-        dom.style.cursor = '';
         return;
       }
       const dx = e.clientX - lastPointerRef.current.x;
@@ -437,7 +435,6 @@ export const PlanetSphere: React.FC<PlanetSphereProps> = ({ planetId }) => {
     const onPointerUp = () => {
       if (!isDraggingRef.current) return;
       isDraggingRef.current = false;
-      dom.style.cursor = '';
     };
 
     dom.addEventListener('pointerdown', onPointerDown);
@@ -448,7 +445,6 @@ export const PlanetSphere: React.FC<PlanetSphereProps> = ({ planetId }) => {
       dom.removeEventListener('pointerdown', onPointerDown);
       window.removeEventListener('pointermove', onPointerMove);
       window.removeEventListener('pointerup', onPointerUp);
-      dom.style.cursor = '';
     };
   }, [gl]);
 
