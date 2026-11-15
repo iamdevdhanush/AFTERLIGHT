@@ -1,0 +1,197 @@
+[
+  {
+    "id": "lm-ascent-stage",
+    "meshNames": [
+      "group75 10", "group75 11", "group75 g1", "group75 g2", "group75 g3", "group75 gr",
+      "group75 p1", "group75 p2", "group75 p3", "group75 p4", "group75 p5",
+      "group75 p6", "group75 p7", "group75 p8", "group75 p9", "group75 pC", "group75 pP",
+      "pCone7", "pCube28", "pCube29",
+      "polySurfa2", "polySurfa3", "polySurfa4", "pPipe1", "pSphere29"
+    ],
+    "label": "Ascent Stage Crew Cabin & Cockpit",
+    "subassembly": "Ascent Stage",
+    "hotspotAnchor": [0, 3.8, 0.4],
+    "explodeVector": [0, 1.4, 0],
+    "cameraTarget": {
+      "position": [0, 1.4, 3.2],
+      "lookAt": [0, 1.2, 0]
+    },
+    "specs": {
+      "mass": "4,769 kg (fueled) / 2,150 kg (dry)",
+      "dimensions": "2.35 m wide × 3.76 m tall cockpit",
+      "habitable_volume": "6.7 m³ (stand-up cockpit)",
+      "material": "Welded 2219 aluminum alloy pressure vessel with Inconel heat foil"
+    },
+    "function": "Pressurized cabin for Neil Armstrong and Buzz Aldrin. Integrated the Apollo Guidance Computer (AGC), Primary Guidance Navigation and Control System (PGNCS), triangular forward windows, overhead docking tunnel, and 16 reaction control system (RCS) thrusters.",
+    "missionFacts": [
+      "No pilot seats to minimize weight — astronauts stood throughout descent and ascent held by bungee restraints",
+      "The Ascent Engine burned Aerozine-50/NTO at 3,500 lbf constant thrust to reach lunar orbit on July 21, 1969",
+      "Docked with Command Module Columbia after 21 hours and 36 minutes on the lunar surface",
+      "Jettisoned in lunar orbit; eventually crashed into an unknown lunar impact site"
+    ],
+    "source": "https://www.hq.nasa.gov/alsj/a11/A11_MissionReport.pdf",
+    "isAuthentic": true
+  },
+  {
+    "id": "lm-descent-stage",
+    "meshNames": [
+      "group13 10", "group13 11", "group13 12", "group13 13", "group13 14",
+      "group13 g1", "group13 g2", "group13 g3", "group13 g4", "group13 g5",
+      "group13 g6", "group13 g7", "group13 g8", "group13 g9", "group13 gr",
+      "group13 p1", "group13 p2", "group13 pC",
+      "pCube2", "pCylinder4", "pCylinder5", "pCylinder9", "polySurfac",
+      "pSphere28", "pSphere30"
+    ],
+    "label": "LM Descent Stage Chassis & Propellant Tanks",
+    "subassembly": "Descent Stage",
+    "hotspotAnchor": [0, 2.3, 0.8],
+    "explodeVector": [0, -0.8, 0],
+    "cameraTarget": {
+      "position": [0, -0.2, 3.5],
+      "lookAt": [0, -0.2, 0]
+    },
+    "specs": {
+      "mass": "10,334 kg (fueled) / 2,034 kg (dry)",
+      "dimensions": "4.2 m octagonal chassis width",
+      "propellant": "Aerozine-50 / Nitrogen Tetroxide (8,165 kg)",
+      "thermal_blankets": "25-layer Kapton & aluminized Mylar MLI blankets"
+    },
+    "function": "Octagonal aluminum-alloy structural framework containing four large hypergolic propellant tanks, helium pressurization tanks, scientific equipment stowage bays (MESA), and the descent propulsion system.",
+    "missionFacts": [
+      "Housed the Modular Equipment Stowage Assembly (MESA) containing the black-and-white TV camera",
+      "Gold Kapton thermal foil shielded against extreme lunar vacuum temperatures from -130 °C to +120 °C",
+      "Served as the launch platform when Eagle's ascent stage lifted off from Tranquility Base",
+      "Remains permanently in situ at Tranquility Base (0.67408° N, 23.47297° E)"
+    ],
+    "source": "https://www.hq.nasa.gov/alsj/LM04_Lunar_Module_ppRC1-23.pdf",
+    "isAuthentic": true
+  },
+  {
+    "id": "lm-landing-legs",
+    "meshNames": [
+      "group31 10", "group31 11", "group31 12", "group31 13", "group31 14",
+      "group31 15", "group31 16", "group31 17", "group31 18", "group31 19",
+      "group31 20", "group31 21", "group31 22", "group31 g1", "group31 g2",
+      "group31 g3", "group31 g4", "group31 g5", "group31 g6", "group31 g7",
+      "group31 g8", "group31 g9", "group31 gr",
+      "group73 g1", "group73 g2", "group73 gr", "group73 p1", "group73 p2", "group73 p3", "group73 pC",
+      "group74 g1", "group74 g2", "group74 gr", "group74 p1", "group74 p2", "group74 p3", "group74 pC",
+      "pPlane1", "pPlane2", "pCylinder6", "pCylinder7", "pCylinder8"
+    ],
+    "label": "Cantilever Struts & Regolith Footpads",
+    "subassembly": "Landing Gear",
+    "hotspotAnchor": [1.6, 0.9, 1.6],
+    "explodeVector": [0.8, -0.9, 0.8],
+    "cameraTarget": {
+      "position": [2.6, -1.0, 2.6],
+      "lookAt": [1.2, -1.3, 1.2]
+    },
+    "specs": {
+      "span": "9.45 m diagonal footprint across dish pads",
+      "pad_diameter": "0.94 m (37 in) spun aluminum dish",
+      "energy_absorption": "Crushable aluminum honeycomb cartridges (up to 81 cm stroke)",
+      "contact_probe_length": "1.73 m feeler wire probes on 3 footpads"
+    },
+    "function": "Four deployable truss assemblies that dissipated touchdown kinetic energy without bouncing or tipping. Feeler probes touched lunar soil first, illuminating the blue 'CONTACT LIGHT' on the cockpit console.",
+    "missionFacts": [
+      "\"Contact light! OK, engine stop.\" — reported by Buzz Aldrin at 20:17:40 UTC, July 20, 1969",
+      "Touchdown was so gentle that the crushable honeycomb barely compressed, leaving the ladder higher than expected",
+      "Armstrong had to take a 1-meter jump from the final ladder rung to the footpad dish",
+      "Landing gear remains permanently deployed on the Moon, visible in LRO satellite photography"
+    ],
+    "source": "https://ntrs.nasa.gov/citations/19710015566",
+    "isAuthentic": true
+  },
+  {
+    "id": "lm-descent-engine",
+    "meshNames": [
+      "pCylinder1", "pCylinder3"
+    ],
+    "label": "Descent Propulsion System (DPS Gimbaled Nozzle)",
+    "subassembly": "Descent Propulsion",
+    "hotspotAnchor": [0, 1.2, 0],
+    "explodeVector": [0, -1.2, 0],
+    "cameraTarget": {
+      "position": [0, -1.4, 2.8],
+      "lookAt": [0, -1.2, 0]
+    },
+    "specs": {
+      "thrust_range": "1,050 to 10,125 lbf (deeply throttleable 10%–100%)",
+      "expansion_ratio": "47:1 niobium-alloy bell extension",
+      "gimbal_range": "±6 degrees electromechanical gimbal",
+      "propellants": "Aerozine-50 and N2O4 hypergolic (no spark plugs needed)"
+    },
+    "function": "World's first deeply throttleable rocket engine used in crewed flight. Allowed Neil Armstrong to slow down from orbital speed, hover, translate horizontally, and manually maneuver past a dangerous crater filled with boulders.",
+    "missionFacts": [
+      "Armstrong manually extended the landing approach by ~40 seconds looking for smooth ground",
+      "Landed with approximately 25 to 30 seconds of descent propellant remaining",
+      "Engine nozzle was shut down just before touchdown so reflected exhaust wouldn't overpressure the base",
+      "Manufactured by TRW Systems Group (Redondo Beach, California)"
+    ],
+    "source": "https://ntrs.nasa.gov/citations/19700031298",
+    "isAuthentic": true
+  },
+  {
+    "id": "lm-forward-hatch-ladder",
+    "meshNames": [
+      "polySurfa1", "pCube3", "pCube27", "pCylinde11", "pCylinder2"
+    ],
+    "label": "Forward Egress Hatch & Crew Ladder",
+    "subassembly": "Crew Systems",
+    "hotspotAnchor": [0, 1.6, 2.2],
+    "explodeVector": [0, 0, 0.9],
+    "cameraTarget": {
+      "position": [0.5, -0.6, 3.2],
+      "lookAt": [0, -0.8, 1.8]
+    },
+    "specs": {
+      "hatch_dimensions": "81 cm × 81 cm (32 in × 32 in) square with rounded corners",
+      "ladder_length": "9 tubular aluminum rungs on forward landing strut",
+      "porch": "Small exterior platform outside hatch for astronaut egress in bulky PLSS spacesuits"
+    },
+    "function": "Egress hatch and ladder mounted to the forward landing strut (+Z axis). Enabled the astronauts to crawl backwards onto the exterior porch and descend to the lunar surface.",
+    "missionFacts": [
+      "Neil Armstrong stepped off this ladder onto the lunar surface at 02:56 UTC on July 21, 1969",
+      "Mounted between the ladder rungs was the commemorative stainless steel Apollo 11 lunar plaque",
+      "Plaque inscription: \"Here men from the planet Earth first set foot upon the Moon, July 1969 A.D. We came in peace for all mankind.\"",
+      "Armstrong pulled a lanyard on this ladder to deploy the Westinghouse lunar television camera"
+    ],
+    "source": "https://www.hq.nasa.gov/alsj/a11/A11_CdrTimeline.html",
+    "isAuthentic": true
+  },
+  {
+    "id": "lm-sband-antenna",
+    "meshNames": [
+      "group51 10", "group51 11", "group51 12", "group51 13", "group51 14",
+      "group51 15", "group51 16", "group51 17", "group51 18", "group51 19",
+      "group51 20", "group51 21", "group51 g1", "group51 g2", "group51 g3",
+      "group51 g4", "group51 g5", "group51 g6", "group51 g7", "group51 g8",
+      "group51 g9", "group51 gr", "group51 p1", "group51 po", "group51 pS",
+      "group61 p1", "group61 p2", "group61 pS", "group32 gr",
+      "pCone6", "pPipe2", "pSphere20", "pSphere26", "pSphere27"
+    ],
+    "label": "S-Band Steerable High-Gain Antenna & Upper Deck",
+    "subassembly": "Telecommunications",
+    "hotspotAnchor": [0.5, 4.6, 0.6],
+    "explodeVector": [0.6, 1.2, 0.4],
+    "cameraTarget": {
+      "position": [1.8, 2.2, 2.4],
+      "lookAt": [0.4, 1.9, 0.5]
+    },
+    "specs": {
+      "dish_diameter": "66 cm (26 in) parabolic mesh reflector",
+      "frequency": "2.2875 GHz downlink / 2.1018 GHz uplink",
+      "steerable_range": "360° azimuth / 180° elevation motorized gimbal",
+      "transmit_power": "20-watt S-band traveling wave tube amplifier"
+    },
+    "function": "Parabolic steerable antenna transmitting live lunar surface television broadcasts, voice, biomedical telemetry, and telemetry across 384,400 km directly to the NASA Deep Space Network.",
+    "missionFacts": [
+      "Beamed the historic live moonwalk broadcast watched by an estimated 650 million people worldwide",
+      "Signals were received simultaneously at Parkes Observatory (Australia), Goldstone (California), and Honeysuckle Creek",
+      "Allowed Houston flight controllers to monitor crew heart rates, oxygen levels, and LM system status",
+      "Required precise pointing at Earth as the planet moved across the lunar sky"
+    ],
+    "source": "https://www.hq.nasa.gov/alsj/a11/a11.telecom.html",
+    "isAuthentic": true
+  }
+]

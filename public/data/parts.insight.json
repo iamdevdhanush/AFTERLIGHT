@@ -1,0 +1,116 @@
+[
+  {
+    "id": "insight-seis-grapple",
+    "meshNames": [
+      "claw_01", "claw_02", "claw_03", "claw_04", "claw_05", "grapple", "cable_02"
+    ],
+    "label": "SEIS Seismometer & Robotic Grapple",
+    "subassembly": "Geophysics Payload",
+    "hotspotAnchor": [0, -0.4, 1.2],
+    "explodeVector": [0, -0.5, 0.8],
+    "cameraTarget": {
+      "position": [0.8, -0.2, 2.2],
+      "lookAt": [0, -0.35, 1.1]
+    },
+    "specs": {
+      "instrument": "Seismic Experiment for Interior Structure (SEIS)",
+      "sensitivity": "Measures ground motion smaller than a hydrogen atom (10⁻¹⁰ m/s²)",
+      "lead_institution": "CNES / IPGP (France) with ETH Zurich and Imperial College",
+      "thermal_shield": "Wind and Thermal Shield (WTS) dome"
+    },
+    "function": "Ultra-sensitive French-led seismometer deployed directly onto the Martian regolith via the robotic grapple. Detected over 1,300 marsquakes, revealing the thickness of Mars's crust and the liquid nature of its metallic core.",
+    "missionFacts": [
+      "Detected the largest marsquake ever recorded on May 4, 2022 (Magnitude 4.7 lasting over 10 hours)",
+      "Confirmed that the Martian crust is between 24 and 72 km thick with at least two internal layers",
+      "Measured meteorite impacts shaking the planet and creating 150-meter fresh craters",
+      "Placed safely under a dome shield to protect sensors from violent Martian winds"
+    ],
+    "source": "https://mars.nasa.gov/insight/mission/instruments/seis/",
+    "isAuthentic": true
+  },
+  {
+    "id": "insight-robotic-arm",
+    "meshNames": [
+      "arm_01", "arm_02", "arm_03", "shovel", "IDC"
+    ],
+    "label": "Instrument Deployment Arm (IDA) & IDC Camera",
+    "subassembly": "Robotic Manipulation",
+    "hotspotAnchor": [0.3, 0.4, 0.8],
+    "explodeVector": [0.5, 0.6, 0.6],
+    "cameraTarget": {
+      "position": [1.6, 0.7, 1.8],
+      "lookAt": [0.25, 0.35, 0.75]
+    },
+    "specs": {
+      "arm_reach": "1.9 m (6.2 ft) with 4 degrees of freedom",
+      "camera": "Instrument Deployment Camera (IDC) mounted on elbow (1024 × 1024 color)",
+      "end_effector": "Wax-actuated 5-finger grapple + regolith scoop"
+    },
+    "function": "Articulated robotic arm designed to grasp, lift, and place scientific instruments from the lander deck onto the Martian soil with sub-centimeter precision. Also used its scoop to pile regolith onto the HP3 mole.",
+    "missionFacts": [
+      "First robotic arm in history to place free-standing instruments onto another planet's surface",
+      "Pushed down on the HP3 'mole' thermal probe with its scoop to provide traction in powdery soil",
+      "Used its scoop to trickle sand onto the lander's solar panels during wind gusts to blow away dust",
+      "Took final self-portraits before dust accumulation ended the mission in December 2022"
+    ],
+    "source": "https://mars.nasa.gov/insight/spacecraft/instruments/ida/",
+    "isAuthentic": true
+  },
+  {
+    "id": "insight-solar-arrays",
+    "meshNames": [
+      "panel_l_rod", "Cube.001", "Cube.046", "Cube.047", "Cube.048"
+    ],
+    "label": "UltraFlex Decagonal Solar Array Wings",
+    "subassembly": "Electrical Power",
+    "hotspotAnchor": [1.8, 0.1, 0],
+    "explodeVector": [1.2, 0.2, 0],
+    "cameraTarget": {
+      "position": [3.2, 0.8, 1.5],
+      "lookAt": [1.6, 0.1, 0]
+    },
+    "specs": {
+      "span": "5.98 m (19.6 ft) total wing tip-to-tip span",
+      "diameter": "2.15 m (7.0 ft) per circular fan-like array",
+      "power_capacity": "~600 to 700 W at landing; dropped to <100 W by mission end due to dust",
+      "mechanism": "UltraFlex accordion fold-out deployment"
+    },
+    "function": "Twin circular folding photovoltaic wings engineered by Northrop Grumman. Unfolded like Japanese paper fans after touchdown on Elysium Planitia to charge two 23-Ah lithium-ion batteries.",
+    "missionFacts": [
+      "Produced 4,600 watt-hours per sol during initial deployment on Elysium Planitia",
+      "Dust storms slowly covered the arrays over 4 years, reducing power output by 85%",
+      "Engineers prolonged mission life by pulsing motors to vibrate panels and shake off dust",
+      "Operated for 1,445 sols — more than double its planned 709-sol prime mission"
+    ],
+    "source": "https://mars.nasa.gov/insight/spacecraft/lander/power/",
+    "isAuthentic": true
+  },
+  {
+    "id": "insight-landing-legs",
+    "meshNames": [
+      "leg_b", "leg_l", "leg_r", "ICC"
+    ],
+    "label": "Three-Leg Landing Struts & Retrorockets",
+    "subassembly": "Descent & Touchdown Platform",
+    "hotspotAnchor": [0, -0.9, -0.6],
+    "explodeVector": [0, -0.8, -0.4],
+    "cameraTarget": {
+      "position": [1.5, -0.6, 1.8],
+      "lookAt": [0, -0.8, -0.5]
+    },
+    "specs": {
+      "leg_count": "3 landing legs with crushable honeycomb shock absorbers",
+      "footpad_diameter": "0.3 m (1 ft) dish pads",
+      "thrusters": "12 pulsed hydrazine descent thrusters (300 N each)"
+    },
+    "function": "Tripod landing gear providing stable foundation for sensitive seismic measurements. Dissipated kinetic energy upon touchdown on November 26, 2018 at Elysium Planitia.",
+    "missionFacts": [
+      "Descended through the Martian atmosphere using a supersonic parachute and 12 pulsed thrusters",
+      "Landed at Elysium Planitia with less than a 4-degree slope on a smooth, rock-free plain",
+      "The Instrument Context Camera (ICC) mounted on the front leg provided wide 124° fish-eye views",
+      "Remains stationary and silent on Elysium Planitia (4.502° N, 135.623° E)"
+    ],
+    "source": "https://mars.nasa.gov/insight/spacecraft/lander/structure/",
+    "isAuthentic": true
+  }
+]

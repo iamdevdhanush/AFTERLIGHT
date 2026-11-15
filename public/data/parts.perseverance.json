@@ -1,0 +1,180 @@
+[
+  {
+    "id": "perseverance-mastcam-z",
+    "meshNames": [
+      "Mastcam_Z_cams", "head", "NavCams", "lens", "top", "microphones.001"
+    ],
+    "label": "Remote Sensing Mast & Mastcam-Z / SuperCam",
+    "subassembly": "Remote Sensing",
+    "hotspotAnchor": [0.12, 1.35, 0.28],
+    "explodeVector": [0, 0.9, 0.2],
+    "cameraTarget": {
+      "position": [0.6, 1.6, 1.8],
+      "lookAt": [0.1, 1.3, 0.28]
+    },
+    "specs": {
+      "mast_height": "2.0 m (6.6 ft) eye height above ground",
+      "mastcam_zoom": "4:1 optical zoom (28 mm to 100 mm focal length)",
+      "supercam_laser": "Pulsed 1064 nm Nd:YAG laser (cleans rock dust up to 7 m away)",
+      "cameras": "Mastcam-Z multispectral stereo pair + SuperCam + 2 Navcams",
+      "audio": "Mars environmental microphone (recorded first audio on Mars)"
+    },
+    "function": "High-altitude mast serving as the rover's eyes and ears. Mastcam-Z captures high-resolution 3D color stereo panoramas, while SuperCam fires laser pulses to vaporize rock surfaces and determine mineral composition via Raman and LIBS spectroscopy.",
+    "missionFacts": [
+      "Captured over 500,000 raw images of Jezero Crater's ancient river delta",
+      "Recorded the first acoustic sounds of Martian wind and rover driving",
+      "SuperCam fired laser shots at the 'Máaz' and 'Yeehgo' rock targets to confirm volcanic origins",
+      "Filmed the historic powered flights of the Ingenuity Mars Helicopter from 60 meters away"
+    ],
+    "source": "https://mars.nasa.gov/mars2020/spacecraft/rover/cameras/",
+    "isAuthentic": true
+  },
+  {
+    "id": "perseverance-robotic-arm-turret",
+    "meshNames": [
+      "corring_drill", "PIXL", "WATSON", "turret_obj", "turret_parts",
+      "arm", "arm.001", "arm.002", "arm.003", "arm.004", "PIXL_cover_01"
+    ],
+    "label": "2.1m Robotic Arm, Coring Drill & Science Turret",
+    "subassembly": "Sample Collection & In Situ Science",
+    "hotspotAnchor": [0.42, 1.35, 1.15],
+    "explodeVector": [0.6, 0.3, 0.6],
+    "cameraTarget": {
+      "position": [1.8, 1.5, 2.0],
+      "lookAt": [0.4, 1.3, 1.1]
+    },
+    "specs": {
+      "arm_reach": "2.1 m (7.0 ft) with 5 degrees of freedom",
+      "turret_mass": "45 kg (99 lb) containing drill, sensors, and spectrometers",
+      "coring_drill": "Rotary percussive coring tool extracting 13 mm × 60 mm core samples",
+      "pixl": "Planetary Instrument for X-ray Lithochemistry (sub-millimeter elemental maps)",
+      "sherloc_watson": "Deep-UV laser Raman spectrometer + WATSON microscopic camera (10-micron resolution)"
+    },
+    "function": "Articulated robotic arm wielding a heavy science turret. Places PIXL and SHERLOC against target rocks to detect organic biosignatures, while the rotary percussive drill cuts pristine geological core samples for Mars Sample Return.",
+    "missionFacts": [
+      "Successfully cored and hermetically sealed over 25 sample tubes in Jezero Crater",
+      "Discovered organic carbon molecules in Jezero delta mudstones using SHERLOC's deep-UV Raman laser",
+      "Deposited a backup cache of 10 sample tubes on the ground at 'Three Forks'",
+      "Sample tubes are titanium tubes lined with gold coatings to preserve volatile organic compounds"
+    ],
+    "source": "https://mars.nasa.gov/mars2020/spacecraft/rover/arm/",
+    "isAuthentic": true
+  },
+  {
+    "id": "perseverance-sample-caching-lab",
+    "meshNames": [
+      "lab", "base", "Up_Look_Camera", "Down_Look_Camera"
+    ],
+    "label": "Adaptive Caching Assembly (Internal Robotics)",
+    "subassembly": "Sample Storage",
+    "hotspotAnchor": [-0.02, 1.1, 0.75],
+    "explodeVector": [0, -0.6, 0.5],
+    "cameraTarget": {
+      "position": [-0.9, 1.3, 1.8],
+      "lookAt": [-0.02, 1.05, 0.7]
+    },
+    "specs": {
+      "sample_capacity": "43 hermetically sealable titanium sample tubes",
+      "cleanliness": "Ultra-clean spacecraft environment ever sent to Mars (<1 ppb terrestrial organic carbon)",
+      "internal_arm": "Sample Handling Arm (SHA) with 3 degrees of freedom"
+    },
+    "function": "Autonomous robotic laboratory inside the rover's belly. Receives cored samples from the robotic arm, photographs the core, volumes it, hermetically seals the titanium tube, and stores it in the sample carousel for future retrieval.",
+    "missionFacts": [
+      "World's most complex sample handling robotics ever deployed on another planet",
+      "Contains witness tubes to monitor Earth-origin trace particulates",
+      "Samples sealed inside will be collected by a future NASA/ESA Mars Sample Return campaign",
+      "The sample drop test at Three Forks confirmed tubes can be safely retrieved by helicopters or rovers"
+    ],
+    "source": "https://mars.nasa.gov/mars2020/mission/science/sample-return/",
+    "isAuthentic": true
+  },
+  {
+    "id": "perseverance-mmrtg-power",
+    "meshNames": [
+      "rtg", "RIMFAX"
+    ],
+    "label": "MMRTG Nuclear Generator & RIMFAX Subsurface Radar",
+    "subassembly": "Power & Geophysics",
+    "hotspotAnchor": [0.0, 1.18, -1.22],
+    "explodeVector": [0, 0.4, -0.8],
+    "cameraTarget": {
+      "position": [1.4, 1.5, -2.4],
+      "lookAt": [0, 1.15, -1.1]
+    },
+    "specs": {
+      "power_source": "Multi-Mission Radioisotope Thermoelectric Generator (MMRTG)",
+      "fuel": "4.8 kg (10.6 lb) plutonium-238 dioxide pellets",
+      "electrical_output": "~110 Watts at start of mission (charges two 43-Ah Li-ion batteries)",
+      "thermal_output": "~2,000 Watts heat piped through rover coolant loops",
+      "rimfax_radar": "Ground-penetrating radar imaging down to 10 m (30 ft) depth"
+    },
+    "function": "Provides continuous electrical and thermal energy immune to Martian nights, dust storms, and winter cold. RIMFAX ground-penetrating radar beams electromagnetic pulses into the regolith to map underground rock layers.",
+    "missionFacts": [
+      "Allows Perseverance to drive and perform science year-round, unlike solar-powered Opportunity",
+      "Excess decay heat is pumped through internal fluid loops to keep sensitive computers warm in -90 °C night cold",
+      "RIMFAX radar discovered that Jezero Crater's floor consists of igneous volcanic rocks overlain by delta muds",
+      "Operational lifespan is guaranteed for at least 14 Earth years"
+    ],
+    "source": "https://mars.nasa.gov/mars2020/spacecraft/rover/electrical-power/",
+    "isAuthentic": true
+  },
+  {
+    "id": "perseverance-rocker-bogie-wheels",
+    "meshNames": [
+      "Wheels_objs", "suspension"
+    ],
+    "label": "Rocker-Bogie Suspension & 6 Machined Titanium Wheels",
+    "subassembly": "Mobility Chassis",
+    "hotspotAnchor": [0.85, 0.28, 0.0],
+    "explodeVector": [0.6, -0.5, 0],
+    "cameraTarget": {
+      "position": [2.4, 0.6, 1.6],
+      "lookAt": [0.8, 0.3, 0]
+    },
+    "specs": {
+      "wheel_diameter": "52.5 cm (20.7 in) aircraft-grade aluminum rims",
+      "grousers": "48 curved wave cleats per wheel for sand traction",
+      "top_speed": "4.2 cm/s (152 m/h / 0.1 mph)",
+      "suspension": "Springless titanium rocker-bogie mechanism with differential bar",
+      "steering": "4 independent steering actuators on front and rear wheel pairs"
+    },
+    "function": "Articulated six-wheel mobility system designed to navigate boulders up to 40 cm tall without chassis tilt. Wheels feature thicker aluminum skins and curved wave cleats designed to prevent the puncture damage suffered by Curiosity.",
+    "missionFacts": [
+      "Features autonomous auto-navigation (AutoNav) driven by dedicated FPGA computer vision vision cores",
+      "Drove over 699 meters in a single sol using autonomous path planning — a Martian record",
+      "Crossed difficult boulder fields in the 'Séítah' and 'Margin Unit' geological formations",
+      "Each wheel rim incorporates a subtle morse code pattern and NASA JPL insignia"
+    ],
+    "source": "https://mars.nasa.gov/mars2020/spacecraft/rover/wheels/",
+    "isAuthentic": true
+  },
+  {
+    "id": "perseverance-high-gain-antenna",
+    "meshNames": [
+      "antenna_hg", "antenna_uhf", "antenna_lg"
+    ],
+    "label": "High-Gain X-Band Dish & UHF Relay Antenna",
+    "subassembly": "Telecommunications",
+    "hotspotAnchor": [0.42, 1.38, -0.39],
+    "explodeVector": [0.5, 0.6, -0.3],
+    "cameraTarget": {
+      "position": [1.4, 1.7, -0.8],
+      "lookAt": [0.4, 1.35, -0.38]
+    },
+    "specs": {
+      "dish_diameter": "30 cm (12 in) steerable parabolic dish",
+      "frequencies": "X-band (7 to 8 GHz direct to Earth) + UHF (400 MHz to orbiters)",
+      "data_rates": "Up to 3,000 bps direct to DSN / up to 2.0 Mbps via Mars Reconnaissance Orbiter (MRO)",
+      "pointing": "Two-axis azimuth/elevation gimbal tracks Earth across Martian sky"
+    },
+    "function": "Dual communications system. The high-gain parabolic antenna transmits directly to the NASA Deep Space Network, while the UHF antenna relays gigabytes of science imagery through Mars Reconnaissance Orbiter and MAVEN.",
+    "missionFacts": [
+      "Downlinks hundreds of high-resolution RAW images every afternoon sol via MRO flybys",
+      "The X-band antenna receives daily command bundles sent from JPL flight operations in Pasadena, CA",
+      "Signal propagation delay to Earth ranges between 4.3 and 21 minutes depending on orbital alignment",
+      "Used to control and receive flight telemetry from the Ingenuity Mars Helicopter base station"
+    ],
+    "source": "https://mars.nasa.gov/mars2020/spacecraft/rover/communications/",
+    "isAuthentic": true
+  }
+]
