@@ -128,6 +128,8 @@ export const ScreenArrival: React.FC = () => {
     const el = document.getElementById(id);
     if (el) {
       el.scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth' });
+      activeChapterRef.current = id;
+      setActiveChapter(id);
       navigation.syncArrivalChapter(id);
     }
   };
