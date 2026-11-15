@@ -17,10 +17,18 @@ interface PlanetMaterialMaps {
   roughnessMap: THREE.Texture;
 }
 
+const derivedPlanetMapsCache = new Map<string, { bumpMap: THREE.CanvasTexture; roughnessMap: THREE.CanvasTexture }>();
+
 export function buildDerivedPlanetMaps(
   img: HTMLImageElement,
   planetId: PlanetSphereId
 ): { bumpMap: THREE.CanvasTexture; roughnessMap: THREE.CanvasTexture } {
+  const cacheKey = `${planetId}-${img.src || img.width}`;
+  const existing = derivedPlanetMapsCache.get(cacheKey);
+  if (existing) {
+    return existing;
+  }
+
   const width = 1024;
   const height = 512;
 
@@ -144,7 +152,9 @@ export function buildDerivedPlanetMaps(
   roughnessMap.anisotropy = 4;
   roughnessMap.needsUpdate = true;
 
-  return { bumpMap, roughnessMap };
+  const result = { bumpMap, roughnessMap };
+  derivedPlanetMapsCache.set(cacheKey, result);
+  return result;
 }
 
 const MarsAtmosphereLimb: React.FC<{ sunDirection: THREE.Vector3 }> = ({ sunDirection }) => {
@@ -287,7 +297,7 @@ export const PlanetSphere: React.FC<PlanetSphereProps> = ({ planetId }) => {
   const isRotationPaused = useExperienceStore((s) => s.isRotationPaused);
   const reducedMotion = useExperienceStore((s) => s.reducedMotion);
 
-  const segments = graphicsQuality === 'high' ? 128 : graphicsQuality === 'medium' ? 72 : 48;
+  const segments = graphicsQuality === 'high' ? 96 : graphicsQuality === 'medium' ? 64 : 48;
 
   // Primary solar direction: crisp 3/4 side illumination with curved terminator
   const sunDirection = useMemo(

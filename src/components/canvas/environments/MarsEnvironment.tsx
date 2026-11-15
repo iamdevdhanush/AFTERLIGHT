@@ -1,9 +1,57 @@
-import React, { useMemo, useRef } from 'react';
+import React, { useMemo, useRef, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { createNoise2D } from 'simplex-noise';
 import { OpportunityModel } from '../artifacts/OpportunityModel';
 import { useExperienceStore } from '../../../store/useExperienceStore';
+
+interface RockTransform {
+  position: [number, number, number];
+  rotation: [number, number, number];
+  scale: [number, number, number];
+}
+
+const InstancedMarsRocks: React.FC<{ rockTransforms: RockTransform[] }> = ({ rockTransforms }) => {
+  const meshRef = useRef<THREE.InstancedMesh>(null);
+  const geo = useMemo(() => new THREE.DodecahedronGeometry(1, 1), []);
+  const mat = useMemo(
+    () => new THREE.MeshStandardMaterial({ color: '#7D3E24', roughness: 0.96, metalness: 0.05 }),
+    []
+  );
+
+  useEffect(() => {
+    const mesh = meshRef.current;
+    if (!mesh || rockTransforms.length === 0) return;
+
+    const dummy = new THREE.Object3D();
+    rockTransforms.forEach((tr, idx) => {
+      dummy.position.set(...tr.position);
+      dummy.rotation.set(...tr.rotation);
+      dummy.scale.set(...tr.scale);
+      dummy.updateMatrix();
+      mesh.setMatrixAt(idx, dummy.matrix);
+    });
+    mesh.instanceMatrix.needsUpdate = true;
+  }, [rockTransforms]);
+
+  useEffect(() => {
+    return () => {
+      geo.dispose();
+      mat.dispose();
+    };
+  }, [geo, mat]);
+
+  if (rockTransforms.length === 0) return null;
+
+  return (
+    <instancedMesh
+      ref={meshRef}
+      args={[geo, mat, rockTransforms.length]}
+      castShadow
+      receiveShadow
+    />
+  );
+};
 
 export const MarsEnvironment: React.FC = () => {
   const noise2D = useMemo(() => createNoise2D(), []);
@@ -108,16 +156,14 @@ export const MarsEnvironment: React.FC = () => {
     return positions;
   }, [graphicsQuality]);
 
-  // Animate dust particles slowly drifting in the Martian wind
+  // Animate dust particles slowly drifting in the Martian wind via transform
   useFrame((_, delta) => {
     if (particlesRef.current) {
-      const positions = particlesRef.current.geometry.attributes.position.array as Float32Array;
-      for (let i = 0; i < positions.length; i += 3) {
-        positions[i] += delta * 1.2; // drift along X
-        positions[i + 1] += Math.sin(Date.now() * 0.001 + i) * 0.004; // micro bob
-        if (positions[i] > 35) positions[i] = -35;
+      particlesRef.current.position.x += delta * 1.2;
+      if (particlesRef.current.position.x > 35) {
+        particlesRef.current.position.x = -35;
       }
-      particlesRef.current.geometry.attributes.position.needsUpdate = true;
+      particlesRef.current.rotation.y += delta * 0.015;
     }
   });
 
@@ -130,15 +176,16 @@ export const MarsEnvironment: React.FC = () => {
         intensity={2.8}
         color="#FFA372"
         castShadow
-        shadow-mapSize-width={2048}
-        shadow-mapSize-height={2048}
+        shadow-mapSize-width={1024}
+        shadow-mapSize-height={1024}
         shadow-camera-near={1}
         shadow-camera-far={80}
         shadow-camera-left={-25}
         shadow-camera-right={25}
         shadow-camera-top={25}
         shadow-camera-bottom={-25}
-        shadow-bias={-0.0005}
+        shadow-bias={-0.0003}
+        shadow-normalBias={0.02}
       />
       {/* Atmospheric secondary backfill light */}
       <directionalLight position={[-20, 8, -20]} intensity={0.5} color="#683424" />
@@ -156,20 +203,8 @@ export const MarsEnvironment: React.FC = () => {
         />
       </mesh>
 
-      {/* 3. SCATTERED MARTIAN BOULDERS */}
-      {rockTransforms.map((tr, idx) => (
-        <mesh
-          key={idx}
-          position={tr.position}
-          rotation={tr.rotation}
-          scale={tr.scale}
-          castShadow
-          receiveShadow
-        >
-          <dodecahedronGeometry args={[1, 1]} />
-          <meshStandardMaterial color="#7D3E24" roughness={0.96} metalness={0.05} />
-        </mesh>
-      ))}
+      {/* 3. SCATTERED MARTIAN BOULDERS (INSTANCED FOR 1 DRAW CALL) */}
+      <InstancedMarsRocks rockTransforms={rockTransforms} />
 
       {/* 4. ATMOSPHERIC DUST DRIFT PARTICLES */}
       <points ref={particlesRef}>

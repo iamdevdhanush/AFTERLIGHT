@@ -179,16 +179,20 @@ export const CuratorPresenter2D: React.FC<CuratorPresenter2DProps> = ({
             : 'mb-3 max-w-[440px]'
         }`}
       >
-        <div className="relative bg-[#FFFFFF] text-[#171717] rounded-2xl sm:rounded-3xl p-4 sm:p-5 shadow-[0_16px_40px_rgba(0,0,0,0.35)] border border-black/5">
+        <div className={`relative bg-[#FFFFFF] text-[#171717] border border-black/5 shadow-[0_12px_32px_rgba(0,0,0,0.35)] ${
+          isOverlayMode
+            ? 'rounded-2xl sm:rounded-3xl p-4 sm:p-5'
+            : 'rounded-xl sm:rounded-2xl p-3.5 sm:p-4'
+        }`}>
           {/* Header context inside speech bubble */}
-          <div className="flex items-center justify-between pb-2 mb-2 border-b border-black/10">
+          <div className="flex items-center justify-between pb-1.5 mb-1.5 border-b border-black/10">
             <span className="font-mono text-[9px] sm:text-[10px] tracking-[0.2em] uppercase font-bold text-black/70 flex items-center space-x-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-signal animate-pulse" />
               <span>DR. MAE VANCE</span>
               {contextTitle && (
                 <>
                   <span className="text-black/30">·</span>
-                  <span className="truncate max-w-[130px] sm:max-w-[180px] text-black/50">
+                  <span className="truncate max-w-[120px] sm:max-w-[160px] text-black/50">
                     {contextTitle}
                   </span>
                 </>
@@ -212,7 +216,7 @@ export const CuratorPresenter2D: React.FC<CuratorPresenter2DProps> = ({
           </div>
 
           {/* Spoken Phrase Content - Stable min-height prevents layout shifts */}
-          <div className="min-h-[48px] sm:min-h-[56px] flex items-center">
+          <div className="min-h-[40px] sm:min-h-[46px] flex items-center">
             <AnimatePresence mode="wait">
               <motion.p
                 key={`${voiceState.currentPhraseIndex}-${displayedPhraseText}`}
@@ -220,7 +224,7 @@ export const CuratorPresenter2D: React.FC<CuratorPresenter2DProps> = ({
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: -3, scale: 0.99 }}
                 transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-                className="font-sans text-xs sm:text-sm md:text-[15px] font-normal leading-relaxed text-[#171717]"
+                className="font-sans text-xs sm:text-[13px] md:text-sm font-normal leading-relaxed text-[#171717]"
               >
                 "{displayedPhraseText}"
               </motion.p>
@@ -369,7 +373,7 @@ export const CuratorPresenter2D: React.FC<CuratorPresenter2DProps> = ({
         </AnimatePresence>
 
         {/* Anchored Waist-Up 2D Illustrated Character Presenter */}
-        <div className="relative w-full max-w-[260px] sm:max-w-[320px] md:max-w-[360px] lg:max-w-[400px] aspect-[1672/940] flex items-end justify-center">
+        <div className="relative w-full max-w-[240px] sm:max-w-[280px] max-h-[140px] sm:max-h-[160px] aspect-[1672/940] flex items-end justify-center">
           {/* Subtle curatorial stage ambient ground glow */}
           <div className="absolute bottom-0 w-3/4 h-2 bg-gradient-to-t from-[#DEB275]/15 to-transparent rounded-full blur-sm pointer-events-none" />
 

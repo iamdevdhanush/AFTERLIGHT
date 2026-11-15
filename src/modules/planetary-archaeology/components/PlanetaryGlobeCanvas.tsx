@@ -233,6 +233,7 @@ export const PlanetaryGlobeCanvas: React.FC<PlanetaryGlobeCanvasProps> = ({
     <div className="absolute inset-0 w-full h-full bg-[#000000] overflow-hidden select-none">
       <Canvas
         camera={{ position: [0, 0, 9.8], fov: 38, near: 0.1, far: 500 }}
+        dpr={[1, Math.min(1.5, window.devicePixelRatio)]}
         gl={{
           antialias: true,
           powerPreference: 'high-performance',

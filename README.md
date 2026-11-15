@@ -29,7 +29,10 @@ Built with React 18, TypeScript, Three.js (`@react-three/fiber` & `@react-three/
 4. **Universal Global Reach**: Accessible in 7 languages (English, Hindi, Spanish, French, Arabic [RTL], Mandarin, Portuguese) with dynamic Metric/Imperial units and low-bandwidth/offline support for low-end mobile devices and rural schools.
 5. **Classroom Ready (Teacher Mode)**: Offers shareable deep links, printable 1-page student worksheets, and exportable 10-question space archaeology quizzes formatted as CSV for Google Classroom and Canvas.
 
----
+### Typography
+- **Headings & Editorial Titles:** `Instrument Serif` (italic and regular)
+- **Body & Story Narrative:** `Inter` (geometric sans-serif)
+- **Telemetry, Coordinates & Specs:** `JetBrains Mono` (monospace)
 
 ## 🏗️ System Architecture
 
@@ -173,6 +176,17 @@ npm test
 # 4. Production build
 npm run build
 ```
+The production bundle will be built into the `dist/` directory.
+
+### Running Audits and Benchmark Scripts
+- **Inspect 3D GLB Meshes:**
+  ```bash
+  node scripts/audit-glb-meshes.mjs
+  ```
+- **Run Headless Browser Performance Benchmark (CDP):**
+  ```bash
+  node scratch/benchmark_performance.cjs
+  ```
 
 ---
 

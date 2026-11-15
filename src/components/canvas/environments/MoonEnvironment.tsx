@@ -116,7 +116,7 @@ const InstancedRockVariant: React.FC<{
 
 export const MoonEnvironment: React.FC = () => {
   const graphicsQuality = useExperienceStore((s) => s.graphicsQuality);
-  const resolution = graphicsQuality === 'high' ? 200 : graphicsQuality === 'medium' ? 150 : 104;
+  const resolution = graphicsQuality === 'high' ? 144 : graphicsQuality === 'medium' ? 112 : 80;
 
   // Load real NASA LROC color mosaic & LOLA lunar elevation dataset
   const [lrocTexture, lolaTexture] = useTexture([
@@ -267,29 +267,29 @@ export const MoonEnvironment: React.FC = () => {
         intensity={4.1}
         color="#FFFDF7"
         castShadow
-        shadow-mapSize-width={2048}
-        shadow-mapSize-height={2048}
+        shadow-mapSize-width={1024}
+        shadow-mapSize-height={1024}
         shadow-camera-near={2}
         shadow-camera-far={120}
         shadow-camera-left={-22}
         shadow-camera-right={22}
         shadow-camera-top={22}
         shadow-camera-bottom={-22}
-        shadow-bias={-0.00025}
-        shadow-normalBias={0.024}
+        shadow-bias={-0.0002}
+        shadow-normalBias={0.02}
       />
 
       {/* Subtle upward light bounced off sunlit regolith into shadowed struts & craters */}
       <hemisphereLight args={['#0B0E14', '#5A564F', 0.28]} />
 
       {/* Subtle cool Earthshine fill from Earth suspended above horizon */}
-      <directionalLight position={[22, 16, -38]} intensity={0.22} color="#6E94BD" />
+      <directionalLight position={[18, 14, -40]} intensity={0.22} color="#6E94BD" />
 
       {/* 2. DEEP BLACK VACUUM SKY WITH SPARSE RESTRAINED STARS (NO ATMOSPHERIC HAZE) */}
       <LunarSkyStars />
 
       {/* 3. ANIMATED 3D EARTH SUSPENDED ABOVE THE LUNAR HORIZON (PRESERVED EXACTLY) */}
-      <EarthGlobe position={[22, 16, -38]} radius={4.8} sunDirection={[-42, 14, 38]} />
+      <EarthGlobe position={[18, 14, -40]} radius={5.2} sunDirection={[-42, 14, 38]} />
 
       {/* 4. GEOLOGICAL NASA LROC/LOLA LUNAR TERRAIN WITH MULTI-SCALE REGOLITH */}
       <mesh geometry={terrainData.geometry} material={terrainMaterial} receiveShadow />
@@ -305,7 +305,8 @@ export const MoonEnvironment: React.FC = () => {
       ))}
 
       {/* 6. ARTIFACT: OFFICIAL NASA APOLLO 11 LUNAR MODULE (EAGLE) */}
-      <ApolloEagleModel position={[0, 0, 0]} rotation={[0, 0.45, 0]} scale={1.25} />
+      {/* Positioned right-of-center to frame Earth and balance left editorial typography */}
+      <ApolloEagleModel position={[2.6, 0, -1.0]} rotation={[0, 0.55, 0]} scale={1.3} />
     </group>
   );
 };

@@ -36,41 +36,72 @@ const CHAPTERS: Chapter[] = [
 
 export const ScreenArrival: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const progressBarRef = useRef<HTMLDivElement>(null);
   const [activeChapter, setActiveChapter] = useState<string>('scene-prologue');
-  const [scrollProgress, setScrollProgress] = useState<number>(0);
+  const activeChapterRef = useRef<string>('scene-prologue');
   const reducedMotion = useExperienceStore((s) => s.reducedMotion);
   const toggleTeacherMode = useExperienceStore((s) => s.toggleTeacherMode);
 
-  // Scroll listener to update progress bar and active chapter HUD
+  // High-performance scroll listener with rAF coalescing and direct DOM style updates
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
 
+    let ticking = false;
+    let cachedOffsets: { id: string; top: number }[] = [];
+
+    const updateOffsets = () => {
+      cachedOffsets = CHAPTERS.map((ch) => {
+        const el = document.getElementById(ch.id);
+        return { id: ch.id, top: el ? el.offsetTop : 0 };
+      });
+    };
+
+    updateOffsets();
+    window.addEventListener('resize', updateOffsets, { passive: true });
+
     const handleScroll = () => {
-      const { scrollTop, scrollHeight, clientHeight } = container;
-      const maxScroll = scrollHeight - clientHeight;
-      const progress = maxScroll > 0 ? (scrollTop / maxScroll) * 100 : 0;
-      setScrollProgress(progress);
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          ticking = false;
+          if (!container) return;
 
-      // Determine active section based on scroll offset
-      const viewHeight = clientHeight;
-      const currentScrollMiddle = scrollTop + viewHeight * 0.4;
+          const { scrollTop, scrollHeight, clientHeight } = container;
+          const maxScroll = scrollHeight - clientHeight;
+          const progress = maxScroll > 0 ? (scrollTop / maxScroll) * 100 : 0;
 
-      for (let i = CHAPTERS.length - 1; i >= 0; i--) {
-        const el = document.getElementById(CHAPTERS[i].id);
-        if (el) {
-          const elTop = el.offsetTop;
-          if (currentScrollMiddle >= elTop) {
-            setActiveChapter(CHAPTERS[i].id);
-            break;
+          // Direct DOM manipulation for zero-react-render progress updates
+          if (progressBarRef.current) {
+            progressBarRef.current.style.width = `${progress}%`;
           }
-        }
+
+          // Throttle 3D background rendering when scrolled down into opaque documentary sections
+          const heroInView = scrollTop < clientHeight * 0.85;
+          setArrivalHeroVisible(heroInView);
+
+          // Determine active section using cached offsets
+          const currentScrollMiddle = scrollTop + clientHeight * 0.4;
+          for (let i = cachedOffsets.length - 1; i >= 0; i--) {
+            if (currentScrollMiddle >= cachedOffsets[i].top) {
+              const matchedId = cachedOffsets[i].id;
+              if (activeChapterRef.current !== matchedId) {
+                activeChapterRef.current = matchedId;
+                setActiveChapter(matchedId);
+              }
+              break;
+            }
+          }
+        });
+        ticking = true;
       }
     };
 
     container.addEventListener('scroll', handleScroll, { passive: true });
-    return () => container.removeEventListener('scroll', handleScroll);
-  }, []);
+    return () => {
+      container.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('resize', updateOffsets);
+    };
+  }, [setArrivalHeroVisible]);
 
   const scrollToChapter = (id: string) => {
     soundManager.playClick();
@@ -103,13 +134,14 @@ export const ScreenArrival: React.FC = () => {
       {/* 1. TOP PROGRESS HAIRLINE */}
       <div className="fixed top-0 left-0 right-0 h-[2px] z-50 bg-meteorite/30 pointer-events-none">
         <div
-          style={{ width: `${scrollProgress}%` }}
-          className="h-full bg-gradient-to-r from-signal via-bone to-signal transition-all duration-150 ease-out shadow-[0_0_8px_rgba(240,90,56,0.6)]"
+          ref={progressBarRef}
+          style={{ width: '0%' }}
+          className="h-full bg-gradient-to-r from-signal via-bone to-signal transition-[width] duration-75 ease-out shadow-[0_0_8px_rgba(240,90,56,0.6)]"
         />
       </div>
 
       {/* 2. FIXED TOP HEADER HUD */}
-      <header className="fixed top-0 left-0 right-0 z-40 px-6 sm:px-12 py-5 flex items-center justify-between backdrop-blur-md bg-obsidian/40 border-b border-meteorite/20">
+      <header className="fixed top-0 left-0 right-0 z-40 px-6 sm:px-12 py-5 flex items-center justify-between bg-obsidian/95 border-b border-meteorite/20">
         <div className="flex items-center space-x-3.5">
           <span className="w-2 h-2 rounded-full bg-signal animate-pulse shadow-[0_0_8px_#F05A38]" />
           <span className="font-mono text-xs uppercase tracking-widest text-bone font-semibold">
@@ -186,17 +218,23 @@ export const ScreenArrival: React.FC = () => {
           ========================================================================= */}
       <section
         id="scene-prologue"
-        className="relative min-h-screen flex flex-col justify-between p-8 md:p-16 pt-28 md:pt-36"
+        className="relative min-h-screen flex flex-col justify-between p-8 md:p-16 pt-28 md:pt-36 overflow-hidden"
       >
-        <div className="max-w-4xl space-y-8 my-auto">
+        {/* Left-side subtle atmospheric scrim to ensure 100% typography contrast while preserving 3D canvas */}
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-obsidian/90 via-obsidian/45 to-transparent z-0" />
+
+        {/* Bottom cinematic transition veil into Scene 2 */}
+        <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-obsidian via-obsidian/60 to-transparent z-10" />
+
+        <div className="relative z-10 max-w-xl lg:max-w-2xl space-y-8 my-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
             className="space-y-4"
           >
-            <div className="inline-flex items-center space-x-2.5 px-3 py-1 bg-surface-raised/60 border border-meteorite rounded-sm backdrop-blur-sm">
-              <span className="w-1.5 h-1.5 rounded-full bg-signal" />
+            <div className="inline-flex items-center space-x-2.5 px-3 py-1 bg-surface-raised/70 border border-meteorite rounded-sm backdrop-blur-sm">
+              <span className="w-1.5 h-1.5 rounded-full bg-signal shadow-[0_0_8px_#F05A38]" />
               <span className="font-mono text-[11px] tracking-widest text-signal uppercase font-medium">
                 INTERACTIVE SPACE ARTIFACT ARCHIVE
               </span>
@@ -213,7 +251,7 @@ export const ScreenArrival: React.FC = () => {
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1.2, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
-            className="max-w-xl text-stone-secondary font-sans text-base sm:text-lg leading-relaxed font-light"
+            className="max-w-prose text-stone-secondary font-sans text-base sm:text-lg leading-relaxed font-light"
           >
             An interactive space documentary of the machines that transformed human
             understanding. Discover the landers, rovers, and scientific instruments resting
@@ -263,7 +301,7 @@ export const ScreenArrival: React.FC = () => {
         </div>
 
         {/* Scroll down prompt */}
-        <div className="pt-8 flex flex-col sm:flex-row items-start sm:items-end justify-between text-xs font-mono tracking-wider text-stone-muted border-t border-meteorite/30">
+        <div className="relative z-10 pt-8 flex flex-col sm:flex-row items-start sm:items-end justify-between text-xs font-mono tracking-wider text-stone-muted border-t border-meteorite/30">
           <div className="flex items-center space-x-4">
             <span className="text-signal">01. THE MOON</span>
             <span className="text-meteorite">•</span>
@@ -287,9 +325,9 @@ export const ScreenArrival: React.FC = () => {
           ========================================================================= */}
       <section
         id="scene-story"
-        className="relative min-h-screen flex items-center p-8 md:p-16 py-24 bg-gradient-to-b from-transparent via-obsidian/80 to-obsidian"
+        className="relative min-h-screen flex items-center p-8 md:p-16 py-28 bg-gradient-to-b from-obsidian via-obsidian/95 to-obsidian"
       >
-        <div className="max-w-5xl mx-auto space-y-12">
+        <div className="max-w-5xl mx-auto space-y-12 w-full">
           <div className="space-y-4">
             <div className="flex items-center space-x-3">
               <span className="w-4 h-[1px] bg-signal" />
@@ -303,8 +341,8 @@ export const ScreenArrival: React.FC = () => {
             </h2>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
-            <div className="md:col-span-7 space-y-6 text-stone-secondary font-light text-base sm:text-lg leading-relaxed">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-10 md:gap-12 items-start">
+            <div className="md:col-span-7 space-y-6 text-stone-secondary font-light text-base sm:text-lg leading-relaxed max-w-prose">
               <p>
                 In the second half of the twentieth century, human beings broke free of
                 Earth&apos;s gravitational sanctuary. What began as a contest between superpowers
@@ -322,34 +360,47 @@ export const ScreenArrival: React.FC = () => {
               </p>
             </div>
 
-            {/* Editorial Stats Grid */}
-            <div className="md:col-span-5 grid grid-cols-1 gap-4">
-              <div className="p-6 bg-surface-raised/40 border border-meteorite/60 rounded-sm space-y-2">
-                <span className="font-mono text-xs text-signal tracking-widest uppercase block">
-                  CUMULATIVE SURFACE MASS
-                </span>
-                <span className="font-serif text-3xl sm:text-4xl text-bone">200+ Metric Tons</span>
-                <p className="font-mono text-xs text-stone-muted leading-relaxed">
-                  Of landers, rovers, and scientific payloads placed across the Moon and Mars.
+            {/* Integrated Editorial Telemetry Strip */}
+            <div className="md:col-span-5 flex flex-col space-y-6 pl-0 md:pl-8 border-l-0 md:border-l border-meteorite/50">
+              <div className="space-y-1.5">
+                <div className="flex items-center space-x-2 font-mono text-[10px] tracking-[0.22em] text-signal uppercase font-semibold">
+                  <span className="w-1.5 h-1.5 rounded-full bg-signal" />
+                  <span>CUMULATIVE SURFACE MASS</span>
+                </div>
+                <div className="font-serif text-3xl sm:text-4xl lg:text-5xl text-bone font-normal tracking-tight">
+                  200+ <span className="text-lg sm:text-xl text-stone-secondary font-light">Metric Tons</span>
+                </div>
+                <p className="font-sans text-xs text-stone-muted leading-relaxed font-light">
+                  Combined mass of landers, rovers, and scientific payloads resting across the Moon and Mars.
                 </p>
               </div>
 
-              <div className="p-6 bg-surface-raised/40 border border-meteorite/60 rounded-sm space-y-2">
-                <span className="font-mono text-xs text-lunar tracking-widest uppercase block">
-                  SURVIVAL RECORD
-                </span>
-                <span className="font-serif text-3xl sm:text-4xl text-bone">55+ Years in Situ</span>
-                <p className="font-mono text-xs text-stone-muted leading-relaxed">
-                  Tranquility Base remains undisturbed under airless lunar vacuum since 1969.
+              <div className="w-full h-[1px] bg-meteorite/40" />
+
+              <div className="space-y-1.5">
+                <div className="flex items-center space-x-2 font-mono text-[10px] tracking-[0.22em] text-lunar uppercase font-semibold">
+                  <span className="w-1.5 h-1.5 rounded-full bg-lunar" />
+                  <span>SURVIVAL RECORD IN VACUO</span>
+                </div>
+                <div className="font-serif text-3xl sm:text-4xl lg:text-5xl text-bone font-normal tracking-tight">
+                  55+ <span className="text-lg sm:text-xl text-stone-secondary font-light">Years in Situ</span>
+                </div>
+                <p className="font-sans text-xs text-stone-muted leading-relaxed font-light">
+                  Tranquility Base hardware and human bootprints remain undisturbed in the airless lunar vacuum since 1969.
                 </p>
               </div>
 
-              <div className="p-6 bg-surface-raised/40 border border-meteorite/60 rounded-sm space-y-2">
-                <span className="font-mono text-xs text-signal tracking-widest uppercase block">
-                  PERMANENT HERITAGE
-                </span>
-                <span className="font-serif text-3xl sm:text-4xl text-bone">8 Curated Sites</span>
-                <p className="font-mono text-xs text-stone-muted leading-relaxed">
+              <div className="w-full h-[1px] bg-meteorite/40" />
+
+              <div className="space-y-1.5">
+                <div className="flex items-center space-x-2 font-mono text-[10px] tracking-[0.22em] text-signal uppercase font-semibold">
+                  <span className="w-1.5 h-1.5 rounded-full bg-signal" />
+                  <span>PERMANENT OFF-WORLD HERITAGE</span>
+                </div>
+                <div className="font-serif text-3xl sm:text-4xl lg:text-5xl text-bone font-normal tracking-tight">
+                  8 <span className="text-lg sm:text-xl text-stone-secondary font-light">Curated Sites</span>
+                </div>
+                <p className="font-sans text-xs text-stone-muted leading-relaxed font-light">
                   Documented historical artifact sites preserved in the AFTERLIGHT museum archive.
                 </p>
               </div>
@@ -754,26 +805,37 @@ export const ScreenArrival: React.FC = () => {
             </p>
           </div>
 
-          {/* Dual Destination Portals */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+          {/* Dual Destination Planetary Portals */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
             {/* The Moon Portal */}
             <div
               onClick={handleSelectMoon}
-              className="group cursor-pointer p-8 bg-surface-raised/40 hover:bg-surface-raised border border-meteorite/80 hover:border-lunar rounded-sm transition-all duration-300 flex flex-col justify-between space-y-8 shadow-xl hover:shadow-lunar/10"
+              className="group cursor-pointer relative overflow-hidden rounded-sm border border-meteorite/80 hover:border-lunar bg-surface-raised transition-all duration-500 shadow-2xl hover:shadow-[0_0_30px_rgba(222,178,117,0.15)] flex flex-col justify-between p-8 sm:p-10 min-h-[420px]"
             >
-              <div className="space-y-6">
+              {/* NASA Lunar Surface Photographic Backdrop */}
+              <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                <img
+                  src="/images/apollo11_surface.jpg"
+                  alt="Lunar Horizon"
+                  className="w-full h-full object-cover object-center brightness-40 group-hover:brightness-50 group-hover:scale-105 transition-all duration-700 ease-out"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-obsidian via-obsidian/80 to-obsidian/30" />
+                <div className="absolute inset-0 bg-gradient-to-b from-obsidian/50 via-transparent to-transparent" />
+              </div>
+
+              <div className="relative z-10 space-y-6">
                 <div className="flex items-center justify-between">
-                  <span className="font-mono text-xs text-lunar uppercase tracking-wider">
-                    DESTINATION 01
+                  <span className="inline-flex items-center space-x-2 px-2.5 py-1 bg-obsidian/80 border border-lunar/40 rounded-sm font-mono text-[10px] tracking-[0.2em] text-lunar uppercase font-semibold">
+                    <span>DESTINATION 01 · 384,400 KM</span>
                   </span>
-                  <span className="text-xs font-mono text-stone-muted">384,400 KM</span>
+                  <span className="font-mono text-[10px] text-stone-muted tracking-widest uppercase">AIRLESS VACUUM</span>
                 </div>
 
-                <div className="space-y-2">
-                  <h3 className="font-serif text-4xl text-bone group-hover:text-lunar transition-colors duration-200">
+                <div className="space-y-3">
+                  <h3 className="font-serif text-4xl sm:text-5xl text-bone group-hover:text-lunar transition-colors duration-300 tracking-tight">
                     THE MOON
                   </h3>
-                  <p className="text-stone-secondary text-sm font-light leading-relaxed">
+                  <p className="text-stone-secondary text-sm font-light leading-relaxed max-w-sm">
                     Tranquility Base, Apollo Lunar Rovers, and ALSEP nuclear science packages
                     standing in eternal airless silence.
                   </p>
@@ -790,37 +852,48 @@ export const ScreenArrival: React.FC = () => {
                   </div>
                   <div className="flex items-center space-x-2">
                     <span className="w-1.5 h-1.5 rounded-full bg-lunar" />
-                    <span>Audio Narration by Dr. Mae Vance</span>
+                    <span>Curatorial Narration by Dr. Mae Vance</span>
                   </div>
                 </div>
               </div>
 
-              <div className="pt-4 flex items-center justify-between text-xs font-mono uppercase tracking-wider text-lunar font-semibold">
+              <div className="relative z-10 pt-6 border-t border-meteorite/30 flex items-center justify-between text-xs font-mono uppercase tracking-[0.18em] text-lunar font-semibold">
                 <span>ENTER MOON EXHIBITION</span>
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-1.5 transition-transform duration-200" />
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-2 transition-transform duration-300" />
               </div>
             </div>
 
             {/* Mars Portal */}
             <div
               onClick={handleSelectMars}
-              className="group cursor-pointer p-8 bg-surface-raised/40 hover:bg-surface-raised border border-meteorite/80 hover:border-signal rounded-sm transition-all duration-300 flex flex-col justify-between space-y-8 shadow-xl hover:shadow-signal/10"
+              className="group cursor-pointer relative overflow-hidden rounded-sm border border-meteorite/80 hover:border-signal bg-surface-raised transition-all duration-500 shadow-2xl hover:shadow-[0_0_30px_rgba(240,90,56,0.18)] flex flex-col justify-between p-8 sm:p-10 min-h-[420px]"
             >
-              <div className="space-y-6">
+              {/* NASA Martian Surface Photographic Backdrop */}
+              <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                <img
+                  src="/images/exhibits/opportunity.jpg"
+                  alt="Martian Terrain"
+                  className="w-full h-full object-cover object-center brightness-40 group-hover:brightness-50 group-hover:scale-105 transition-all duration-700 ease-out"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#120706] via-[#1A0D0C]/85 to-[#090C10]/40" />
+                <div className="absolute inset-0 bg-gradient-to-b from-obsidian/50 via-transparent to-transparent" />
+              </div>
+
+              <div className="relative z-10 space-y-6">
                 <div className="flex items-center justify-between">
-                  <span className="font-mono text-xs text-signal uppercase tracking-wider">
-                    DESTINATION 02
+                  <span className="inline-flex items-center space-x-2 px-2.5 py-1 bg-[#1A0D0C]/90 border border-signal/40 rounded-sm font-mono text-[10px] tracking-[0.2em] text-signal uppercase font-semibold">
+                    <span>DESTINATION 02 · 225M KM</span>
                   </span>
-                  <span className="text-xs font-mono text-stone-muted">225M KM AVERAGE</span>
+                  <span className="font-mono text-[10px] text-stone-muted tracking-widest uppercase">IRON OXIDE ATMOSPHERE</span>
                 </div>
 
-                <div className="space-y-2">
-                  <h3 className="font-serif text-4xl text-bone group-hover:text-signal transition-colors duration-200">
+                <div className="space-y-3">
+                  <h3 className="font-serif text-4xl sm:text-5xl text-bone group-hover:text-signal transition-colors duration-300 tracking-tight">
                     MARS
                   </h3>
-                  <p className="text-stone-secondary text-sm font-light leading-relaxed">
-                    Sojourner, Opportunity, Spirit, and InSight resting under rust skies and
-                    planet-wide dust storms.
+                  <p className="text-stone-secondary text-sm font-light leading-relaxed max-w-sm">
+                    Sojourner, Opportunity, Spirit, and InSight resting under rust skies, towering
+                    volcanoes, and planet-wide dust storms.
                   </p>
                 </div>
 
@@ -840,9 +913,9 @@ export const ScreenArrival: React.FC = () => {
                 </div>
               </div>
 
-              <div className="pt-4 flex items-center justify-between text-xs font-mono uppercase tracking-wider text-signal font-semibold">
+              <div className="relative z-10 pt-6 border-t border-meteorite/30 flex items-center justify-between text-xs font-mono uppercase tracking-[0.18em] text-signal font-semibold">
                 <span>ENTER MARS EXHIBITION</span>
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-1.5 transition-transform duration-200" />
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-2 transition-transform duration-300" />
               </div>
             </div>
           </div>

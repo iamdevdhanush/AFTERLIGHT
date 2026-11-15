@@ -149,70 +149,31 @@ export const ApolloEagleModel: React.FC<ApolloEagleModelProps> = ({
         </group>
       )}
 
-      {/* 3. HISTORIC TRANQUILITY BASE ELEMENTS NEARBY */}
-      {/* Early Apollo Scientific Experiments Package (EASEP) */}
-      <group position={[-5.8, 0, 4.2]} rotation={[0, 0.6, 0]}>
-        {/* Passive Seismic Experiment Package (PSEP) */}
-        <mesh position={[0, 0.25, 0]} castShadow receiveShadow>
-          <boxGeometry args={[0.7, 0.45, 0.55]} />
-          <meshStandardMaterial color="#BFC4CA" metalness={0.8} roughness={0.3} />
-        </mesh>
-        {/* Laser Ranging Retro-Reflector (LRRR) */}
-        <group position={[1.4, 0, 0.3]} rotation={[0.4, -0.3, 0]}>
-          <mesh position={[0, 0.3, 0]} castShadow receiveShadow>
-            <boxGeometry args={[0.8, 0.55, 0.2]} />
-            <meshStandardMaterial color="#9EA3A8" metalness={0.9} roughness={0.2} />
+      {/* 3. HISTORIC TRANQUILITY BASE ARTIFACTS (Positioned cleanly away from landing pads) */}
+      {isExploration && (
+        <group position={[5.8, 0, -4.2]} rotation={[0, -0.4, 0]}>
+          {/* Flagstaff pole */}
+          <mesh position={[0, 1.1, 0]} castShadow>
+            <cylinderGeometry args={[0.018, 0.018, 2.2, 16]} />
+            <meshStandardMaterial color="#D8DDE3" metalness={0.9} roughness={0.2} />
           </mesh>
-          {/* Retro-reflector corner-cube prisms */}
-          <mesh position={[0, 0.3, 0.11]}>
-            <planeGeometry args={[0.65, 0.4]} />
-            <meshStandardMaterial color="#2E3C48" metalness={0.95} roughness={0.1} />
+          {/* Horizontal crossbar holding flag rigid in vacuum */}
+          <mesh position={[0.55, 2.18, 0]}>
+            <boxGeometry args={[1.1, 0.015, 0.015]} />
+            <meshStandardMaterial color="#D8DDE3" metalness={0.9} roughness={0.2} />
           </mesh>
-        </group>
-      </group>
-
-      {/* The American Flag planted in lunar regolith */}
-      <group position={[4.8, 0, -3.2]} rotation={[0, -0.4, 0]}>
-        {/* Flagstaff pole */}
-        <mesh position={[0, 1.1, 0]} castShadow>
-          <cylinderGeometry args={[0.018, 0.018, 2.2, 16]} />
-          <meshStandardMaterial color="#D8DDE3" metalness={0.9} roughness={0.2} />
-        </mesh>
-        {/* Horizontal crossbar holding flag rigid in vacuum */}
-        <mesh position={[0.55, 2.18, 0]}>
-          <boxGeometry args={[1.1, 0.015, 0.015]} />
-          <meshStandardMaterial color="#D8DDE3" metalness={0.9} roughness={0.2} />
-        </mesh>
-        {/* Flag fabric */}
-        <mesh position={[0.55, 1.75, 0]} castShadow receiveShadow>
-          <planeGeometry args={[1.1, 0.85]} />
-          <meshStandardMaterial
-            color="#D43D3D"
-            roughness={0.8}
-            metalness={0.1}
-            side={THREE.DoubleSide}
-          />
-        </mesh>
-      </group>
-
-      {/* Displaced regolith / Astronaut bootprint paths */}
-      <group position={[0, 0.01, 0]}>
-        {/* Footprint trail from ladder to flag */}
-        {[-0.8, -0.4, 0, 0.4, 0.8, 1.2, 1.6, 2.0, 2.4, 2.8, 3.2, 3.6, 4.0].map((step, i) => (
-          <mesh
-            key={i}
-            position={[step * 1.1 + Math.sin(i) * 0.15, 0, -step * 0.7 + (i % 2 === 0 ? 0.12 : -0.12)]}
-            rotation={[-Math.PI / 2, 0, -0.5]}
-          >
-            <planeGeometry args={[0.18, 0.32]} />
+          {/* Flag fabric */}
+          <mesh position={[0.55, 1.75, 0]} castShadow receiveShadow>
+            <planeGeometry args={[1.1, 0.85]} />
             <meshStandardMaterial
-              color="#22252A" // Darker disturbed regolith
-              roughness={0.98}
-              metalness={0.02}
+              color="#D43D3D"
+              roughness={0.8}
+              metalness={0.1}
+              side={THREE.DoubleSide}
             />
           </mesh>
-        ))}
-      </group>
+        </group>
+      )}
     </group>
   );
 };

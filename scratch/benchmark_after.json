@@ -1,0 +1,46 @@
+[
+  {
+    "resolution": "1920x1080 (Desktop Full HD)",
+    "pageLoadMs": 395,
+    "domInteractiveMs": 15,
+    "avgFps": 48.3,
+    "frameDrops": 30,
+    "framesCount": 121,
+    "maxDeltaMs": 34,
+    "usedHeapMB": "30.3",
+    "bundleSizeMB": "1.76"
+  },
+  {
+    "resolution": "1366x768 (Standard Laptop)",
+    "pageLoadMs": 158,
+    "domInteractiveMs": 125,
+    "avgFps": 60.3,
+    "frameDrops": 0,
+    "framesCount": 151,
+    "maxDeltaMs": 17.1,
+    "usedHeapMB": "42.3",
+    "bundleSizeMB": "1.76"
+  },
+  {
+    "resolution": "1024x768 (Tablet Landscape)",
+    "pageLoadMs": 71,
+    "domInteractiveMs": 33,
+    "avgFps": 60.1,
+    "frameDrops": 0,
+    "framesCount": 151,
+    "maxDeltaMs": 17,
+    "usedHeapMB": "45.1",
+    "bundleSizeMB": "1.76"
+  },
+  {
+    "resolution": "390x844 (Mobile Phone)",
+    "pageLoadMs": 69,
+    "domInteractiveMs": 37,
+    "avgFps": 60.2,
+    "frameDrops": 0,
+    "framesCount": 151,
+    "maxDeltaMs": 17,
+    "usedHeapMB": "29.5",
+    "bundleSizeMB": "1.76"
+  }
+]

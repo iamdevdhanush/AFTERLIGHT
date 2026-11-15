@@ -541,32 +541,15 @@ export const ScreenArtifactDetails: React.FC<ScreenArtifactDetailsProps> = ({ on
             initial={reducedMotion ? { opacity: 0 } : { opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: reducedMotion ? 0 : 0.1, ease: [0.16, 1, 0.3, 1] }}
-            className="lg:col-span-5 lg:sticky lg:top-24 space-y-8"
+            className="lg:col-span-5 lg:sticky lg:top-20"
           >
             {/* Dr. Mae Vance Curatorial Presenter & Signature Speech Bubble */}
             <AfterlightGuide
               artifact={artifact}
               selectedComponent={selectedComponent}
               onResetComponent={() => selectComponent(null)}
+              onEnterStory={enterStory}
             />
-
-            {/* Curatorial In-Situ Records & Story Link */}
-            <div className="pt-8 border-t border-meteorite/50 space-y-4">
-              <div className="font-mono text-[11px] tracking-[0.14em] text-stone-muted space-y-1">
-                <div className="text-bone font-medium">{artifact.locationName}</div>
-                <div>{artifact.coordinates.latitude} · {artifact.coordinates.longitude}</div>
-                <div>DEPLOYED: {artifact.landingDate.toUpperCase()}</div>
-              </div>
-
-              <button
-                type="button"
-                onClick={enterStory}
-                className="group inline-flex items-center space-x-2.5 px-6 py-3 border border-meteorite hover:border-[#DEB275] bg-surface hover:bg-surface-raised text-bone transition-all text-xs font-mono uppercase tracking-[0.16em]"
-              >
-                <span>EXPLORE DOCUMENTARY STORY</span>
-                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" style={{ color: '#DEB275' }} />
-              </button>
-            </div>
           </motion.div>
         </div>
       </main>
