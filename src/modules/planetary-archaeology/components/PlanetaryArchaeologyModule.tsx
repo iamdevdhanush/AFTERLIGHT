@@ -29,7 +29,7 @@ export const PlanetaryArchaeologyModule: React.FC<PlanetaryArchaeologyModuleProp
   const [activeLayerType, setActiveLayerType] = useState<ImageryLayerType>('visible');
   const [terrainExaggeration, setTerrainExaggeration] = useState<number>(1.0);
   const [showGraticule, setShowGraticule] = useState<boolean>(false);
-  const [isAutoRotating, setIsAutoRotating] = useState<boolean>(false);
+  const [isAutoRotating, setIsAutoRotating] = useState<boolean>(true);
 
   const [selectedSite, setSelectedSite] = useState<PlanetarySite | null>(null);
   const [hoveredSiteId, setHoveredSiteId] = useState<string | null>(null);
@@ -136,6 +136,7 @@ export const PlanetaryArchaeologyModule: React.FC<PlanetaryArchaeologyModuleProp
     setSelectedSite(null);
     setIsInspectingTerrain(false);
     setCameraCue(null);
+    setIsAutoRotating(true);
   };
 
   // Handle selecting a site (from marker click, directory click, or search selection)
@@ -153,6 +154,7 @@ export const PlanetaryArchaeologyModule: React.FC<PlanetaryArchaeologyModuleProp
     setSelectedSite(null);
     setIsInspectingTerrain(false);
     setCameraCue(null);
+    setIsAutoRotating(true); // Resume continuous planetary rotation
   };
 
   // Handle opening 7-chapter storytelling experience
@@ -214,13 +216,30 @@ export const PlanetaryArchaeologyModule: React.FC<PlanetaryArchaeologyModuleProp
           </div>
         </div>
 
-        {/* Exit link below technical box */}
-        <div className="mt-2 pointer-events-auto">
+        {/* Action Links & Auto-Rotation Toggle below technical box */}
+        <div className="mt-2 pointer-events-auto flex items-center gap-2">
           <button
             onClick={onExit}
             className="font-mono text-[9px] tracking-[0.14em] uppercase text-stone-500 hover:text-amber-400 transition-colors flex items-center gap-1.5 px-2 py-1 bg-black/40 border border-stone-800/60 hover:border-amber-500/40"
           >
             ← MUSEUM CATALOG
+          </button>
+
+          <button
+            onClick={() => setIsAutoRotating(!isAutoRotating)}
+            className={`font-mono text-[9px] tracking-[0.14em] uppercase transition-all duration-200 flex items-center gap-1.5 px-2.5 py-1 border ${
+              isAutoRotating
+                ? 'bg-amber-500/15 text-amber-400 border-amber-500/50 shadow-[0_0_8px_rgba(245,158,11,0.2)]'
+                : 'bg-black/40 text-stone-400 border-stone-800/60 hover:text-stone-200'
+            }`}
+            title="Toggle Continuous Planetary Orbital Rotation"
+          >
+            <span
+              className={`w-1.5 h-1.5 rounded-full ${
+                isAutoRotating ? 'bg-amber-400 animate-pulse' : 'bg-stone-500'
+              }`}
+            />
+            <span>{isAutoRotating ? 'ORBIT SPIN: ACTIVE' : 'ORBIT SPIN: PAUSED'}</span>
           </button>
         </div>
       </div>

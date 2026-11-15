@@ -223,6 +223,12 @@ export const PlanetaryGlobeCanvas: React.FC<PlanetaryGlobeCanvasProps> = ({
   const sunPosition: [number, number, number] =
     planet === 'moon' ? [8.5, 2.8, 5.5] : [8.2, 3.0, 5.8];
 
+  // Astronomical axial obliquity
+  // Moon: 1.54° (0.0268 rad) to ecliptic
+  // Mars: 25.19° (0.4396 rad) to orbital plane
+  const axialTilt: [number, number, number] =
+    planet === 'moon' ? [-0.026, 0, -0.06] : [-0.18, 0, -0.42];
+
   return (
     <div className="absolute inset-0 w-full h-full bg-[#000000] overflow-hidden select-none">
       <Canvas
@@ -275,41 +281,43 @@ export const PlanetaryGlobeCanvas: React.FC<PlanetaryGlobeCanvasProps> = ({
           minDistance={4.2}
           maxDistance={22.0}
           enablePan={false}
+          enableRotate={!!selectedSite}
         />
 
-        {/* 3D Planetary Globe & Markers */}
+        {/* 3D Planetary Globe & Markers rotating synchronously in one unified celestial group */}
         <Suspense fallback={null}>
-          <PlanetaryGlobe
-            planet={planet}
-            activeLayerType={activeLayerType}
-            terrainExaggeration={terrainExaggeration}
-            showGraticule={showGraticule}
-            isAutoRotating={isAutoRotating}
-            onPointerCoordinate={onPointerCoordinate}
-            spinGroupRef={spinGroupRef}
-          />
-
-          {/* Markers & Rover Traversal Routes rotate synchronously with the globe */}
-          <group ref={spinGroupRef}>
-            {/* 3D Rover Traversal Paths */}
-            {traverses.map((traverse) => (
-              <RoverTraversePath3D
-                key={traverse.id}
-                traverse={traverse}
-                isSelectedRover={selectedSite?.traverseId === traverse.id}
-                onSelectWaypoint={onSelectWaypoint}
+          <group rotation={axialTilt}>
+            <group ref={spinGroupRef}>
+              <PlanetaryGlobe
+                planet={planet}
+                activeLayerType={activeLayerType}
+                terrainExaggeration={terrainExaggeration}
+                showGraticule={showGraticule}
+                isAutoRotating={isAutoRotating}
+                onPointerCoordinate={onPointerCoordinate}
+                spinGroupRef={spinGroupRef}
               />
-            ))}
 
-            {/* Hardware Location Markers */}
-            <PlanetaryMarkers
-              sites={sites}
-              selectedSiteId={selectedSite?.id || null}
-              hoveredSiteId={hoveredSiteId}
-              onHoverSite={onHoverSite}
-              onSelectSite={onSelectSite}
-              spinGroupRef={spinGroupRef}
-            />
+              {/* 3D Rover Traversal Paths */}
+              {traverses.map((traverse) => (
+                <RoverTraversePath3D
+                  key={traverse.id}
+                  traverse={traverse}
+                  isSelectedRover={selectedSite?.traverseId === traverse.id}
+                  onSelectWaypoint={onSelectWaypoint}
+                />
+              ))}
+
+              {/* Hardware Location Markers */}
+              <PlanetaryMarkers
+                sites={sites}
+                selectedSiteId={selectedSite?.id || null}
+                hoveredSiteId={hoveredSiteId}
+                onHoverSite={onHoverSite}
+                onSelectSite={onSelectSite}
+                spinGroupRef={spinGroupRef}
+              />
+            </group>
           </group>
         </Suspense>
       </Canvas>
