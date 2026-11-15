@@ -1,5 +1,5 @@
 /**
- * AFTERLIGHT — Signal & Stone Design Tokens
+ * ORBITAL — Signal & Stone Design Tokens
  * 
  * Foundational Palette:
  * - Obsidian: #111416 (Deep foundational dark surface)

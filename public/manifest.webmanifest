@@ -1,0 +1,18 @@
+{
+  "name": "ORBITAL — Interactive Space Archaeology Museum",
+  "short_name": "ORBITAL",
+  "description": "An interactive digital museum exploring the human-made machines, scientific instruments, and physical remnants left across the Moon and Mars.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#080B10",
+  "theme_color": "#080B10",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
+

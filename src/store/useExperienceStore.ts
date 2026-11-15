@@ -32,7 +32,6 @@ interface ExperienceStore {
   graphicsQuality: 'high' | 'medium' | 'low';
   reducedMotion: boolean;
   isRotationPaused: boolean;
-  isAiGuideOpen: boolean;
   isArrivalHeroVisible: boolean;
 
   // Progress tracking
@@ -69,7 +68,6 @@ interface ExperienceStore {
   setGraphicsQuality: (quality: 'high' | 'medium' | 'low') => void;
   setReducedMotion: (reduced: boolean) => void;
   toggleRotationPaused: () => void;
-  toggleAiGuide: (open?: boolean) => void;
 }
 
 // Initial state resolution with URL query synchronization & planetary module support
@@ -123,7 +121,6 @@ export const useExperienceStore = create<ExperienceStore>((set, get) => ({
   graphicsQuality: 'high',
   reducedMotion: initialReducedMotion,
   isRotationPaused: false,
-  isAiGuideOpen: false,
   isArrivalHeroVisible: true,
 
   discoveredArtifacts: initial.artifact ? [initial.artifact] : [],
@@ -282,16 +279,6 @@ export const useExperienceStore = create<ExperienceStore>((set, get) => ({
   toggleRotationPaused: () => {
     soundManager.playClick();
     set((s) => ({ isRotationPaused: !s.isRotationPaused }));
-  },
-
-  toggleAiGuide: (open) => {
-    const next = open !== undefined ? open : !get().isAiGuideOpen;
-    if (next) {
-      soundManager.playNavModalOpen();
-    } else {
-      soundManager.playNavModalClose();
-    }
-    set({ isAiGuideOpen: next });
   },
 }));
 

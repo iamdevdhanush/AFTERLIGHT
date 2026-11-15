@@ -219,7 +219,7 @@ export const MoonEnvironment: React.FC = () => {
         );
     };
 
-    mat.customProgramCacheKey = () => 'afterlight-lunar-regolith-v1';
+    mat.customProgramCacheKey = () => 'orbital-lunar-regolith-v1';
     return mat;
   }, [pbrMaps]);
 

@@ -1,5 +1,5 @@
 /**
- * AFTERLIGHT 3D HARDWARE INSPECTION STUDIO — AEROSPACE MUSEUM EDITION v2
+ * ORBITAL 3D HARDWARE INSPECTION STUDIO — AEROSPACE MUSEUM EDITION v2
  * =======================================================================
  * Ultra-Realistic PBR Rendering with Three.js & React Three Fiber
  *
@@ -829,7 +829,7 @@ export const HardwareInspectionStudio: React.FC<HardwareInspectionProps> = ({
           <div className="flex items-center space-x-2 shrink-0">
             <Cpu className="w-4 h-4 text-amber-400" />
             <span className="font-mono text-[11px] tracking-[0.18em] uppercase text-white font-semibold hidden sm:block">
-              AFTERLIGHT 3D HARDWARE INSPECTION STUDIO
+              ORBITAL 3D HARDWARE INSPECTION STUDIO
             </span>
           </div>
 

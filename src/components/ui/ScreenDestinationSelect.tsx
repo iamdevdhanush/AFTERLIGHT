@@ -25,7 +25,7 @@ export const ScreenDestinationSelect: React.FC = () => {
   return (
     <div className="relative z-10 w-full h-full flex flex-col justify-between p-7 md:p-14 pointer-events-none select-none">
       {/* Top Minimal Header */}
-      <div className="flex items-center justify-between">
+      <header className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
           <button
             type="button"
@@ -44,7 +44,7 @@ export const ScreenDestinationSelect: React.FC = () => {
               style={{ backgroundColor: activeTheme.accent }}
             />
             <span className="font-mono text-xs uppercase tracking-[0.2em] text-bone font-medium">
-              AFTERLIGHT
+              ORBITAL
             </span>
           </div>
         </div>
@@ -89,7 +89,7 @@ export const ScreenDestinationSelect: React.FC = () => {
             );
           })}
         </nav>
-      </div>
+      </header>
 
       {/* Left-reserved editorial typography — 3D globe owns center/right */}
       <div className="my-auto max-w-sm md:max-w-md pr-4">

@@ -1,5 +1,5 @@
 /**
- * AFTERLIGHT — Museum Curator Voice & Speech Synthesis Engine
+ * ORBITAL — Museum Curator Voice & Speech Synthesis Engine
  * 
  * Provides warm, mature, documentary-style female voice narration with:
  * - Reliable female English voice selection (preferring high-quality Edge/Chrome natural voices)
@@ -142,7 +142,9 @@ class GuideVoiceEngine {
   private static getPersistedVolume(): number {
     if (typeof window === 'undefined') return 1.0;
     try {
-      const saved = localStorage.getItem('afterlight_narration_volume');
+      const saved =
+        localStorage.getItem('orbital_narration_volume') ??
+        localStorage.getItem('afterlight_narration_volume');
       if (saved !== null) {
         const parsed = parseFloat(saved);
         if (!isNaN(parsed) && parsed >= 0 && parsed <= 1) return parsed;
@@ -225,7 +227,7 @@ class GuideVoiceEngine {
       this.state.selectedVoiceName = 'Ambient Acoustic Simulation (No Female Voice Available)';
       this.state.isFemaleVoiceActive = false;
       console.warn(
-        '[AFTERLIGHT GuideVoiceEngine] No verified female English voice detected. To preserve Dr. Mae Vance\'s curatorial identity, narration will run in ambient simulated mode rather than using a male voice.'
+        '[ORBITAL GuideVoiceEngine] No verified female English voice detected. To preserve Dr. Mae Vance\'s curatorial identity, narration will run in ambient simulated mode rather than using a male voice.'
       );
     }
 
@@ -679,7 +681,7 @@ class GuideVoiceEngine {
     this.state.volume = clamped;
     try {
       if (typeof window !== 'undefined') {
-        localStorage.setItem('afterlight_narration_volume', String(clamped));
+        localStorage.setItem('orbital_narration_volume', String(clamped));
       }
     } catch {}
     if (this.currentUtterance && typeof window !== 'undefined' && 'speechSynthesis' in window) {

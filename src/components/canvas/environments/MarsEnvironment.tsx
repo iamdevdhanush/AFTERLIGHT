@@ -144,6 +144,12 @@ export const MarsEnvironment: React.FC = () => {
     return { geometry: geo, rockTransforms: rocks };
   }, [noise2D, resolution, graphicsQuality]);
 
+  useEffect(() => {
+    return () => {
+      geometry.dispose();
+    };
+  }, [geometry]);
+
   // Atmospheric dust particle cloud
   const dustParticles = useMemo(() => {
     const count = graphicsQuality === 'high' ? 1200 : 600;

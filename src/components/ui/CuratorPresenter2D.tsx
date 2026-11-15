@@ -28,7 +28,7 @@ const POSE_IMAGES: Record<CharacterPose, string> = {
 };
 
 /**
- * AFTERLIGHT — 2D Illustrated Curator Presenter & Animated Speech Bubble
+ * ORBITAL — 2D Illustrated Curator Presenter & Animated Speech Bubble
  * Featuring Dr. Mae Vance, Senior Curator of Planetary Heritage.
  * 
  * Supports two distinct presentation modes:

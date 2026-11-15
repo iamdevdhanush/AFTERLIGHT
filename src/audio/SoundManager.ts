@@ -1,5 +1,5 @@
 /**
- * AFTERLIGHT — Cinematic Audio Synthesizer Engine
+ * ORBITAL — Cinematic Audio Synthesizer Engine
  * Uses Web Audio API to synthesize photorealistic planetary ambient soundscapes,
  * atmospheric winds, telemetry pulses, and cinematic tonal cues without external audio files.
  */
@@ -26,7 +26,8 @@ class SoundManager {
   private static getPersistedSfxMuted(): boolean {
     if (typeof window === 'undefined') return false;
     try {
-      return localStorage.getItem('afterlight_sfx_muted') === 'true';
+      const persisted = localStorage.getItem('orbital_sfx_muted') ?? localStorage.getItem('afterlight_sfx_muted');
+      return persisted === 'true';
     } catch {
       return false;
     }
@@ -45,8 +46,19 @@ class SoundManager {
         this.transitionGain = this.ctx.createGain();
         this.transitionGain.gain.setValueAtTime(1.0, this.ctx.currentTime);
         this.transitionGain.connect(this.masterGain);
+
+        // Pause synthesis when tab is hidden to save CPU/battery
+        if (typeof document !== 'undefined') {
+          document.addEventListener('visibilitychange', () => {
+            if (document.hidden && this.ctx && this.ctx.state === 'running') {
+              this.ctx.suspend().catch(() => {});
+            } else if (!document.hidden && !this.isMuted && this.ctx && this.ctx.state === 'suspended') {
+              this.ctx.resume().catch(() => {});
+            }
+          });
+        }
       }
-      if (this.ctx && this.ctx.state === 'suspended') {
+      if (this.ctx && this.ctx.state === 'suspended' && !this.isMuted) {
         this.ctx.resume().catch(() => {});
       }
     } catch {
@@ -59,6 +71,17 @@ class SoundManager {
     if (this.masterGain && this.ctx) {
       const targetGain = muted ? 0 : 0.4;
       this.masterGain.gain.setTargetAtTime(targetGain, this.ctx.currentTime, 0.2);
+      if (muted) {
+        setTimeout(() => {
+          if (this.isMuted && this.ctx && this.ctx.state === 'running') {
+            this.ctx.suspend().catch(() => {});
+          }
+        }, 300);
+      } else {
+        if (this.ctx && this.ctx.state === 'suspended') {
+          this.ctx.resume().catch(() => {});
+        }
+      }
     }
   }
 
@@ -66,6 +89,7 @@ class SoundManager {
     this.isSfxMuted = muted;
     try {
       if (typeof window !== 'undefined') {
+        localStorage.setItem('orbital_sfx_muted', String(muted));
         localStorage.setItem('afterlight_sfx_muted', String(muted));
       }
     } catch {}
@@ -1204,6 +1228,7 @@ class SoundManager {
 export const soundManager = new SoundManager();
 
 if (typeof window !== 'undefined') {
+  (window as any).__ORBITAL_SOUND__ = soundManager;
   (window as any).__AFTERLIGHT_SOUND__ = soundManager;
 }
 

@@ -5,21 +5,23 @@ import { useExperienceStore } from '../../store/useExperienceStore';
 import { guideVoiceEngine, VoiceState } from '../../audio/GuideVoiceEngine';
 import { CuratorPresenter2D } from './CuratorPresenter2D';
 
-interface AfterlightGuideProps {
+export interface OrbitalGuideProps {
   artifact: ArtifactData;
   selectedComponent: ArtifactComponent | null;
   onResetComponent: () => void;
   onEnterStory?: () => void;
 }
 
+export type AfterlightGuideProps = OrbitalGuideProps;
+
 const AMBER_ACCENT = '#DEB275';
 
 /**
- * AFTERLIGHT — Museum Curator Storytelling Integration
+ * ORBITAL — Museum Curator Storytelling Integration
  * Unifies the Dr. Mae Vance character presenter, animated speech bubble,
  * curatorial controls, site telemetry, and documentary story access into one connected card.
  */
-export const AfterlightGuide: React.FC<AfterlightGuideProps> = ({
+export const OrbitalGuide: React.FC<OrbitalGuideProps> = ({
   artifact,
   selectedComponent,
   onResetComponent,
@@ -107,7 +109,7 @@ export const AfterlightGuide: React.FC<AfterlightGuideProps> = ({
 
   return (
     <aside
-      aria-label="Afterlight Museum Curator Narration"
+      aria-label="ORBITAL Museum Curator Narration"
       className="flex flex-col bg-surface-raised/50 border border-meteorite/70 rounded-sm p-4 sm:p-5 space-y-4 select-none shadow-xl"
     >
       {/* 1. Header: Curator identity + Audio Controls */}
@@ -286,3 +288,5 @@ export const AfterlightGuide: React.FC<AfterlightGuideProps> = ({
     </aside>
   );
 };
+
+export const AfterlightGuide = OrbitalGuide;

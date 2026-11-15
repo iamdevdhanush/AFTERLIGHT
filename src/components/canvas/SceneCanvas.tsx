@@ -30,40 +30,49 @@ export const SceneCanvas: React.FC = () => {
     state === 'LEGACY' ||
     state === 'PLANETARY_ARCHAEOLOGY';
 
-  if (isMuseumEditorialView) {
-    return <div className="absolute inset-0 w-full h-full z-0 bg-[#080B10]" />;
-  }
+  const frameloop = isMuseumEditorialView
+    ? 'never'
+    : (state === 'ARRIVAL' && !isArrivalHeroVisible ? 'demand' : 'always');
 
   return (
-    <div className="absolute inset-0 w-full h-full pointer-events-auto z-0 overflow-hidden bg-[#000000]">
-      <Canvas
-        frameloop={state === 'ARRIVAL' && !isArrivalHeroVisible ? 'demand' : 'always'}
-        shadows
-        gl={{
-          antialias: true,
-          powerPreference: 'high-performance',
-          alpha: false,
-          stencil: false,
-          depth: true,
-          toneMappingExposure: 1.0,
-        }}
-        dpr={[1, Math.min(1.5, window.devicePixelRatio)]}
-        camera={{ position: [0, 2.5, 12], fov: 42, near: 0.1, far: 400 }}
+    <>
+      {isMuseumEditorialView && (
+        <div className="absolute inset-0 w-full h-full z-0 bg-[#080B10]" />
+      )}
+      <div
+        className={`absolute inset-0 w-full h-full z-0 overflow-hidden bg-[#000000] ${
+          isMuseumEditorialView ? 'invisible pointer-events-none' : 'pointer-events-auto visible'
+        }`}
       >
-        <CameraDirector />
-        <Suspense fallback={null}>
-          {showOrbitalPlanet ? (
-            <PlanetSphere planetId={activeEnvironment} />
-          ) : (
-            <>
-              {activeEnvironment === 'moon' && <MoonEnvironment />}
-              {activeEnvironment === 'mars' && <MarsEnvironment />}
-              {activeEnvironment === 'deep_space' && <DeepSpaceEnvironment />}
-            </>
-          )}
-        </Suspense>
-      </Canvas>
-    </div>
+        <Canvas
+          frameloop={frameloop}
+          shadows
+          gl={{
+            antialias: true,
+            powerPreference: 'high-performance',
+            alpha: false,
+            stencil: false,
+            depth: true,
+            toneMappingExposure: 1.0,
+          }}
+          dpr={[1, Math.min(1.5, window.devicePixelRatio)]}
+          camera={{ position: [0, 2.5, 12], fov: 42, near: 0.1, far: 400 }}
+        >
+          <CameraDirector />
+          <Suspense fallback={null}>
+            {showOrbitalPlanet ? (
+              <PlanetSphere planetId={activeEnvironment} />
+            ) : (
+              <>
+                {activeEnvironment === 'moon' && <MoonEnvironment />}
+                {activeEnvironment === 'mars' && <MarsEnvironment />}
+                {activeEnvironment === 'deep_space' && <DeepSpaceEnvironment />}
+              </>
+            )}
+          </Suspense>
+        </Canvas>
+      </div>
+    </>
   );
 };
 

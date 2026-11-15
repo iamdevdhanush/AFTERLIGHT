@@ -176,7 +176,7 @@ export const Artifact3DStage: React.FC<Artifact3DStageProps> = ({ artifactId, on
           </h3>
           <p className="font-sans text-xs text-stone-secondary leading-relaxed font-light">
             {manifest?.unavailableReason ||
-              'Official NASA 3D engineering models for this mission hardware are not available in the NASA 3D Resources archive. To preserve archival authenticity, AFTERLIGHT displays verified NASA photography.'}
+              'Official NASA 3D engineering models for this mission hardware are not available in the NASA 3D Resources archive. To preserve archival authenticity, ORBITAL displays verified NASA photography.'}
           </p>
         </div>
         {onSwitchToPhoto && (
@@ -202,6 +202,7 @@ export const Artifact3DStage: React.FC<Artifact3DStageProps> = ({ artifactId, on
       {/* 3D WebGL Canvas */}
       <div className="relative w-full h-full flex-1">
         <Canvas
+          frameloop={autoRotate ? 'always' : 'demand'}
           shadows
           camera={{
             position: defaultCamConfig.position,

@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <radialGradient id="orbGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#F05A38" stop-opacity="1" />
+      <stop offset="100%" stop-color="#F05A38" stop-opacity="0" />
+    </radialGradient>
+    <linearGradient id="bodyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#E2E8F0" />
+      <stop offset="45%" stop-color="#94A3B8" />
+      <stop offset="100%" stop-color="#1E293B" />
+    </linearGradient>
+  </defs>
+
+  <!-- Deep space background -->
+  <rect width="64" height="64" rx="14" fill="#080B10" />
+
+  <!-- Outer subtle boundary ring -->
+  <circle cx="32" cy="32" r="27" fill="none" stroke="#1E232B" stroke-width="1" />
+
+  <!-- Inclined elliptical orbit path -->
+  <ellipse cx="32" cy="32" rx="22" ry="8.5" fill="none" stroke="#DEB275" stroke-width="1.25" stroke-dasharray="2 1.5" transform="rotate(-28 32 32)" opacity="0.65" />
+
+  <!-- Planetary body -->
+  <circle cx="32" cy="32" r="11" fill="url(#bodyGrad)" />
+  <!-- Shadow crescent on body for astronomical depth -->
+  <path d="M 32 21 A 11 11 0 0 1 42.5 35 A 11 11 0 0 1 32 43 A 11 9 0 0 0 32 21 Z" fill="#080B10" opacity="0.75" />
+
+  <!-- Front arc of orbit -->
+  <path d="M 13 38 A 22 8.5 0 0 0 50 26" fill="none" stroke="#F5F3EF" stroke-width="1.75" transform="rotate(-28 32 32)" />
+
+  <!-- Active telemetry node in orbit -->
+  <circle cx="48" cy="23" r="4" fill="url(#orbGlow)" opacity="0.8" />
+  <circle cx="48" cy="23" r="2" fill="#F05A38" />
+  <circle cx="48" cy="23" r="0.9" fill="#FFFFFF" />
+</svg>
+

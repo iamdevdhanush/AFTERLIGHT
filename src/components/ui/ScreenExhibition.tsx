@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, Suspense, lazy } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowLeft,
@@ -18,10 +18,13 @@ import { ARTIFACTS, EXHIBITION_COLLECTIONS } from '../../data/artifacts';
 import { DESTINATIONS } from '../../data/destinations';
 import { getDestinationTheme } from '../../theme/tokens';
 import { DestinationId, ArtifactCategory, HardwareStatus, ArtifactData } from '../../types';
-import { ScreenArtifactDetails } from './ScreenArtifactDetails';
 import { PlanetarySurfaceMap } from './PlanetarySurfaceMap';
 import { navigation } from '../../navigation/navigationController';
 import { soundManager } from '../../audio/SoundManager';
+
+const ScreenArtifactDetails = lazy(() =>
+  import('./ScreenArtifactDetails').then((m) => ({ default: m.ScreenArtifactDetails }))
+);
 
 export const ScreenExhibition: React.FC = () => {
   const currentDestination = useExperienceStore((s) => s.currentDestination);
@@ -129,21 +132,24 @@ export const ScreenExhibition: React.FC = () => {
   return (
     <div className="fixed inset-0 z-30 bg-obsidian text-bone overflow-y-auto overflow-x-hidden select-none">
       {/* 1. Minimal Sticky Top Navigation Header */}
-      <header className="sticky top-0 z-20 bg-obsidian/90 backdrop-blur-sm border-b border-meteorite px-6 md:px-14 py-4 flex items-center justify-between">
-        <div className="flex items-center space-x-4 md:space-x-6 min-w-0">
+      <header className="sticky top-0 z-20 bg-obsidian/90 backdrop-blur-sm border-b border-meteorite px-4 sm:px-6 md:px-14 py-3.5 sm:py-4 flex items-center justify-between gap-3">
+        <div className="flex items-center space-x-3 sm:space-x-5 min-w-0">
           <button
             type="button"
-            onClick={returnToDestinations}
-            className="group shrink-0 inline-flex items-center space-x-2 text-xs font-mono tracking-[0.16em] text-stone-secondary hover:text-bone transition-colors uppercase"
+            onClick={() => navigation.toArrival()}
+            className="group shrink-0 inline-flex items-center space-x-1.5 sm:space-x-2 text-xs font-mono tracking-[0.16em] text-stone-secondary hover:text-bone transition-colors uppercase"
+            title="Return to the Guided Introduction Story"
           >
             <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />
-            <span>DESTINATIONS</span>
+            <span>RETURN TO STORY</span>
           </button>
 
           <span className="text-meteorite font-mono text-xs hidden sm:inline">/</span>
 
-          <div className="hidden sm:flex items-center space-x-2 font-mono text-xs tracking-[0.18em] uppercase truncate">
-            <span className="text-stone-secondary">AFTERLIGHT</span>
+          <div className="hidden md:flex items-center space-x-2 font-mono text-xs tracking-[0.18em] uppercase truncate">
+            <span className="text-bone font-medium">ORBITAL</span>
+            <span className="text-meteorite">/</span>
+            <span className="text-stone-muted">MUSEUM</span>
             <span className="text-meteorite">/</span>
             <span style={{ color: destTheme.accent }}>
               {selectedDestFilter === 'all' ? 'ALL ARCHIVES' : dest.name}
@@ -151,8 +157,35 @@ export const ScreenExhibition: React.FC = () => {
           </div>
         </div>
 
-        {/* Right Tools: 3D Map shortcut & Ambient Audio Toggle */}
-        <div className="flex items-center space-x-3">
+        {/* Right Tools: Destination Switcher, 3D Map shortcut & Ambient Audio Toggle */}
+        <div className="flex items-center space-x-2 sm:space-x-3 shrink-0">
+          {/* Destination Switcher Pill (Milestone D) */}
+          {validDest === 'moon' ? (
+            <button
+              type="button"
+              onClick={() => navigation.toDestination('mars')}
+              className="inline-flex items-center space-x-1.5 px-2.5 py-1.5 bg-black/60 hover:bg-black/90 text-stone-secondary hover:text-bone border border-meteorite hover:border-[#F05A38]/60 font-mono text-[10px] sm:text-[11px] tracking-[0.14em] uppercase transition-all duration-200"
+              title="Switch to Mars Museum Archive"
+            >
+              <Globe className="w-3 h-3 text-[#F05A38]" />
+              <span className="hidden sm:inline text-stone-muted">SWITCH TO</span>
+              <span className="text-[#F05A38] font-semibold">MARS</span>
+              <ArrowRight className="w-3 h-3" />
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => navigation.toDestination('moon')}
+              className="inline-flex items-center space-x-1.5 px-2.5 py-1.5 bg-black/60 hover:bg-black/90 text-stone-secondary hover:text-bone border border-meteorite hover:border-[#DEB275]/60 font-mono text-[10px] sm:text-[11px] tracking-[0.14em] uppercase transition-all duration-200"
+              title="Switch to Moon Museum Archive"
+            >
+              <Globe className="w-3 h-3 text-[#DEB275]" />
+              <span className="hidden sm:inline text-stone-muted">SWITCH TO</span>
+              <span className="text-[#DEB275] font-semibold">MOON</span>
+              <ArrowRight className="w-3 h-3" />
+            </button>
+          )}
+
           {(selectedDestFilter === 'moon' || selectedDestFilter === 'mars' || currentDestination === 'moon' || currentDestination === 'mars') && (
             <button
               type="button"
@@ -161,7 +194,7 @@ export const ScreenExhibition: React.FC = () => {
               title="Launch Interactive 3D Planetary Map"
             >
               <Compass className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">3D PLANETARY MAP</span>
+              <span className="hidden lg:inline">3D PLANETARY MAP</span>
             </button>
           )}
 
@@ -203,6 +236,19 @@ export const ScreenExhibition: React.FC = () => {
           <p className="font-sans text-sm md:text-base text-stone-secondary leading-relaxed max-w-2xl font-light">
             {supportingText}
           </p>
+
+          <div className="flex items-center space-x-2.5 pt-1 text-xs font-mono text-stone-muted">
+            <div className="w-5 h-5 rounded-full overflow-hidden border border-meteorite shrink-0 bg-surface">
+              <img
+                src="/characters/mae-vance/idle.png"
+                alt="Dr. Mae Vance"
+                className="w-full h-full object-cover object-top"
+              />
+            </div>
+            <span>Curatorial guidance by Dr. Mae Vance</span>
+            <span>·</span>
+            <span>NASA PDS Primary Provenance</span>
+          </div>
         </motion.section>
 
         {/* 3. Refined Multi-Dimensional Filtering & Search Bar */}
@@ -629,7 +675,9 @@ export const ScreenExhibition: React.FC = () => {
               transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
               className="relative z-10 min-h-screen"
             >
-              <ScreenArtifactDetails onClose={returnToExhibition} />
+              <Suspense fallback={null}>
+                <ScreenArtifactDetails onClose={returnToExhibition} />
+              </Suspense>
             </motion.div>
           </div>
         )}

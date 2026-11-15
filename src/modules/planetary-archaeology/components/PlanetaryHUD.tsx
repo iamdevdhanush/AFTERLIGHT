@@ -67,10 +67,10 @@ export const PlanetaryHUD: React.FC<PlanetaryHUDProps> = ({
             type="button"
             onClick={onExit}
             className="flex items-center space-x-2 px-3 py-1.5 bg-[#0D121C]/90 hover:bg-[#1A2333] text-stone-300 hover:text-white rounded-lg border border-[#222E42] text-xs font-mono tracking-wider uppercase transition-colors shadow-lg"
-            title="Return to AFTERLIGHT Museum"
+            title="Return to ORBITAL Museum"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">AFTERLIGHT MUSEUM</span>
+            <span className="hidden sm:inline">ORBITAL MUSEUM</span>
           </button>
 
           <div className="h-4 w-px bg-[#222E42]" />

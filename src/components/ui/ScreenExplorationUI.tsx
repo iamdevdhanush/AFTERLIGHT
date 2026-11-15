@@ -16,7 +16,6 @@ export const ScreenExplorationUI: React.FC = () => {
   const discoveredArtifacts = useExperienceStore((s) => s.discoveredArtifacts);
   const graphicsQuality = useExperienceStore((s) => s.graphicsQuality);
   const setGraphicsQuality = useExperienceStore((s) => s.setGraphicsQuality);
-  const toggleAiGuide = useExperienceStore((s) => s.toggleAiGuide);
 
   const [showSettings, setShowSettings] = useState(false);
 
@@ -43,7 +42,7 @@ export const ScreenExplorationUI: React.FC = () => {
 
           <div className="flex items-center space-x-2 font-mono text-xs tracking-[0.16em]">
             <span className="uppercase text-bone font-semibold">
-              AFTERLIGHT
+              ORBITAL
             </span>
             <span className="text-stone-muted">•</span>
             <span style={{ color: destTheme.accent }} className="font-medium uppercase">
@@ -52,17 +51,8 @@ export const ScreenExplorationUI: React.FC = () => {
           </div>
         </div>
 
-        {/* Right: Sound, Settings, AI Guide */}
+        {/* Right: Sound, Settings */}
         <div className="flex items-center space-x-3 pointer-events-auto">
-          {/* Ask Archive AI pill */}
-          <button
-            onClick={() => toggleAiGuide()}
-            className="flex items-center space-x-2 px-3.5 py-1.5 bg-surface-raised/90 hover:bg-surface text-stone-secondary hover:text-bone border border-meteorite text-xs font-mono tracking-[0.14em] transition-colors duration-200"
-          >
-            <Sparkles className="w-3.5 h-3.5 text-signal" />
-            <span className="hidden md:inline font-medium uppercase">ASK THE ARCHIVE</span>
-          </button>
-
           {/* Sound Toggle */}
           <button
             onClick={toggleAudio}

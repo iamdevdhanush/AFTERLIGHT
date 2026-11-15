@@ -1,28 +1,57 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, Suspense, lazy } from 'react';
 import { useExperienceStore } from './store/useExperienceStore';
 import { SceneCanvas } from './components/canvas/SceneCanvas';
 import { ScreenArrival } from './components/ui/ScreenArrival';
 import { ScreenDestinationSelect } from './components/ui/ScreenDestinationSelect';
-import { ScreenExplorationUI } from './components/ui/ScreenExplorationUI';
-import { ScreenArtifactInspection } from './components/ui/ScreenArtifactInspection';
-import { ScreenExhibition } from './components/ui/ScreenExhibition';
-import { ScreenArtifactDetails } from './components/ui/ScreenArtifactDetails';
-import { ScreenDocumentary } from './components/ui/ScreenDocumentary';
-import { ScreenLegacy } from './components/ui/ScreenLegacy';
 import { ScreenLoading } from './components/ui/ScreenLoading';
 import { SpaceshipCursor } from './components/ui/SpaceshipCursor';
-import { PlanetaryArchaeologyModule } from './modules/planetary-archaeology';
 import { navigation } from './navigation/navigationController';
+
+// Route-based code splitting for secondary museum views & heavy modules
+const ScreenExhibition = lazy(() =>
+  import('./components/ui/ScreenExhibition').then((m) => ({ default: m.ScreenExhibition }))
+);
+const ScreenExplorationUI = lazy(() =>
+  import('./components/ui/ScreenExplorationUI').then((m) => ({ default: m.ScreenExplorationUI }))
+);
+const ScreenArtifactInspection = lazy(() =>
+  import('./components/ui/ScreenArtifactInspection').then((m) => ({ default: m.ScreenArtifactInspection }))
+);
+const ScreenDocumentary = lazy(() =>
+  import('./components/ui/ScreenDocumentary').then((m) => ({ default: m.ScreenDocumentary }))
+);
+const ScreenLegacy = lazy(() =>
+  import('./components/ui/ScreenLegacy').then((m) => ({ default: m.ScreenLegacy }))
+);
+const PlanetaryArchaeologyModule = lazy(() =>
+  import('./modules/planetary-archaeology').then((m) => ({ default: m.PlanetaryArchaeologyModule }))
+);
 
 export const App: React.FC = () => {
   const state = useExperienceStore((s) => s.state);
   const currentDestination = useExperienceStore((s) => s.currentDestination);
   const setState = useExperienceStore((s) => s.setState);
+  const toggleAudio = useExperienceStore((s) => s.toggleAudio);
 
   // Initialize browser history and route synchronization
   useEffect(() => {
     navigation.init();
   }, []);
+
+  // Global keyboard shortcuts: 'M' toggles audio mute
+  useEffect(() => {
+    const handleGlobalKey = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) {
+        return;
+      }
+      if (e.key === 'm' || e.key === 'M') {
+        toggleAudio();
+      }
+    };
+    window.addEventListener('keydown', handleGlobalKey);
+    return () => window.removeEventListener('keydown', handleGlobalKey);
+  }, [toggleAudio]);
 
   const isKnownState =
     state === 'ARRIVAL' ||
@@ -52,28 +81,30 @@ export const App: React.FC = () => {
       {state === 'DESTINATION_SELECT' && <ScreenDestinationSelect />}
       {state === 'ENVIRONMENT_LOADING' && <ScreenLoading />}
 
-      {(state === 'EXHIBITION' || state === 'ARTIFACT_DETAILS') && <ScreenExhibition />}
+      <Suspense fallback={<ScreenLoading />}>
+        {(state === 'EXHIBITION' || state === 'ARTIFACT_DETAILS') && <ScreenExhibition />}
 
-      {(state === 'GUIDED_INTRO' ||
-        state === 'FREE_EXPLORATION' ||
-        state === 'RETURN_TO_EXPLORATION') && (
-        <ScreenExplorationUI />
-      )}
+        {(state === 'GUIDED_INTRO' ||
+          state === 'FREE_EXPLORATION' ||
+          state === 'RETURN_TO_EXPLORATION') && (
+          <ScreenExplorationUI />
+        )}
 
-      {(state === 'ARTIFACT_APPROACH' || state === 'ARTIFACT_INSPECTION') && (
-        <ScreenArtifactInspection />
-      )}
+        {(state === 'ARTIFACT_APPROACH' || state === 'ARTIFACT_INSPECTION') && (
+          <ScreenArtifactInspection />
+        )}
 
-      {state === 'STORY_CHAPTER' && <ScreenDocumentary />}
-      {state === 'LEGACY' && <ScreenLegacy />}
+        {state === 'STORY_CHAPTER' && <ScreenDocumentary />}
+        {state === 'LEGACY' && <ScreenLegacy />}
 
-      {/* 4. ISOLATED 3D PLANETARY ARCHAEOLOGY MODULE (Moon & Mars Real Surface Data) */}
-      {state === 'PLANETARY_ARCHAEOLOGY' && (
-        <PlanetaryArchaeologyModule
-          initialPlanet={currentDestination === 'mars' ? 'mars' : 'moon'}
-          onExit={() => setState('DESTINATION_SELECT')}
-        />
-      )}
+        {/* 4. ISOLATED 3D PLANETARY ARCHAEOLOGY MODULE (Moon & Mars Real Surface Data) */}
+        {state === 'PLANETARY_ARCHAEOLOGY' && (
+          <PlanetaryArchaeologyModule
+            initialPlanet={currentDestination === 'mars' ? 'mars' : 'moon'}
+            onExit={() => setState('DESTINATION_SELECT')}
+          />
+        )}
+      </Suspense>
 
       {/* 5. RECOVERY FALLBACK FOR INVALID OR UNRECOGNIZED STATE */}
       {!isKnownState && <ScreenArrival />}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowLeft,
@@ -14,13 +14,13 @@ import {
   Sparkles,
   ExternalLink,
 } from 'lucide-react';
-import { AfterlightGuide } from './AfterlightGuide';
+import { OrbitalGuide } from './AfterlightGuide';
 import { Artifact3DStage } from '../canvas/Artifact3DStage';
 import { useExperienceStore } from '../../store/useExperienceStore';
 import { ARTIFACTS } from '../../data/artifacts';
 import { DESTINATIONS } from '../../data/destinations';
 import { getDestinationTheme } from '../../theme/tokens';
-import { ArtifactComponent } from '../../types';
+import { ArtifactComponent, ArtifactData } from '../../types';
 import { navigation } from '../../navigation/navigationController';
 import { guideVoiceEngine } from '../../audio/GuideVoiceEngine';
 
@@ -48,21 +48,40 @@ export const ScreenArtifactDetails: React.FC<ScreenArtifactDetailsProps> = ({ on
   const dest = artifact ? DESTINATIONS[artifact.destination] || DESTINATIONS.moon : DESTINATIONS.moon;
   const destTheme = artifact ? getDestinationTheme(artifact.destination) : getDestinationTheme('moon');
 
+  // Multi-artifact collection navigation within active destination
+  const destinationArtifacts = useMemo<ArtifactData[]>(() => {
+    if (!artifact) return [];
+    return Object.values(ARTIFACTS).filter((a) => a.destination === artifact.destination);
+  }, [artifact]);
+
+  const currentIndex = destinationArtifacts.findIndex((a: ArtifactData) => a.id === artifact?.id);
+  const prevArtifact = currentIndex > 0 ? destinationArtifacts[currentIndex - 1] : null;
+  const nextArtifact =
+    currentIndex >= 0 && currentIndex < destinationArtifacts.length - 1
+      ? destinationArtifacts[currentIndex + 1]
+      : null;
+
   const handleClose = () => {
     if (onClose) onClose();
     else navigation.goBack();
   };
 
-  // Keyboard navigation: Escape key closes the detail overlay
+  // Keyboard navigation: Escape key closes, ArrowLeft / ArrowRight navigates between artifacts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         handleClose();
+      } else if (e.key === 'ArrowLeft' && prevArtifact) {
+        useExperienceStore.setState({ selectedArtifactId: prevArtifact.id });
+        navigation.toArtifact(prevArtifact.id);
+      } else if (e.key === 'ArrowRight' && nextArtifact) {
+        useExperienceStore.setState({ selectedArtifactId: nextArtifact.id });
+        navigation.toArtifact(nextArtifact.id);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleClose]);
+  }, [handleClose, prevArtifact, nextArtifact]);
 
   // Cleanly silence narration when exiting the artifact screen
   useEffect(() => {
@@ -117,24 +136,26 @@ export const ScreenArtifactDetails: React.FC<ScreenArtifactDetailsProps> = ({ on
       <header className="sticky top-0 z-30 bg-obsidian/95 backdrop-blur-md border-b border-meteorite/60 px-6 md:px-14 py-4 flex items-center justify-between">
         {/* Left: Breadcrumbs matching reference styling */}
         <div className="flex items-center space-x-2 md:space-x-3 font-mono text-xs tracking-[0.16em] uppercase">
+          <span className="text-bone font-medium">ORBITAL</span>
+          <span className="text-meteorite">/</span>
           <button
             type="button"
             onClick={handleClose}
             className="group inline-flex items-center space-x-1.5 transition-colors hover:text-bone"
-            style={{ color: '#DEB275' }}
+            style={{ color: destTheme.accent }}
           >
             <span>← EXHIBITION</span>
           </button>
 
           <span className="text-meteorite">/</span>
 
-          <span style={{ color: '#DEB275' }} className="hidden sm:inline">
+          <span style={{ color: destTheme.accent }} className="hidden sm:inline">
             {dest.name}
           </span>
 
           <span className="text-meteorite hidden sm:inline">/</span>
 
-          <span style={{ color: '#DEB275' }} className="truncate font-medium">
+          <span style={{ color: destTheme.accent }} className="truncate font-medium">
             {artifact.name}
           </span>
         </div>
@@ -495,12 +516,23 @@ export const ScreenArtifactDetails: React.FC<ScreenArtifactDetailsProps> = ({ on
 
             {/* Scientific Impact & Historical Milestones */}
             <div className="pt-4 space-y-4 border-t border-meteorite">
-              <span
-                className="font-mono text-[11px] tracking-[0.2em] uppercase font-semibold block"
-                style={{ color: destTheme.accent }}
-              >
-                SCIENTIFIC CONTRIBUTIONS & LEGACY
-              </span>
+              <div className="flex items-center justify-between gap-3">
+                <span
+                  className="font-mono text-[11px] tracking-[0.2em] uppercase font-semibold block"
+                  style={{ color: destTheme.accent }}
+                >
+                  SCIENTIFIC CONTRIBUTIONS & LEGACY
+                </span>
+                <button
+                  type="button"
+                  onClick={() => navigation.toLegacy(artifact.id)}
+                  className="inline-flex items-center space-x-1.5 font-mono text-[10px] tracking-[0.16em] uppercase text-stone-secondary hover:text-signal transition-colors group shrink-0"
+                  title="View In-Situ Legacy Retrospective"
+                >
+                  <span>RETROSPECTIVE</span>
+                  <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
+                </button>
+              </div>
 
               <ul className="space-y-2.5 border-l-2 pl-4" style={{ borderColor: destTheme.accent }}>
                 {artifact.legacy.scientificImpact.map((impact, idx) => (
@@ -544,7 +576,7 @@ export const ScreenArtifactDetails: React.FC<ScreenArtifactDetailsProps> = ({ on
             className="lg:col-span-5 lg:sticky lg:top-20"
           >
             {/* Dr. Mae Vance Curatorial Presenter & Signature Speech Bubble */}
-            <AfterlightGuide
+            <OrbitalGuide
               artifact={artifact}
               selectedComponent={selectedComponent}
               onResetComponent={() => selectComponent(null)}
@@ -553,6 +585,66 @@ export const ScreenArtifactDetails: React.FC<ScreenArtifactDetailsProps> = ({ on
           </motion.div>
         </div>
       </main>
+
+      {/* 4. Museum Artifact Collection Pager */}
+      <footer className="max-w-7xl mx-auto px-6 md:px-14 pb-20 pt-6 border-t border-meteorite/60 flex flex-col sm:flex-row items-center justify-between gap-6">
+        {prevArtifact ? (
+          <button
+            type="button"
+            onClick={() => {
+              useExperienceStore.setState({ selectedArtifactId: prevArtifact.id });
+              navigation.toArtifact(prevArtifact.id);
+            }}
+            className="group flex items-center space-x-3 text-left p-2.5 -m-2.5 hover:bg-surface-raised transition-colors rounded-sm"
+          >
+            <div className="w-8 h-8 rounded-full border border-meteorite flex items-center justify-center text-stone-muted group-hover:text-bone group-hover:border-signal transition-colors">
+              <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
+            </div>
+            <div>
+              <span className="font-mono text-[9px] tracking-[0.16em] uppercase text-stone-muted block">
+                PREVIOUS SPECIMEN
+              </span>
+              <span className="font-serif text-sm text-bone group-hover:text-signal transition-colors">
+                {prevArtifact.name}
+              </span>
+            </div>
+          </button>
+        ) : (
+          <div className="hidden sm:block" />
+        )}
+
+        <div className="font-mono text-xs tracking-[0.2em] text-stone-muted uppercase flex items-center space-x-2">
+          <span style={{ color: destTheme.accent }}>{String(currentIndex + 1).padStart(2, '0')}</span>
+          <span>/</span>
+          <span>{String(destinationArtifacts.length).padStart(2, '0')}</span>
+          <span className="hidden md:inline text-stone-muted">· {dest.name} ARCHIVE</span>
+        </div>
+
+        {nextArtifact ? (
+          <button
+            type="button"
+            onClick={() => {
+              useExperienceStore.setState({ selectedArtifactId: nextArtifact.id });
+              navigation.toArtifact(nextArtifact.id);
+            }}
+            className="group flex items-center space-x-3 text-right p-2.5 -m-2.5 hover:bg-surface-raised transition-colors rounded-sm"
+          >
+            <div>
+              <span className="font-mono text-[9px] tracking-[0.16em] uppercase text-stone-muted block">
+                NEXT SPECIMEN
+              </span>
+              <span className="font-serif text-sm text-bone group-hover:text-signal transition-colors">
+                {nextArtifact.name}
+              </span>
+            </div>
+            <div className="w-8 h-8 rounded-full border border-meteorite flex items-center justify-center text-stone-muted group-hover:text-bone group-hover:border-signal transition-colors">
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+            </div>
+          </button>
+        ) : (
+          <div className="hidden sm:block" />
+        )}
+      </footer>
     </div>
   );
 };

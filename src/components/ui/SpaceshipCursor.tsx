@@ -19,7 +19,7 @@ const TIP_OFFSET_Y = CURSOR_HEIGHT * TIP_FRAC_Y; // ~0.31px
 /**
  * SpaceshipCursor
  *
- * Implements AFTERLIGHT's custom spaceship pointer across all screens.
+ * Implements ORBITAL's custom spaceship pointer across all screens.
  * - Hardware-accelerated smooth 60/120fps tracking via direct style updates
  * - Hotspot mathematically calibrated to the spaceship's nose tip
  * - pointer-events: none ensures zero interference with Three.js or DOM clicks

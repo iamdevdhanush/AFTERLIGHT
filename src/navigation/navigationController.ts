@@ -23,7 +23,10 @@ class NavigationController {
   constructor() {
     if (typeof window !== 'undefined') {
       // Track session history depth
-      const initialDepth = window.history.state?._afterlightDepth || 0;
+      const initialDepth =
+        window.history.state?._orbitalDepth ??
+        window.history.state?._afterlightDepth ??
+        0;
       this.historyStackDepth = initialDepth;
     }
   }
@@ -44,7 +47,11 @@ class NavigationController {
     // Replace current history entry with initial metadata
     const initialUrl = this.buildUrl(initialNav);
     window.history.replaceState(
-      { ...initialNav, _afterlightDepth: this.historyStackDepth },
+      {
+        ...initialNav,
+        _orbitalDepth: this.historyStackDepth,
+        _afterlightDepth: this.historyStackDepth,
+      },
       '',
       initialUrl
     );
@@ -70,7 +77,9 @@ class NavigationController {
       // Track depth to know if we can goBack() safely
       const prevDepth = this.historyStackDepth;
       let newDepth = prevDepth;
-      if (event.state?._afterlightDepth !== undefined) {
+      if (event.state?._orbitalDepth !== undefined) {
+        newDepth = event.state._orbitalDepth;
+      } else if (event.state?._afterlightDepth !== undefined) {
         newDepth = event.state._afterlightDepth;
       } else {
         newDepth = Math.max(0, this.historyStackDepth - 1);
@@ -246,14 +255,22 @@ class NavigationController {
 
     if (replace || targetUrl === currentUrl) {
       window.history.replaceState(
-        { ...nav, _afterlightDepth: this.historyStackDepth },
+        {
+          ...nav,
+          _orbitalDepth: this.historyStackDepth,
+          _afterlightDepth: this.historyStackDepth,
+        },
         '',
         targetUrl
       );
     } else {
       this.historyStackDepth += 1;
       window.history.pushState(
-        { ...nav, _afterlightDepth: this.historyStackDepth },
+        {
+          ...nav,
+          _orbitalDepth: this.historyStackDepth,
+          _afterlightDepth: this.historyStackDepth,
+        },
         '',
         targetUrl
       );
@@ -584,7 +601,7 @@ class NavigationController {
       this.toDestinations();
     } else if (current === 'DESTINATION_SELECT') {
       this.toArrival();
-    }
+    } 
   }
 }
 
@@ -592,5 +609,6 @@ export const navigation = new NavigationController();
 
 // Expose globally for diagnostics and verification tests
 if (typeof window !== 'undefined') {
+  (window as any).__ORBITAL_NAV__ = navigation;
   (window as any).__AFTERLIGHT_NAV__ = navigation;
 }

@@ -1,6 +1,6 @@
 import React, { useMemo, useRef, useState } from 'react';
 import { useGLTF } from '@react-three/drei';
-import { ThreeEvent, useFrame } from '@react-three/fiber';
+import { ThreeEvent } from '@react-three/fiber';
 import * as THREE from 'three';
 import { useExperienceStore } from '../../../store/useExperienceStore';
 
@@ -94,13 +94,6 @@ export const ApolloEagleModel: React.FC<ApolloEagleModelProps> = ({
     return clone;
   }, [scene]);
 
-  // Subtle floating micro-shimmer when selected
-  useFrame(({ clock }) => {
-    if (isSelected && groupRef.current) {
-      // Subtle stabilization
-    }
-  });
-
   const handlePointerOver = (e: ThreeEvent<PointerEvent>) => {
     e.stopPropagation();
     if (isExploration) {
@@ -178,4 +171,4 @@ export const ApolloEagleModel: React.FC<ApolloEagleModelProps> = ({
   );
 };
 
-useGLTF.preload('/models/apollo_lunar_module.glb');
+useGLTF.preload('/models/apollo_lunar_module.glb', '/draco/');

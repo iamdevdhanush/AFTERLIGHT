@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, Suspense, lazy } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Compass,
@@ -6,16 +6,15 @@ import {
   ChevronDown,
   Globe2,
   Radio,
-  Clock,
-  MapPin,
-  Sparkles,
-  ChevronRight,
-  Layers,
   ArrowRight,
 } from 'lucide-react';
 import { navigation } from '../../navigation/navigationController';
 import { soundManager } from '../../audio/SoundManager';
 import { useExperienceStore } from '../../store/useExperienceStore';
+
+const ScreenArtifactDetails = lazy(() =>
+  import('./ScreenArtifactDetails').then((m) => ({ default: m.ScreenArtifactDetails }))
+);
 
 interface Chapter {
   id: string;
@@ -24,12 +23,10 @@ interface Chapter {
 }
 
 const CHAPTERS: Chapter[] = [
-  { id: 'scene-prologue', label: 'PROLOGUE', number: '01' },
-  { id: 'scene-story', label: 'THE LEAP', number: '02' },
-  { id: 'scene-machines', label: 'MONUMENTS', number: '03' },
-  { id: 'scene-moon', label: 'THE MOON', number: '04' },
-  { id: 'scene-mars', label: 'MARS', number: '05' },
-  { id: 'scene-archive', label: 'ENTER ARCHIVE', number: '06' },
+  { id: 'scene-prologue', label: 'ARRIVAL', number: '01' },
+  { id: 'scene-story', label: 'THE STORY', number: '02' },
+  { id: 'scene-reveals', label: 'REVEALS', number: '03' },
+  { id: 'scene-destinations', label: 'DESTINATIONS', number: '04' },
 ];
 
 export const ScreenArrival: React.FC = () => {
@@ -37,6 +34,8 @@ export const ScreenArrival: React.FC = () => {
   const progressBarRef = useRef<HTMLDivElement>(null);
   const [activeChapter, setActiveChapter] = useState<string>('scene-prologue');
   const activeChapterRef = useRef<string>('scene-prologue');
+  const [inspectingArtifactId, setInspectingArtifactId] = useState<string | null>(null);
+
   const reducedMotion = useExperienceStore((s) => s.reducedMotion);
   const setArrivalHeroVisible = useExperienceStore((s) => s.setArrivalHeroVisible);
 
@@ -73,7 +72,7 @@ export const ScreenArrival: React.FC = () => {
             progressBarRef.current.style.width = `${progress}%`;
           }
 
-          // Throttle 3D background rendering when scrolled down into opaque documentary sections
+          // Throttle 3D background rendering when scrolled down into opaque editorial sections
           const heroInView = scrollTop < clientHeight * 0.85;
           setArrivalHeroVisible(heroInView);
 
@@ -124,6 +123,18 @@ export const ScreenArrival: React.FC = () => {
     navigation.toDestinations();
   };
 
+  const handleOpenSpecimen = (id: string) => {
+    soundManager.playNavArtifactSelect();
+    useExperienceStore.setState({ selectedArtifactId: id });
+    setInspectingArtifactId(id);
+  };
+
+  const handleCloseSpecimen = () => {
+    soundManager.playNavReturnToExhibition();
+    useExperienceStore.setState({ selectedArtifactId: null });
+    setInspectingArtifactId(null);
+  };
+
   return (
     <div
       ref={containerRef}
@@ -138,12 +149,12 @@ export const ScreenArrival: React.FC = () => {
         />
       </div>
 
-      {/* 2. FIXED TOP HEADER HUD */}
+      {/* 2. MINIMAL FIXED TOP HEADER HUD WITH EXACTLY ONE PRIMARY SKIP ACTION */}
       <header className="fixed top-0 left-0 right-0 z-40 px-6 sm:px-12 py-5 flex items-center justify-between bg-obsidian/95 border-b border-meteorite/20">
         <div className="flex items-center space-x-3.5">
           <span className="w-2 h-2 rounded-full bg-signal animate-pulse shadow-[0_0_8px_#F05A38]" />
           <span className="font-mono text-xs uppercase tracking-widest text-bone font-semibold">
-            AFTERLIGHT
+            ORBITAL
           </span>
           <span className="hidden sm:inline text-meteorite font-mono text-xs">/</span>
           <span className="hidden sm:inline font-mono text-[10px] tracking-wider text-stone-muted uppercase">
@@ -151,7 +162,7 @@ export const ScreenArrival: React.FC = () => {
           </span>
         </div>
 
-        {/* Current Chapter Indicator (Mobile & Tablet) */}
+        {/* Right side: Active Chapter Indicator + Single Primary Skip Action */}
         <div className="flex items-center space-x-4">
           <div className="hidden lg:flex items-center space-x-2 text-xs font-mono tracking-wider text-stone-muted">
             <Radio className="w-3.5 h-3.5 text-signal animate-pulse" />
@@ -163,11 +174,12 @@ export const ScreenArrival: React.FC = () => {
 
           <button
             type="button"
-            onClick={() => scrollToChapter('scene-archive')}
+            onClick={() => scrollToChapter('scene-destinations')}
             className="group px-3.5 py-1.5 rounded-sm border border-meteorite hover:border-signal/80 bg-surface-raised/40 hover:bg-signal text-bone hover:text-obsidian transition-all duration-200 text-xs font-mono uppercase tracking-wider flex items-center space-x-2"
+            title="Jump directly to Destination Selection"
           >
-            <span>ENTER ARCHIVE</span>
-            <ArrowUpRight className="w-3.5 h-3.5 text-signal group-hover:text-obsidian group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform duration-200" />
+            <span>SKIP TO MUSEUM</span>
+            <ArrowRight className="w-3.5 h-3.5 text-signal group-hover:text-obsidian group-hover:translate-x-0.5 transition-transform duration-200" />
           </button>
         </div>
       </header>
@@ -208,7 +220,7 @@ export const ScreenArrival: React.FC = () => {
       </nav>
 
       {/* =========================================================================
-          SCENE 1 — THE OPENING SCENE (PROLOGUE)
+          BEAT 01 — ARRIVAL (PROLOGUE)
           ========================================================================= */}
       <section
         id="scene-prologue"
@@ -222,9 +234,9 @@ export const ScreenArrival: React.FC = () => {
 
         <div className="relative z-10 max-w-xl lg:max-w-2xl space-y-8 my-auto">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: reducedMotion ? 0 : 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
+            transition={{ duration: reducedMotion ? 0.2 : 1.2, ease: [0.16, 1, 0.3, 1] }}
             className="space-y-4"
           >
             <div className="inline-flex items-center space-x-2.5 px-3 py-1 bg-surface-raised/70 border border-meteorite rounded-sm backdrop-blur-sm">
@@ -242,9 +254,9 @@ export const ScreenArrival: React.FC = () => {
           </motion.div>
 
           <motion.p
-            initial={{ opacity: 0, y: 15 }}
+            initial={{ opacity: 0, y: reducedMotion ? 0 : 15 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1.2, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+            transition={{ duration: reducedMotion ? 0.2 : 1.2, delay: reducedMotion ? 0 : 0.2, ease: [0.16, 1, 0.3, 1] }}
             className="max-w-prose text-stone-secondary font-sans text-base sm:text-lg leading-relaxed font-light"
           >
             An interactive space documentary of the machines that transformed human
@@ -253,10 +265,10 @@ export const ScreenArrival: React.FC = () => {
           </motion.p>
 
           <motion.div
-            initial={{ opacity: 0, y: 15 }}
+            initial={{ opacity: 0, y: reducedMotion ? 0 : 15 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1.2, delay: 0.4 }}
-            className="flex flex-wrap items-center gap-4 pt-2"
+            transition={{ duration: reducedMotion ? 0.2 : 1.2, delay: reducedMotion ? 0 : 0.4 }}
+            className="flex items-center gap-4 pt-2"
           >
             <button
               type="button"
@@ -266,15 +278,6 @@ export const ScreenArrival: React.FC = () => {
               <Compass className="w-4 h-4 group-hover:rotate-45 transition-transform duration-300" />
               <span>DISCOVER THE STORY</span>
               <ChevronDown className="w-4 h-4 group-hover:translate-y-0.5 transition-transform duration-200" />
-            </button>
-
-            <button
-              type="button"
-              onClick={handleOpen3DSelector}
-              className="px-6 py-4 border border-meteorite hover:border-signal bg-surface-raised/40 hover:bg-surface text-bone transition-all duration-300 font-mono text-xs uppercase tracking-wider flex items-center space-x-2.5"
-            >
-              <Globe2 className="w-4 h-4 text-signal" />
-              <span>3D ORBITAL SELECTOR</span>
             </button>
           </motion.div>
         </div>
@@ -300,7 +303,7 @@ export const ScreenArrival: React.FC = () => {
       </section>
 
       {/* =========================================================================
-          SCENE 2 — THE STORY BEGINS (THE LEAP)
+          BEAT 02 — THE STORY (THE SACRIFICIAL PHYSICS OF EXPLORATION)
           ========================================================================= */}
       <section
         id="scene-story"
@@ -311,7 +314,7 @@ export const ScreenArrival: React.FC = () => {
             <div className="flex items-center space-x-3">
               <span className="w-4 h-[1px] bg-signal" />
               <span className="font-mono text-xs uppercase tracking-widest text-signal font-medium">
-                CHAPTER 02 · THE LEAP
+                CHAPTER 02 · THE STORY
               </span>
             </div>
 
@@ -328,34 +331,40 @@ export const ScreenArrival: React.FC = () => {
                 evolved into the greatest engineering journey in civilization&apos;s history.
               </p>
               <p>
-                Across hundreds of thousands and millions of kilometers of vacuum, we cast our
-                scientific senses into the dark. We built machines capable of surviving radiation,
-                absolute zero, and violent atmospheric entries to stand where humans could not yet
-                walk.
+                Rocket physics is uncompromising. Every gram of return mass requires an exponential
+                propellant penalty. To launch astronauts back into lunar orbit, lower descent
+                stages served as sacrificial launch pads. On Mars, solar-powered rovers continued
+                rolling years past their design lifespans until dust storms engulfed their panels.
               </p>
               <p className="text-bone/90 font-normal">
                 When their propellants were exhausted and communications silenced, they did not
                 vanish. They became humanity&apos;s farthest outposts.
               </p>
+
+              {/* Curatorial Note by Dr. Mae Vance */}
+              <div className="p-5 bg-surface-raised/40 border border-meteorite/60 rounded-sm flex items-start space-x-4 pt-4 mt-2">
+                <div className="w-11 h-11 rounded-full overflow-hidden border border-meteorite shrink-0 bg-surface">
+                  <img
+                    src="/characters/mae-vance/explaining.png"
+                    alt="Dr. Mae Vance, Museum Curator"
+                    className="w-full h-full object-cover object-top"
+                  />
+                </div>
+                <div className="space-y-1 text-xs">
+                  <div className="flex items-center space-x-2 font-mono text-[10px] tracking-wider text-signal uppercase">
+                    <span className="font-semibold">DR. MAE VANCE</span>
+                    <span className="text-stone-muted">·</span>
+                    <span className="text-stone-muted">LEAD CURATOR</span>
+                  </div>
+                  <p className="font-sans text-stone-secondary font-light italic leading-relaxed">
+                    &ldquo;When humanity leaves machines beyond Earth, we leave behind our greatest ambition. In the lunar vacuum, bootprints and descent stages endure indefinitely. On Mars, the dust tells the story of survival. Welcome to ORBITAL.&rdquo;
+                  </p>
+                </div>
+              </div>
             </div>
 
-            {/* Integrated Editorial Telemetry Strip */}
+            {/* Integrated Editorial Telemetry Strip with Verified Primary-Source NASA Metrics */}
             <div className="md:col-span-5 flex flex-col space-y-6 pl-0 md:pl-8 border-l-0 md:border-l border-meteorite/50">
-              <div className="space-y-1.5">
-                <div className="flex items-center space-x-2 font-mono text-[10px] tracking-[0.22em] text-signal uppercase font-semibold">
-                  <span className="w-1.5 h-1.5 rounded-full bg-signal" />
-                  <span>CUMULATIVE SURFACE MASS</span>
-                </div>
-                <div className="font-serif text-3xl sm:text-4xl lg:text-5xl text-bone font-normal tracking-tight">
-                  200+ <span className="text-lg sm:text-xl text-stone-secondary font-light">Metric Tons</span>
-                </div>
-                <p className="font-sans text-xs text-stone-muted leading-relaxed font-light">
-                  Combined mass of landers, rovers, and scientific payloads resting across the Moon and Mars.
-                </p>
-              </div>
-
-              <div className="w-full h-[1px] bg-meteorite/40" />
-
               <div className="space-y-1.5">
                 <div className="flex items-center space-x-2 font-mono text-[10px] tracking-[0.22em] text-lunar uppercase font-semibold">
                   <span className="w-1.5 h-1.5 rounded-full bg-lunar" />
@@ -365,7 +374,7 @@ export const ScreenArrival: React.FC = () => {
                   55+ <span className="text-lg sm:text-xl text-stone-secondary font-light">Years in Situ</span>
                 </div>
                 <p className="font-sans text-xs text-stone-muted leading-relaxed font-light">
-                  Tranquility Base hardware and human bootprints remain undisturbed in the airless lunar vacuum since 1969.
+                  Tranquility Base hardware and human bootprints remain undisturbed in the airless lunar vacuum since July 20, 1969 (NASA SP-214).
                 </p>
               </div>
 
@@ -374,13 +383,28 @@ export const ScreenArrival: React.FC = () => {
               <div className="space-y-1.5">
                 <div className="flex items-center space-x-2 font-mono text-[10px] tracking-[0.22em] text-signal uppercase font-semibold">
                   <span className="w-1.5 h-1.5 rounded-full bg-signal" />
-                  <span>PERMANENT OFF-WORLD HERITAGE</span>
+                  <span>DOCUMENTED HERITAGE SITES</span>
                 </div>
                 <div className="font-serif text-3xl sm:text-4xl lg:text-5xl text-bone font-normal tracking-tight">
                   8 <span className="text-lg sm:text-xl text-stone-secondary font-light">Curated Sites</span>
                 </div>
                 <p className="font-sans text-xs text-stone-muted leading-relaxed font-light">
-                  Documented historical artifact sites preserved in the AFTERLIGHT museum archive.
+                  Historic landing and exploration sites across the Moon and Mars with verified cartographic coordinates (NASA PDS Cartography Group).
+                </p>
+              </div>
+
+              <div className="w-full h-[1px] bg-meteorite/40" />
+
+              <div className="space-y-1.5">
+                <div className="flex items-center space-x-2 font-mono text-[10px] tracking-[0.22em] text-signal uppercase font-semibold">
+                  <span className="w-1.5 h-1.5 rounded-full bg-signal" />
+                  <span>LONGEST OFF-WORLD TRAVERSE</span>
+                </div>
+                <div className="font-serif text-3xl sm:text-4xl lg:text-5xl text-bone font-normal tracking-tight">
+                  45.16 <span className="text-lg sm:text-xl text-stone-secondary font-light">Kilometers</span>
+                </div>
+                <p className="font-sans text-xs text-stone-muted leading-relaxed font-light">
+                  Record distance driven across another planetary body by the MER-B Opportunity Rover across Meridiani Planum (NASA JPL-Pub 19-3).
                 </p>
               </div>
             </div>
@@ -389,18 +413,18 @@ export const ScreenArrival: React.FC = () => {
       </section>
 
       {/* =========================================================================
-          SCENE 3 — THE MACHINES WE LEFT BEHIND
+          BEAT 03 — ARTIFACT REVEALS (TWO LANDMARK MONUMENTS)
           ========================================================================= */}
       <section
-        id="scene-machines"
-        className="relative min-h-screen flex flex-col justify-center p-8 md:p-16 py-24 bg-obsidian border-t border-meteorite/30"
+        id="scene-reveals"
+        className="relative min-h-screen flex flex-col justify-center p-8 md:p-16 py-28 bg-obsidian border-t border-meteorite/30"
       >
-        <div className="max-w-6xl mx-auto space-y-16">
+        <div className="max-w-6xl mx-auto space-y-16 w-full">
           <div className="max-w-3xl space-y-4">
             <div className="flex items-center space-x-3">
               <span className="w-4 h-[1px] bg-signal" />
               <span className="font-mono text-xs uppercase tracking-widest text-signal font-medium">
-                CHAPTER 03 · THE CONCEPT
+                CHAPTER 03 · ARTIFACT REVEALS
               </span>
             </div>
 
@@ -413,244 +437,119 @@ export const ScreenArrival: React.FC = () => {
             </h2>
 
             <p className="text-stone-secondary text-base sm:text-lg font-light leading-relaxed pt-2">
-              Rocket physics is uncompromising. Every gram of return mass requires an exponential
-              ladder of propellant. To launch astronauts back into lunar orbit, lower descent
-              stages served as sacrificial launch pads. On Mars, solar-powered rovers continued
-              rolling years past their design lifespans until dust storms engulfed their panels.
+              Across the Moon and Mars, humanity has left two fundamentally distinct classes of
+              exploration hardware: intentionally placed landing platforms designed to anchor liftoffs
+              or listen across decades, and robotic explorers that ventured miles beyond their design
+              lifespans until nature claimed their solar arrays.
             </p>
           </div>
 
-          {/* Staggered Artifact Feature Moments */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {/* 1. Apollo 11 Eagle */}
-            <div className="group relative border border-meteorite/60 bg-surface-raised/30 hover:bg-surface-raised/70 transition-all duration-300 p-6 flex flex-col justify-between space-y-6">
-              <div className="space-y-4">
-                <div className="relative h-48 overflow-hidden rounded-sm border border-meteorite/40">
+          {/* Two Landmark Featured Specimen Cards */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
+            {/* 1. Apollo 11 Eagle Descent Stage (The Moon) */}
+            <div className="group relative border border-meteorite/70 bg-surface-raised/40 hover:bg-surface-raised hover:border-lunar transition-all duration-300 p-8 rounded-sm flex flex-col justify-between space-y-6 shadow-xl">
+              <div className="space-y-5">
+                <div className="relative aspect-[16/10] overflow-hidden rounded-sm border border-meteorite/50 bg-surface">
                   <img
                     src="/images/apollo11_surface.jpg"
-                    alt="Apollo 11 Eagle Descent Stage"
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    alt="Apollo 11 Eagle Descent Stage at Tranquility Base"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out brightness-95 group-hover:brightness-100"
                     loading="lazy"
                   />
-                  <div className="absolute top-2.5 left-2.5 px-2 py-0.5 bg-obsidian/80 backdrop-blur-sm border border-meteorite/60 text-[10px] font-mono text-lunar">
-                    THE MOON · 1969
+                  <div className="absolute inset-0 bg-gradient-to-t from-obsidian/80 via-transparent to-transparent pointer-events-none" />
+                  <div className="absolute top-3 left-3 px-2.5 py-1 bg-obsidian/85 backdrop-blur-sm border border-lunar/50 text-[10px] font-mono text-lunar font-semibold rounded-sm">
+                    DELIBERATELY ABANDONED HARDWARE
+                  </div>
+                  <div className="absolute bottom-3 left-3 text-[10px] font-mono text-stone-muted">
+                    NASA AS11-40-5921 · JULY 20, 1969
                   </div>
                 </div>
 
-                <div className="space-y-1.5">
-                  <span className="font-mono text-[10px] uppercase tracking-widest text-signal">
-                    APOLLO 11 · LM-5
-                  </span>
-                  <h3 className="font-serif text-xl text-bone">Eagle Descent Stage</h3>
-                  <p className="text-stone-secondary text-xs leading-relaxed font-light">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between font-mono text-[11px] tracking-[0.18em] uppercase text-lunar font-semibold">
+                    <span>APOLLO 11 · LM-5</span>
+                    <span className="text-stone-muted">THE MOON</span>
+                  </div>
+
+                  <h3 className="font-serif text-2xl sm:text-3xl text-bone group-hover:text-lunar transition-colors">
+                    Eagle Descent Stage
+                  </h3>
+
+                  <p className="text-stone-secondary text-xs sm:text-sm leading-relaxed font-light">
                     The gold-wrapped lower chassis that cushioned humanity&apos;s first lunar landing
-                    and anchored the liftoff back to orbit.
+                    and served as the stationary launch pad when Neil Armstrong and Buzz Aldrin
+                    blasted off back into orbit.
                   </p>
                 </div>
               </div>
 
-              <div className="pt-3 border-t border-meteorite/40 flex items-center justify-between text-[11px] font-mono text-stone-muted">
-                <span>Mare Tranquillitatis</span>
-                <span className="text-lunar">Preserved</span>
+              <div className="pt-4 border-t border-meteorite/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs font-mono">
+                <div className="text-stone-muted">
+                  <span className="block text-bone font-medium">Mare Tranquillitatis</span>
+                  <span className="text-[10px]">0.67408° N, 23.47297° E</span>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => handleOpenSpecimen('apollo11_eagle')}
+                  className="px-4 py-2 border border-meteorite hover:border-lunar text-lunar hover:bg-lunar hover:text-obsidian transition-colors uppercase tracking-wider text-[11px] font-semibold flex items-center space-x-2 self-start sm:self-auto rounded-sm"
+                >
+                  <span>EXAMINE SPECIMEN</span>
+                  <ArrowUpRight className="w-3.5 h-3.5" />
+                </button>
               </div>
             </div>
 
-            {/* 2. Lunar Roving Vehicle */}
-            <div className="group relative border border-meteorite/60 bg-surface-raised/30 hover:bg-surface-raised/70 transition-all duration-300 p-6 flex flex-col justify-between space-y-6">
-              <div className="space-y-4">
-                <div className="relative h-48 overflow-hidden rounded-sm border border-meteorite/40">
-                  <img
-                    src="/images/exhibits/apollo_lrv.jpg"
-                    alt="Apollo Lunar Roving Vehicle"
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    loading="lazy"
-                  />
-                  <div className="absolute top-2.5 left-2.5 px-2 py-0.5 bg-obsidian/80 backdrop-blur-sm border border-meteorite/60 text-[10px] font-mono text-lunar">
-                    THE MOON · 1971–1972
-                  </div>
-                </div>
-
-                <div className="space-y-1.5">
-                  <span className="font-mono text-[10px] uppercase tracking-widest text-signal">
-                    APOLLO 15–17
-                  </span>
-                  <h3 className="font-serif text-xl text-bone">Lunar Roving Vehicle</h3>
-                  <p className="text-stone-secondary text-xs leading-relaxed font-light">
-                    Electric chariots that carried astronauts across mountain rims, parked facing
-                    Earth to broadcast liftoff.
-                  </p>
-                </div>
-              </div>
-
-              <div className="pt-3 border-t border-meteorite/40 flex items-center justify-between text-[11px] font-mono text-stone-muted">
-                <span>3 Surface Sites</span>
-                <span className="text-lunar">Intact</span>
-              </div>
-            </div>
-
-            {/* 3. Opportunity Rover */}
-            <div className="group relative border border-meteorite/60 bg-surface-raised/30 hover:bg-surface-raised/70 transition-all duration-300 p-6 flex flex-col justify-between space-y-6">
-              <div className="space-y-4">
-                <div className="relative h-48 overflow-hidden rounded-sm border border-meteorite/40">
+            {/* 2. MER-B Opportunity Rover (Mars) */}
+            <div className="group relative border border-meteorite/70 bg-surface-raised/40 hover:bg-surface-raised hover:border-signal transition-all duration-300 p-8 rounded-sm flex flex-col justify-between space-y-6 shadow-xl">
+              <div className="space-y-5">
+                <div className="relative aspect-[16/10] overflow-hidden rounded-sm border border-meteorite/50 bg-surface">
                   <img
                     src="/images/exhibits/opportunity.jpg"
                     alt="Opportunity Rover on Mars"
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out brightness-95 group-hover:brightness-100"
                     loading="lazy"
                   />
-                  <div className="absolute top-2.5 left-2.5 px-2 py-0.5 bg-obsidian/80 backdrop-blur-sm border border-meteorite/60 text-[10px] font-mono text-signal">
-                    MARS · 2004–2018
+                  <div className="absolute inset-0 bg-gradient-to-t from-obsidian/80 via-transparent to-transparent pointer-events-none" />
+                  <div className="absolute top-3 left-3 px-2.5 py-1 bg-[#1A0D0C]/90 backdrop-blur-sm border border-signal/50 text-[10px] font-mono text-signal font-semibold rounded-sm">
+                    MISSION-ENDED ROBOTIC EXPLORER
+                  </div>
+                  <div className="absolute bottom-3 left-3 text-[10px] font-mono text-stone-muted">
+                    NASA JPL MER-B · 2004–2018
                   </div>
                 </div>
 
-                <div className="space-y-1.5">
-                  <span className="font-mono text-[10px] uppercase tracking-widest text-signal">
-                    MER-B MARS ROVER
-                  </span>
-                  <h3 className="font-serif text-xl text-bone">Opportunity</h3>
-                  <p className="text-stone-secondary text-xs leading-relaxed font-light">
-                    Designed for 90 days, it explored for 14.5 years, running an unprecedented
-                    45.16-kilometer marathon across ancient lakebeds.
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between font-mono text-[11px] tracking-[0.18em] uppercase text-signal font-semibold">
+                    <span>MER-B ROVER</span>
+                    <span className="text-stone-muted">MARS</span>
+                  </div>
+
+                  <h3 className="font-serif text-2xl sm:text-3xl text-bone group-hover:text-signal transition-colors">
+                    Opportunity Rover
+                  </h3>
+
+                  <p className="text-stone-secondary text-xs sm:text-sm leading-relaxed font-light">
+                    Engineered for a 90-sol design lifespan, Opportunity explored for fourteen and a
+                    half years, completing a historic 45.16-kilometer marathon before a planet-wide
+                    dust storm obscured its solar arrays.
                   </p>
                 </div>
               </div>
 
-              <div className="pt-3 border-t border-meteorite/40 flex items-center justify-between text-[11px] font-mono text-stone-muted">
-                <span>Perseverance Valley</span>
-                <span className="text-signal">Silent</span>
-              </div>
-            </div>
-
-            {/* 4. InSight Lander */}
-            <div className="group relative border border-meteorite/60 bg-surface-raised/30 hover:bg-surface-raised/70 transition-all duration-300 p-6 flex flex-col justify-between space-y-6">
-              <div className="space-y-4">
-                <div className="relative h-48 overflow-hidden rounded-sm border border-meteorite/40">
-                  <img
-                    src="/images/exhibits/insight_selfie.jpg"
-                    alt="InSight Mars Lander"
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    loading="lazy"
-                  />
-                  <div className="absolute top-2.5 left-2.5 px-2 py-0.5 bg-obsidian/80 backdrop-blur-sm border border-meteorite/60 text-[10px] font-mono text-signal">
-                    MARS · 2018–2022
-                  </div>
+              <div className="pt-4 border-t border-meteorite/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs font-mono">
+                <div className="text-stone-muted">
+                  <span className="block text-bone font-medium">Perseverance Valley</span>
+                  <span className="text-[10px]">Endeavour Rim · 2.215° S, 354.475° E</span>
                 </div>
 
-                <div className="space-y-1.5">
-                  <span className="font-mono text-[10px] uppercase tracking-widest text-signal">
-                    DISCOVERY MISSION
-                  </span>
-                  <h3 className="font-serif text-xl text-bone">InSight Lander</h3>
-                  <p className="text-stone-secondary text-xs leading-relaxed font-light">
-                    Humanity&apos;s extraterrestrial seismologist. Listened to over 1,300 marsquakes
-                    before dust dimmed its solar wings.
-                  </p>
-                </div>
-              </div>
-
-              <div className="pt-3 border-t border-meteorite/40 flex items-center justify-between text-[11px] font-mono text-stone-muted">
-                <span>Elysium Planitia</span>
-                <span className="text-signal">Resting</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* =========================================================================
-          SCENE 4 — THE MOON (THE SILENT SEAS)
-          ========================================================================= */}
-      <section
-        id="scene-moon"
-        className="relative min-h-screen flex flex-col justify-center p-8 md:p-16 py-24 bg-[#090C10] border-t border-meteorite/30"
-      >
-        <div className="max-w-6xl mx-auto space-y-16">
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-            <div className="space-y-4 max-w-2xl">
-              <div className="flex items-center space-x-3">
-                <span className="w-4 h-[1px] bg-lunar" />
-                <span className="font-mono text-xs uppercase tracking-widest text-lunar font-medium">
-                  DESTINATION 01 · 384,400 KM FROM EARTH
-                </span>
-              </div>
-
-              <h2 className="font-serif text-4xl sm:text-6xl text-bone tracking-tight leading-tight">
-                THE SILENT SEAS OF THE MOON
-              </h2>
-
-              <p className="text-stone-secondary text-base sm:text-lg font-light leading-relaxed">
-                An airless sanctuary where human bootprints, aluminum chassis, and gold thermal foil
-                remain mathematically unchanged since the moment they touched down.
-              </p>
-            </div>
-
-            <button
-              type="button"
-              onClick={handleSelectMoon}
-              className="px-6 py-3.5 bg-lunar/20 hover:bg-lunar text-lunar hover:text-obsidian border border-lunar/40 rounded-sm font-mono text-xs uppercase tracking-wider flex items-center space-x-2.5 transition-all duration-300 self-start md:self-auto"
-            >
-              <span>EXPLORE MOON EXHIBITION</span>
-              <ArrowRight className="w-4 h-4" />
-            </button>
-          </div>
-
-          {/* Deep Focus Lunar Feature Presentation */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center bg-surface-raised/20 border border-meteorite/50 p-6 sm:p-10 rounded-sm">
-            <div className="lg:col-span-7 relative h-72 sm:h-96 rounded-sm overflow-hidden border border-meteorite/60">
-              <img
-                src="/images/apollo11_surface.jpg"
-                alt="Apollo 11 Tranquility Base"
-                className="w-full h-full object-cover"
-                loading="lazy"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-obsidian via-transparent to-transparent opacity-80" />
-              <div className="absolute bottom-4 left-4 right-4 flex items-end justify-between font-mono text-xs text-bone">
-                <div>
-                  <span className="text-signal block text-[10px]">HISTORICAL MONUMENT</span>
-                  <span>APOLLO 11 TRANQUILITY BASE</span>
-                </div>
-                <div className="text-right text-stone-muted text-[10px]">
-                  <span>0.67408° N, 23.47297° E</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="lg:col-span-5 space-y-6">
-              <div className="space-y-2">
-                <span className="font-mono text-xs text-lunar uppercase tracking-wider">
-                  JULY 20, 1969 · MARE TRANQUILLITATIS
-                </span>
-                <h3 className="font-serif text-3xl text-bone">The First Base On Another World</h3>
-                <p className="text-stone-secondary text-sm leading-relaxed font-light">
-                  When Eagle touched down, it held only 25 seconds of descent fuel remaining. For
-                  21 hours, its lower stage served as living quarters, laboratory, and finally as
-                  the stationary launchpad for the ascent engine.
-                </p>
-              </div>
-
-              <div className="space-y-3 pt-2">
-                <div className="flex items-start space-x-3 text-xs font-mono text-stone-muted">
-                  <span className="text-lunar font-semibold">01.</span>
-                  <span>Descent Stage remains upright and intact with stainless-steel plaque</span>
-                </div>
-                <div className="flex items-start space-x-3 text-xs font-mono text-stone-muted">
-                  <span className="text-lunar font-semibold">02.</span>
-                  <span>Laser Ranging Retroreflector still targeted by Earth observatories today</span>
-                </div>
-                <div className="flex items-start space-x-3 text-xs font-mono text-stone-muted">
-                  <span className="text-lunar font-semibold">03.</span>
-                  <span>Solar Wind Composition foil and early seismic stations resting in the dust</span>
-                </div>
-              </div>
-
-              <div className="pt-4">
                 <button
                   type="button"
-                  onClick={handleSelectMoon}
-                  className="w-full py-3 bg-surface hover:bg-lunar text-bone hover:text-obsidian border border-meteorite hover:border-lunar font-mono text-xs uppercase tracking-wider transition-colors duration-200 flex items-center justify-center space-x-2"
+                  onClick={() => handleOpenSpecimen('opportunity')}
+                  className="px-4 py-2 border border-meteorite hover:border-signal text-signal hover:bg-signal hover:text-obsidian transition-colors uppercase tracking-wider text-[11px] font-semibold flex items-center space-x-2 self-start sm:self-auto rounded-sm"
                 >
-                  <span>OPEN 3D APOLLO 11 HARDWARE</span>
-                  <ArrowUpRight className="w-4 h-4" />
+                  <span>EXAMINE SPECIMEN</span>
+                  <ArrowUpRight className="w-3.5 h-3.5" />
                 </button>
               </div>
             </div>
@@ -659,117 +558,16 @@ export const ScreenArrival: React.FC = () => {
       </section>
 
       {/* =========================================================================
-          SCENE 5 — MARS (THE RED EXPEDITION)
+          BEAT 04 — DESTINATION SELECTION (TERMINAL BEAT OF GUIDED INTRODUCTION)
           ========================================================================= */}
       <section
-        id="scene-mars"
-        className="relative min-h-screen flex flex-col justify-center p-8 md:p-16 py-24 bg-gradient-to-b from-[#090C10] via-[#1A0D0C] to-[#120706] border-t border-meteorite/30"
-      >
-        <div className="max-w-6xl mx-auto space-y-16">
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-            <div className="space-y-4 max-w-2xl">
-              <div className="flex items-center space-x-3">
-                <span className="w-4 h-[1px] bg-signal" />
-                <span className="font-mono text-xs uppercase tracking-widest text-signal font-medium">
-                  DESTINATION 02 · 225,000,000 KM AVERAGE
-                </span>
-              </div>
-
-              <h2 className="font-serif text-4xl sm:text-6xl text-bone tracking-tight leading-tight">
-                THE RED EXPEDITION
-              </h2>
-
-              <p className="text-stone-secondary text-base sm:text-lg font-light leading-relaxed">
-                Across frozen basalt plateaus and towering volcanic calderas, robotic wanderers
-                whispered radio telemetry until the sky darkened.
-              </p>
-            </div>
-
-            <button
-              type="button"
-              onClick={handleSelectMars}
-              className="px-6 py-3.5 bg-signal/20 hover:bg-signal text-signal hover:text-obsidian border border-signal/40 rounded-sm font-mono text-xs uppercase tracking-wider flex items-center space-x-2.5 transition-all duration-300 self-start md:self-auto"
-            >
-              <span>EXPLORE MARS EXHIBITION</span>
-              <ArrowRight className="w-4 h-4" />
-            </button>
-          </div>
-
-          {/* Deep Focus Mars Feature Presentation */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center bg-surface-raised/20 border border-signal/20 p-6 sm:p-10 rounded-sm">
-            <div className="lg:col-span-7 relative h-72 sm:h-96 rounded-sm overflow-hidden border border-meteorite/60">
-              <img
-                src="/images/exhibits/opportunity.jpg"
-                alt="Opportunity Rover on Mars"
-                className="w-full h-full object-cover"
-                loading="lazy"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-obsidian via-transparent to-transparent opacity-80" />
-              <div className="absolute bottom-4 left-4 right-4 flex items-end justify-between font-mono text-xs text-bone">
-                <div>
-                  <span className="text-signal block text-[10px]">5,111 MARTIAN SOLS</span>
-                  <span>MER-B OPPORTUNITY (1973–2018)</span>
-                </div>
-                <div className="text-right text-stone-muted text-[10px]">
-                  <span>Perseverance Valley · Endeavour Rim</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="lg:col-span-5 space-y-6">
-              <div className="space-y-2">
-                <span className="font-mono text-xs text-signal uppercase tracking-wider">
-                  2004–2018 · 45.16 KM TRAVERSE
-                </span>
-                <h3 className="font-serif text-3xl text-bone">The Rover That Outlasted Time</h3>
-                <p className="text-stone-secondary text-sm leading-relaxed font-light">
-                  Built to survive 90 Martian days, Opportunity spent fourteen and a half years
-                  crawling across ancient lakebeds. It discovered hematite spherules—conclusive
-                  proof that liquid water once bathed the Martian surface.
-                </p>
-              </div>
-
-              <div className="space-y-3 pt-2">
-                <div className="flex items-start space-x-3 text-xs font-mono text-stone-muted">
-                  <span className="text-signal font-semibold">01.</span>
-                  <span>Completed 45.16 kilometers—the longest off-world drive in history</span>
-                </div>
-                <div className="flex items-start space-x-3 text-xs font-mono text-stone-muted">
-                  <span className="text-signal font-semibold">02.</span>
-                  <span>Returned over 217,000 raw color and panoramic images</span>
-                </div>
-                <div className="flex items-start space-x-3 text-xs font-mono text-stone-muted">
-                  <span className="text-signal font-semibold">03.</span>
-                  <span>Final telemetry transmitted from Endeavour Crater on June 10, 2018</span>
-                </div>
-              </div>
-
-              <div className="pt-4">
-                <button
-                  type="button"
-                  onClick={handleSelectMars}
-                  className="w-full py-3 bg-surface hover:bg-signal text-bone hover:text-obsidian border border-meteorite hover:border-signal font-mono text-xs uppercase tracking-wider transition-colors duration-200 flex items-center justify-center space-x-2"
-                >
-                  <span>OPEN 3D OPPORTUNITY ROVER</span>
-                  <ArrowUpRight className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* =========================================================================
-          SCENE 6 — ENTER THE ARCHIVE (DESTINATIONS)
-          ========================================================================= */}
-      <section
-        id="scene-archive"
-        className="relative min-h-screen flex flex-col justify-between p-8 md:p-16 py-24 bg-obsidian border-t border-meteorite/40"
+        id="scene-destinations"
+        className="relative min-h-screen flex flex-col justify-between p-8 md:p-16 py-28 bg-obsidian border-t border-meteorite/40"
       >
         <div className="max-w-6xl mx-auto w-full space-y-16 my-auto">
           <div className="text-center max-w-3xl mx-auto space-y-4">
-            <span className="font-mono text-xs text-signal tracking-widest uppercase block">
-              ENTER THE DIGITAL ARCHIVE
+            <span className="font-mono text-xs text-signal tracking-widest uppercase block font-medium">
+              CHAPTER 04 · DESTINATION SELECTION
             </span>
 
             <h2 className="font-serif text-5xl sm:text-7xl text-bone tracking-tight leading-[0.98]">
@@ -779,8 +577,8 @@ export const ScreenArrival: React.FC = () => {
             </h2>
 
             <p className="text-stone-secondary text-base sm:text-lg font-light leading-relaxed max-w-xl mx-auto">
-              Select a world to step into the interactive museum. Inspect full 3D hardware models,
-              explore real orbital topography, and listen to documentary narration by Dr. Mae Vance.
+              Select a world to step into the digital museum archive. Explore curated specimens,
+              inspect 3D hardware, and examine orbital surface topography.
             </p>
           </div>
 
@@ -907,7 +705,7 @@ export const ScreenArrival: React.FC = () => {
               className="inline-flex items-center space-x-2.5 px-6 py-3 border border-meteorite hover:border-signal text-stone-secondary hover:text-bone text-xs font-mono uppercase tracking-wider transition-colors duration-200"
             >
               <Globe2 className="w-4 h-4 text-signal" />
-              <span>OR EXPLORE INTERACTIVE 3D PLANETARY GLOBES</span>
+              <span>OR OPEN 3D ORBITAL GLOBE SELECTOR</span>
             </button>
           </div>
         </div>
@@ -915,7 +713,7 @@ export const ScreenArrival: React.FC = () => {
         {/* Museum Footer */}
         <footer className="pt-12 mt-12 border-t border-meteorite/40 flex flex-col sm:flex-row items-center justify-between text-[11px] font-mono text-stone-muted gap-4">
           <div>
-            <span>AFTERLIGHT · NASA SPACE APPS CHALLENGE 2026</span>
+            <span>ORBITAL · NASA SPACE APPS CHALLENGE 2026</span>
           </div>
           <div className="flex items-center space-x-6">
             <span>HISTORICAL ARTIFACT PRESERVATION</span>
@@ -923,6 +721,33 @@ export const ScreenArrival: React.FC = () => {
           </div>
         </footer>
       </section>
+
+      {/* Inline Modal Specimen Overlay (if opened from Beat 3 story reveals) */}
+      <AnimatePresence>
+        {inspectingArtifactId && (
+          <div className="fixed inset-0 z-50 overflow-y-auto">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.35, ease: 'easeOut' }}
+              onClick={handleCloseSpecimen}
+              className="fixed inset-0 bg-obsidian/85 backdrop-blur-xl"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.98 }}
+              transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+              className="relative z-10 min-h-screen"
+            >
+              <Suspense fallback={null}>
+                <ScreenArtifactDetails onClose={handleCloseSpecimen} />
+              </Suspense>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
