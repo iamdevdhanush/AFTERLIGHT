@@ -10,6 +10,7 @@ import { ScreenArtifactDetails } from './components/ui/ScreenArtifactDetails';
 import { ScreenDocumentary } from './components/ui/ScreenDocumentary';
 import { ScreenLegacy } from './components/ui/ScreenLegacy';
 import { ScreenLoading } from './components/ui/ScreenLoading';
+import { SpaceshipCursor } from './components/ui/SpaceshipCursor';
 import { PlanetaryArchaeologyModule } from './modules/planetary-archaeology';
 import { navigation } from './navigation/navigationController';
 
@@ -76,6 +77,9 @@ export const App: React.FC = () => {
 
       {/* 5. RECOVERY FALLBACK FOR INVALID OR UNRECOGNIZED STATE */}
       {!isKnownState && <ScreenArrival />}
+
+      {/* 6. HARDWARE-ACCELERATED SPACESHIP CURSOR OVERLAY */}
+      <SpaceshipCursor />
     </div>
   );
 };
