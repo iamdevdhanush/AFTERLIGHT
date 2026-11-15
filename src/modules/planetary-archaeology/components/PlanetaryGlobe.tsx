@@ -402,7 +402,7 @@ export const PlanetaryGlobe: React.FC<PlanetaryGlobeProps> = ({
     return base * terrainExaggeration;
   }, [planet, terrainExaggeration]);
 
-  const segments = 160; // 160x160 vertices for smoother silhouette
+  const segments = 96; // 96x96 vertices for smooth silhouette with optimal raster performance
 
   return (
     <group rotation={axialTilt}>

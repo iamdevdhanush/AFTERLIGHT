@@ -34,40 +34,72 @@ const CHAPTERS: Chapter[] = [
 
 export const ScreenArrival: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const progressBarRef = useRef<HTMLDivElement>(null);
   const [activeChapter, setActiveChapter] = useState<string>('scene-prologue');
-  const [scrollProgress, setScrollProgress] = useState<number>(0);
+  const activeChapterRef = useRef<string>('scene-prologue');
   const reducedMotion = useExperienceStore((s) => s.reducedMotion);
+  const setArrivalHeroVisible = useExperienceStore((s) => s.setArrivalHeroVisible);
 
-  // Scroll listener to update progress bar and active chapter HUD
+  // High-performance scroll listener with rAF coalescing and direct DOM style updates
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
 
+    let ticking = false;
+    let cachedOffsets: { id: string; top: number }[] = [];
+
+    const updateOffsets = () => {
+      cachedOffsets = CHAPTERS.map((ch) => {
+        const el = document.getElementById(ch.id);
+        return { id: ch.id, top: el ? el.offsetTop : 0 };
+      });
+    };
+
+    updateOffsets();
+    window.addEventListener('resize', updateOffsets, { passive: true });
+
     const handleScroll = () => {
-      const { scrollTop, scrollHeight, clientHeight } = container;
-      const maxScroll = scrollHeight - clientHeight;
-      const progress = maxScroll > 0 ? (scrollTop / maxScroll) * 100 : 0;
-      setScrollProgress(progress);
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          ticking = false;
+          if (!container) return;
 
-      // Determine active section based on scroll offset
-      const viewHeight = clientHeight;
-      const currentScrollMiddle = scrollTop + viewHeight * 0.4;
+          const { scrollTop, scrollHeight, clientHeight } = container;
+          const maxScroll = scrollHeight - clientHeight;
+          const progress = maxScroll > 0 ? (scrollTop / maxScroll) * 100 : 0;
 
-      for (let i = CHAPTERS.length - 1; i >= 0; i--) {
-        const el = document.getElementById(CHAPTERS[i].id);
-        if (el) {
-          const elTop = el.offsetTop;
-          if (currentScrollMiddle >= elTop) {
-            setActiveChapter(CHAPTERS[i].id);
-            break;
+          // Direct DOM manipulation for zero-react-render progress updates
+          if (progressBarRef.current) {
+            progressBarRef.current.style.width = `${progress}%`;
           }
-        }
+
+          // Throttle 3D background rendering when scrolled down into opaque documentary sections
+          const heroInView = scrollTop < clientHeight * 0.85;
+          setArrivalHeroVisible(heroInView);
+
+          // Determine active section using cached offsets
+          const currentScrollMiddle = scrollTop + clientHeight * 0.4;
+          for (let i = cachedOffsets.length - 1; i >= 0; i--) {
+            if (currentScrollMiddle >= cachedOffsets[i].top) {
+              const matchedId = cachedOffsets[i].id;
+              if (activeChapterRef.current !== matchedId) {
+                activeChapterRef.current = matchedId;
+                setActiveChapter(matchedId);
+              }
+              break;
+            }
+          }
+        });
+        ticking = true;
       }
     };
 
     container.addEventListener('scroll', handleScroll, { passive: true });
-    return () => container.removeEventListener('scroll', handleScroll);
-  }, []);
+    return () => {
+      container.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('resize', updateOffsets);
+    };
+  }, [setArrivalHeroVisible]);
 
   const scrollToChapter = (id: string) => {
     soundManager.playClick();
@@ -100,13 +132,14 @@ export const ScreenArrival: React.FC = () => {
       {/* 1. TOP PROGRESS HAIRLINE */}
       <div className="fixed top-0 left-0 right-0 h-[2px] z-50 bg-meteorite/30 pointer-events-none">
         <div
-          style={{ width: `${scrollProgress}%` }}
-          className="h-full bg-gradient-to-r from-signal via-bone to-signal transition-all duration-150 ease-out shadow-[0_0_8px_rgba(240,90,56,0.6)]"
+          ref={progressBarRef}
+          style={{ width: '0%' }}
+          className="h-full bg-gradient-to-r from-signal via-bone to-signal transition-[width] duration-75 ease-out shadow-[0_0_8px_rgba(240,90,56,0.6)]"
         />
       </div>
 
       {/* 2. FIXED TOP HEADER HUD */}
-      <header className="fixed top-0 left-0 right-0 z-40 px-6 sm:px-12 py-5 flex items-center justify-between backdrop-blur-md bg-obsidian/40 border-b border-meteorite/20">
+      <header className="fixed top-0 left-0 right-0 z-40 px-6 sm:px-12 py-5 flex items-center justify-between bg-obsidian/95 border-b border-meteorite/20">
         <div className="flex items-center space-x-3.5">
           <span className="w-2 h-2 rounded-full bg-signal animate-pulse shadow-[0_0_8px_#F05A38]" />
           <span className="font-mono text-xs uppercase tracking-widest text-bone font-semibold">

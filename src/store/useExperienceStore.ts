@@ -33,12 +33,14 @@ interface ExperienceStore {
   reducedMotion: boolean;
   isRotationPaused: boolean;
   isAiGuideOpen: boolean;
+  isArrivalHeroVisible: boolean;
 
   // Progress tracking
   discoveredArtifacts: string[];
 
   // Actions
   setState: (state: ExperienceState) => void;
+  setArrivalHeroVisible: (visible: boolean) => void;
   beginArrival: () => void;
   previewDestination: (destId: DestinationId) => void;
   selectDestination: (destId: DestinationId) => void;
@@ -122,10 +124,16 @@ export const useExperienceStore = create<ExperienceStore>((set, get) => ({
   reducedMotion: initialReducedMotion,
   isRotationPaused: false,
   isAiGuideOpen: false,
+  isArrivalHeroVisible: true,
 
   discoveredArtifacts: initial.artifact ? [initial.artifact] : [],
 
   setState: (state) => set({ state }),
+  setArrivalHeroVisible: (visible) => {
+    if (get().isArrivalHeroVisible !== visible) {
+      set({ isArrivalHeroVisible: visible });
+    }
+  },
 
   beginArrival: () => {
     navigation.toDestinations();

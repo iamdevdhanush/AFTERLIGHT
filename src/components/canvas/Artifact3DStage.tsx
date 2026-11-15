@@ -203,13 +203,13 @@ export const Artifact3DStage: React.FC<Artifact3DStageProps> = ({ artifactId, on
       <div className="relative w-full h-full flex-1">
         <Canvas
           shadows
-          dpr={[1, 2]}
           camera={{
             position: defaultCamConfig.position,
             fov: 38,
             near: 0.1,
             far: 100,
           }}
+          dpr={[1, Math.min(1.5, window.devicePixelRatio)]}
           gl={{
             antialias: true,
             powerPreference: 'high-performance',
@@ -226,8 +226,8 @@ export const Artifact3DStage: React.FC<Artifact3DStageProps> = ({ artifactId, on
             intensity={2.8}
             color="#FFF6E8"
             castShadow
-            shadow-mapSize-width={2048}
-            shadow-mapSize-height={2048}
+            shadow-mapSize-width={1024}
+            shadow-mapSize-height={1024}
             shadow-camera-near={0.5}
             shadow-camera-far={25}
             shadow-bias={-0.0001}

@@ -116,7 +116,7 @@ const InstancedRockVariant: React.FC<{
 
 export const MoonEnvironment: React.FC = () => {
   const graphicsQuality = useExperienceStore((s) => s.graphicsQuality);
-  const resolution = graphicsQuality === 'high' ? 200 : graphicsQuality === 'medium' ? 150 : 104;
+  const resolution = graphicsQuality === 'high' ? 144 : graphicsQuality === 'medium' ? 112 : 80;
 
   // Load real NASA LROC color mosaic & LOLA lunar elevation dataset
   const [lrocTexture, lolaTexture] = useTexture([
@@ -267,16 +267,16 @@ export const MoonEnvironment: React.FC = () => {
         intensity={4.1}
         color="#FFFDF7"
         castShadow
-        shadow-mapSize-width={2048}
-        shadow-mapSize-height={2048}
+        shadow-mapSize-width={1024}
+        shadow-mapSize-height={1024}
         shadow-camera-near={2}
         shadow-camera-far={120}
         shadow-camera-left={-22}
         shadow-camera-right={22}
         shadow-camera-top={22}
         shadow-camera-bottom={-22}
-        shadow-bias={-0.00025}
-        shadow-normalBias={0.024}
+        shadow-bias={-0.0002}
+        shadow-normalBias={0.02}
       />
 
       {/* Subtle upward light bounced off sunlit regolith into shadowed struts & craters */}

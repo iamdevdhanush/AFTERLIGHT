@@ -41,6 +41,8 @@ export const SpaceshipCursor: React.FC = () => {
 
   // Position coordinates maintained via refs to avoid React re-renders during high-frequency mouse movements
   const posRef = useRef({ x: -100, y: -100 });
+  const isTextInputRef = useRef(false);
+  const isInteractiveRef = useRef(false);
   const movingTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -89,7 +91,10 @@ export const SpaceshipCursor: React.FC = () => {
       const isText = !!target.closest(
         'input:not([type="button"]):not([type="submit"]):not([type="checkbox"]):not([type="radio"]):not([type="range"]), textarea, select, [contenteditable="true"]'
       );
-      setIsTextInput(isText);
+      if (isText !== isTextInputRef.current) {
+        isTextInputRef.current = isText;
+        setIsTextInput(isText);
+      }
 
       // Interactive clickable elements (buttons, links, tab items, clickable cards, 3D canvases)
       const isClickable = !isText && !!(
@@ -98,7 +103,10 @@ export const SpaceshipCursor: React.FC = () => {
         ) ||
         (target.closest('canvas') && !!useExperienceStore.getState().hoveredArtifactId)
       );
-      setIsInteractive(isClickable);
+      if (isClickable !== isInteractiveRef.current) {
+        isInteractiveRef.current = isClickable;
+        setIsInteractive(isClickable);
+      }
     };
 
     const handleMouseDown = () => setIsMouseDown(true);
