@@ -365,7 +365,7 @@ export const PlanetaryGlobe: React.FC<PlanetaryGlobeProps> = ({
         dragVelocityRef.current.x *= 0.92;
         dragVelocityRef.current.y *= 0.92;
       } else if (isAutoRotating) {
-        const autoSpeed = planet === 'moon' ? 0.025 : 0.035;
+        const autoSpeed = planet === 'moon' ? 0.035 : 0.045;
         group.rotation.y += autoSpeed * dt;
       }
     }
@@ -405,46 +405,44 @@ export const PlanetaryGlobe: React.FC<PlanetaryGlobeProps> = ({
   const segments = 96; // 96x96 vertices for smooth silhouette with optimal raster performance
 
   return (
-    <group rotation={axialTilt}>
-      <group ref={spinGroupRef}>
-        {/* Main Planetary Terrain Mesh */}
-        <mesh
-          castShadow
-          receiveShadow
-          onPointerMove={handlePointerMove}
-          onPointerOut={handlePointerOut}
-        >
-          <sphereGeometry args={[GLOBE_RADIUS, segments, segments]} />
-          {maps ? (
-            <meshPhysicalMaterial
-              key={`${planet}-${activeLayerType}-mapped`}
-              map={maps.colorMap}
-              bumpMap={maps.bumpMap}
-              bumpScale={planet === 'moon' ? 0.085 * terrainExaggeration : 0.065 * terrainExaggeration}
-              displacementMap={planet === 'moon' ? maps.bumpMap : undefined}
-              displacementScale={planet === 'moon' ? 0.034 * terrainExaggeration : 0}
-              displacementBias={planet === 'moon' ? -0.017 * terrainExaggeration : 0}
-              roughnessMap={maps.roughnessMap}
-              roughness={1.0}
-              metalness={0.0}
-              specularIntensity={planet === 'moon' ? 0.04 : 0.07}
-              envMapIntensity={0}
-            />
-          ) : (
-            <meshStandardMaterial
-              key={`${planet}-base`}
-              color={planet === 'moon' ? '#7A7C80' : '#A85233'}
-              roughness={0.9}
-            />
-          )}
-        </mesh>
+    <>
+      {/* Main Planetary Terrain Mesh */}
+      <mesh
+        castShadow
+        receiveShadow
+        onPointerMove={handlePointerMove}
+        onPointerOut={handlePointerOut}
+      >
+        <sphereGeometry args={[GLOBE_RADIUS, segments, segments]} />
+        {maps ? (
+          <meshPhysicalMaterial
+            key={`${planet}-${activeLayerType}-mapped`}
+            map={maps.colorMap}
+            bumpMap={maps.bumpMap}
+            bumpScale={planet === 'moon' ? 0.085 * terrainExaggeration : 0.065 * terrainExaggeration}
+            displacementMap={planet === 'moon' ? maps.bumpMap : undefined}
+            displacementScale={planet === 'moon' ? 0.034 * terrainExaggeration : 0}
+            displacementBias={planet === 'moon' ? -0.017 * terrainExaggeration : 0}
+            roughnessMap={maps.roughnessMap}
+            roughness={1.0}
+            metalness={0.0}
+            specularIntensity={planet === 'moon' ? 0.04 : 0.07}
+            envMapIntensity={0}
+          />
+        ) : (
+          <meshStandardMaterial
+            key={`${planet}-base`}
+            color={planet === 'moon' ? '#7A7C80' : '#A85233'}
+            roughness={0.9}
+          />
+        )}
+      </mesh>
 
-        {/* Geospatial Coordinate Graticule Grid */}
-        {showGraticule && <PlanetaryGraticule radius={GLOBE_RADIUS} />}
-      </group>
+      {/* Geospatial Coordinate Graticule Grid */}
+      {showGraticule && <PlanetaryGraticule radius={GLOBE_RADIUS} />}
 
       {/* Atmospheric Limb Scattering Glow for Mars */}
       {planet === 'mars' && <MarsAtmosphericGlow sunDirection={sunDirection} />}
-    </group>
+    </>
   );
 };

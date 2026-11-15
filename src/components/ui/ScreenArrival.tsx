@@ -7,10 +7,13 @@ import {
   Globe2,
   Radio,
   ArrowRight,
+  GraduationCap,
+  Sparkles,
 } from 'lucide-react';
 import { navigation } from '../../navigation/navigationController';
 import { soundManager } from '../../audio/SoundManager';
 import { useExperienceStore } from '../../store/useExperienceStore';
+import { LanguageSwitcher } from './LanguageSwitcher';
 
 const ScreenArtifactDetails = lazy(() =>
   import('./ScreenArtifactDetails').then((m) => ({ default: m.ScreenArtifactDetails }))
@@ -37,6 +40,7 @@ export const ScreenArrival: React.FC = () => {
   const [inspectingArtifactId, setInspectingArtifactId] = useState<string | null>(null);
 
   const reducedMotion = useExperienceStore((s) => s.reducedMotion);
+  const toggleTeacherMode = useExperienceStore((s) => s.toggleTeacherMode);
   const setArrivalHeroVisible = useExperienceStore((s) => s.setArrivalHeroVisible);
 
   // Restore scroll position or target chapter if returning from museum/exhibition
@@ -191,8 +195,8 @@ export const ScreenArrival: React.FC = () => {
           </span>
         </div>
 
-        {/* Right side: Active Chapter Indicator + Single Primary Skip Action */}
-        <div className="flex items-center space-x-4">
+        {/* Right side: Active Chapter Indicator, Teacher Mode, Language Switcher + Skip Action */}
+        <div className="flex items-center space-x-3 sm:space-x-4">
           <div className="hidden lg:flex items-center space-x-2 text-xs font-mono tracking-wider text-stone-muted">
             <Radio className="w-3.5 h-3.5 text-signal animate-pulse" />
             <span className="text-bone">
@@ -200,6 +204,18 @@ export const ScreenArrival: React.FC = () => {
               {CHAPTERS.find((c) => c.id === activeChapter)?.label}
             </span>
           </div>
+
+          <LanguageSwitcher />
+
+          <button
+            type="button"
+            onClick={() => toggleTeacherMode(true)}
+            className="hidden sm:flex items-center space-x-1.5 px-3 py-1 rounded-sm border border-amber-500/40 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 text-[10px] font-mono uppercase tracking-wider transition-colors shadow-sm"
+            title="Classroom assignments, lesson sheets, and LMS quiz export"
+          >
+            <GraduationCap className="w-3.5 h-3.5 text-amber-400" />
+            <span>TEACHER MODE</span>
+          </button>
 
           <button
             type="button"
@@ -297,16 +313,40 @@ export const ScreenArrival: React.FC = () => {
             initial={{ opacity: 0, y: reducedMotion ? 0 : 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: reducedMotion ? 0.2 : 1.2, delay: reducedMotion ? 0 : 0.4 }}
-            className="flex items-center gap-4 pt-2"
+            className="flex flex-wrap items-center gap-3 pt-2"
           >
+            {/* Flagship Story Mode Button for Youth & School-Age Explorers */}
+            <button
+              type="button"
+              onClick={() => {
+                soundManager.playClick();
+                navigation.toDestinations();
+              }}
+              className="group px-7 py-4 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-semibold transition-all duration-300 shadow-xl shadow-amber-500/25 flex items-center space-x-3 text-xs font-mono uppercase tracking-wider"
+              title="Interactive storytelling about forgotten rovers, landers and relics"
+            >
+              <Sparkles className="w-4 h-4 text-black group-hover:rotate-12 transition-transform duration-300" />
+              <span>LAUNCH STORY MODE</span>
+              <ArrowRight className="w-4 h-4 text-black group-hover:translate-x-1 transition-transform duration-200" />
+            </button>
+
             <button
               type="button"
               onClick={() => scrollToChapter('scene-story')}
-              className="group px-8 py-4 bg-signal text-obsidian hover:bg-bone transition-all duration-300 font-semibold shadow-lg shadow-signal/20 flex items-center space-x-3 text-xs font-mono uppercase tracking-wider"
+              className="group px-6 py-4 bg-signal/90 text-obsidian hover:bg-bone transition-all duration-300 font-semibold shadow-lg shadow-signal/20 flex items-center space-x-2.5 text-xs font-mono uppercase tracking-wider"
             >
               <Compass className="w-4 h-4 group-hover:rotate-45 transition-transform duration-300" />
-              <span>DISCOVER THE STORY</span>
+              <span>DISCOVER PROLOGUE</span>
               <ChevronDown className="w-4 h-4 group-hover:translate-y-0.5 transition-transform duration-200" />
+            </button>
+
+            <button
+              type="button"
+              onClick={handleOpen3DSelector}
+              className="px-5 py-4 border border-meteorite hover:border-signal bg-surface-raised/40 hover:bg-surface text-bone transition-all duration-300 font-mono text-xs uppercase tracking-wider flex items-center space-x-2"
+            >
+              <Globe2 className="w-4 h-4 text-signal" />
+              <span>3D ORBITAL MAP</span>
             </button>
           </motion.div>
         </div>

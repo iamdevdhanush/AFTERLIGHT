@@ -6,6 +6,9 @@ import { ScreenDestinationSelect } from './components/ui/ScreenDestinationSelect
 import { ScreenLoading } from './components/ui/ScreenLoading';
 import { SpaceshipCursor } from './components/ui/SpaceshipCursor';
 import { navigation } from './navigation/navigationController';
+import { AriaLiveAnnouncer } from './components/ui/AriaLiveAnnouncer';
+import { TeacherModeModal } from './components/ui/TeacherModeModal';
+import { WebGLFallbackGallery } from './components/canvas/WebGLFallbackGallery';
 
 // Route-based code splitting for secondary museum views & heavy modules
 const ScreenExhibition = lazy(() =>
@@ -32,11 +35,44 @@ export const App: React.FC = () => {
   const currentDestination = useExperienceStore((s) => s.currentDestination);
   const setState = useExperienceStore((s) => s.setState);
   const toggleAudio = useExperienceStore((s) => s.toggleAudio);
+  const isTeacherModeOpen = useExperienceStore((s) => s.isTeacherModeOpen);
+  const toggleTeacherMode = useExperienceStore((s) => s.toggleTeacherMode);
+  const webglAvailable = useExperienceStore((s) => s.webglAvailable);
+  const setWebglAvailable = useExperienceStore((s) => s.setWebglAvailable);
 
-  // Initialize browser history and route synchronization
+  // Initialize browser history and route synchronization & detect WebGL
   useEffect(() => {
     navigation.init();
-  }, []);
+
+    // WebGL capability probe
+    try {
+      const canvas = document.createElement('canvas');
+      const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+      if (!gl) {
+        setWebglAvailable(false);
+      }
+    } catch {
+      setWebglAvailable(false);
+    }
+
+    // Auto-open teacher mode if ?teacher=true in URL
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('teacher') === 'true') {
+        toggleTeacherMode(true);
+      }
+    }
+  }, [setWebglAvailable, toggleTeacherMode]);
+
+  // Graceful 2D Archival Gallery Fallback if WebGL is disabled or unsupported
+  if (!webglAvailable) {
+    return (
+      <div className="w-screen h-screen overflow-hidden bg-void text-starlight font-sans">
+        <WebGLFallbackGallery onRetry={() => setWebglAvailable(true)} />
+        <AriaLiveAnnouncer />
+      </div>
+    );
+  }
 
   // Global keyboard shortcuts: 'M' toggles audio mute
   useEffect(() => {
@@ -111,6 +147,12 @@ export const App: React.FC = () => {
 
       {/* 6. HARDWARE-ACCELERATED SPACESHIP CURSOR OVERLAY */}
       <SpaceshipCursor />
+
+      {/* 7. SCREEN-READER LIVE ANNOUNCER (WCAG 2.2 AA) */}
+      <AriaLiveAnnouncer />
+
+      {/* 8. TEACHER & EDUCATOR TOOLKIT MODAL */}
+      {isTeacherModeOpen && <TeacherModeModal onClose={() => toggleTeacherMode(false)} />}
     </div>
   );
 };
