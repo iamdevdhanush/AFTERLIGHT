@@ -39,6 +39,24 @@ export const ScreenArrival: React.FC = () => {
   const reducedMotion = useExperienceStore((s) => s.reducedMotion);
   const setArrivalHeroVisible = useExperienceStore((s) => s.setArrivalHeroVisible);
 
+  // Restore scroll position or target chapter if returning from museum/exhibition
+  useEffect(() => {
+    const targetChapter = navigation.getLastArrivalChapter();
+    const targetScrollTop = navigation.getLastArrivalScrollTop();
+
+    if (targetChapter && targetChapter !== 'scene-prologue') {
+      const timer = setTimeout(() => {
+        const el = document.getElementById(targetChapter);
+        if (el) {
+          el.scrollIntoView({ behavior: 'auto' });
+        } else if (containerRef.current && targetScrollTop > 0) {
+          containerRef.current.scrollTop = targetScrollTop;
+        }
+      }, 60);
+      return () => clearTimeout(timer);
+    }
+  }, []);
+
   // High-performance scroll listener with rAF coalescing and direct DOM style updates
   useEffect(() => {
     const container = containerRef.current;
@@ -84,6 +102,7 @@ export const ScreenArrival: React.FC = () => {
               if (activeChapterRef.current !== matchedId) {
                 activeChapterRef.current = matchedId;
                 setActiveChapter(matchedId);
+                navigation.syncArrivalChapter(matchedId, scrollTop);
               }
               break;
             }
@@ -105,21 +124,31 @@ export const ScreenArrival: React.FC = () => {
     const el = document.getElementById(id);
     if (el) {
       el.scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth' });
+      navigation.syncArrivalChapter(id);
     }
   };
 
   const handleSelectMoon = () => {
     soundManager.playNavMoonSelected();
+    if (containerRef.current) {
+      navigation.syncArrivalChapter('scene-destinations', containerRef.current.scrollTop);
+    }
     navigation.toDestination('moon');
   };
 
   const handleSelectMars = () => {
     soundManager.playNavMarsSelected();
+    if (containerRef.current) {
+      navigation.syncArrivalChapter('scene-destinations', containerRef.current.scrollTop);
+    }
     navigation.toDestination('mars');
   };
 
   const handleOpen3DSelector = () => {
     soundManager.playNavArrivalToDestinations();
+    if (containerRef.current) {
+      navigation.syncArrivalChapter('scene-destinations', containerRef.current.scrollTop);
+    }
     navigation.toDestinations();
   };
 

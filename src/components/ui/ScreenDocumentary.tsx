@@ -145,7 +145,7 @@ export const ScreenDocumentary: React.FC = () => {
 
           <button
             type="button"
-            onClick={returnToExhibition}
+            onClick={() => navigation.closeToExhibition(artifact.destination)}
             className="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-surface-raised hover:bg-surface border border-meteorite text-xs font-mono tracking-wider text-stone-secondary hover:text-bone transition-colors"
             title="Return to Exhibition"
           >

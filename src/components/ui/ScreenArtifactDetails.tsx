@@ -63,7 +63,7 @@ export const ScreenArtifactDetails: React.FC<ScreenArtifactDetailsProps> = ({ on
 
   const handleClose = () => {
     if (onClose) onClose();
-    else navigation.goBack();
+    else navigation.closeArtifact();
   };
 
   // Keyboard navigation: Escape key closes, ArrowLeft / ArrowRight navigates between artifacts
@@ -72,11 +72,9 @@ export const ScreenArtifactDetails: React.FC<ScreenArtifactDetailsProps> = ({ on
       if (e.key === 'Escape') {
         handleClose();
       } else if (e.key === 'ArrowLeft' && prevArtifact) {
-        useExperienceStore.setState({ selectedArtifactId: prevArtifact.id });
-        navigation.toArtifact(prevArtifact.id);
+        navigation.toArtifact(prevArtifact.id, true);
       } else if (e.key === 'ArrowRight' && nextArtifact) {
-        useExperienceStore.setState({ selectedArtifactId: nextArtifact.id });
-        navigation.toArtifact(nextArtifact.id);
+        navigation.toArtifact(nextArtifact.id, true);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -592,8 +590,7 @@ export const ScreenArtifactDetails: React.FC<ScreenArtifactDetailsProps> = ({ on
           <button
             type="button"
             onClick={() => {
-              useExperienceStore.setState({ selectedArtifactId: prevArtifact.id });
-              navigation.toArtifact(prevArtifact.id);
+              navigation.toArtifact(prevArtifact.id, true);
             }}
             className="group flex items-center space-x-3 text-left p-2.5 -m-2.5 hover:bg-surface-raised transition-colors rounded-sm"
           >
@@ -624,8 +621,7 @@ export const ScreenArtifactDetails: React.FC<ScreenArtifactDetailsProps> = ({ on
           <button
             type="button"
             onClick={() => {
-              useExperienceStore.setState({ selectedArtifactId: nextArtifact.id });
-              navigation.toArtifact(nextArtifact.id);
+              navigation.toArtifact(nextArtifact.id, true);
             }}
             className="group flex items-center space-x-3 text-right p-2.5 -m-2.5 hover:bg-surface-raised transition-colors rounded-sm"
           >

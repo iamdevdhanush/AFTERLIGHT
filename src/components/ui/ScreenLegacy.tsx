@@ -110,7 +110,7 @@ export const ScreenLegacy: React.FC = () => {
 
         <button
           type="button"
-          onClick={returnToExhibition}
+          onClick={() => navigation.closeToExhibition(artifact.destination)}
           className="group inline-flex items-center space-x-2 text-stone-secondary hover:text-bone text-xs font-mono tracking-[0.16em] transition-colors duration-300 uppercase"
         >
           <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />

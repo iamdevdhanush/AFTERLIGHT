@@ -124,19 +124,41 @@ export const ScreenExhibition: React.FC = () => {
   // Unified museum archive plate aspect ratio
   const PLATE_ASPECT = 'aspect-[16/10]';
 
+  const containerRef = React.useRef<HTMLDivElement>(null);
+
+  // Restore scroll position when returning from artifact or destination switch
+  React.useEffect(() => {
+    if (!selectedArtifactId && containerRef.current) {
+      const savedScroll = navigation.getExhibitionScroll(validDest);
+      if (savedScroll > 0) {
+        containerRef.current.scrollTop = savedScroll;
+      }
+    }
+  }, [selectedArtifactId, validDest]);
+
+  const handleSelectArtifact = (id: string) => {
+    if (containerRef.current) {
+      navigation.saveExhibitionScroll(validDest, containerRef.current.scrollTop);
+    }
+    selectArtifact(id);
+  };
+
   // Distinct featured artifact (when viewing destination collection without complex filters)
   const isStandardView = !searchQuery.trim() && selectedCategory === 'all' && selectedStatus === 'all';
   const featuredArtifact = isStandardView && filteredExhibits.length > 0 ? filteredExhibits[0] : null;
   const supportingExhibits = isStandardView && featuredArtifact ? filteredExhibits.slice(1) : filteredExhibits;
 
   return (
-    <div className="fixed inset-0 z-30 bg-obsidian text-bone overflow-y-auto overflow-x-hidden select-none">
+    <div
+      ref={containerRef}
+      className="fixed inset-0 z-30 bg-obsidian text-bone overflow-y-auto overflow-x-hidden select-none"
+    >
       {/* 1. Minimal Sticky Top Navigation Header */}
       <header className="sticky top-0 z-20 bg-obsidian/90 backdrop-blur-sm border-b border-meteorite px-4 sm:px-6 md:px-14 py-3.5 sm:py-4 flex items-center justify-between gap-3">
         <div className="flex items-center space-x-3 sm:space-x-5 min-w-0">
           <button
             type="button"
-            onClick={() => navigation.toArrival()}
+            onClick={() => navigation.returnToStory()}
             className="group shrink-0 inline-flex items-center space-x-1.5 sm:space-x-2 text-xs font-mono tracking-[0.16em] text-stone-secondary hover:text-bone transition-colors uppercase"
             title="Return to the Guided Introduction Story"
           >
@@ -472,7 +494,7 @@ export const ScreenExhibition: React.FC = () => {
           >
             <PlanetarySurfaceMap
               initialPlanet={selectedDestFilter === 'mars' ? 'mars' : 'moon'}
-              onSelectArtifact={(id) => selectArtifact(id)}
+              onSelectArtifact={(id) => handleSelectArtifact(id)}
             />
           </motion.section>
         ) : (
@@ -481,7 +503,7 @@ export const ScreenExhibition: React.FC = () => {
             {featuredArtifact && (
               <motion.div
                 layoutId={`exhibit-card-${featuredArtifact.id}`}
-                onClick={() => selectArtifact(featuredArtifact.id)}
+                onClick={() => handleSelectArtifact(featuredArtifact.id)}
                 className="cursor-pointer group relative border border-meteorite bg-surface-raised overflow-hidden shadow-2xl transition-all duration-300 hover:border-signal"
               >
                 <div className="grid grid-cols-1 lg:grid-cols-12 items-stretch">
@@ -575,7 +597,7 @@ export const ScreenExhibition: React.FC = () => {
                     <motion.article
                       key={artifact.id}
                       layoutId={`exhibit-card-${artifact.id}`}
-                      onClick={() => selectArtifact(artifact.id)}
+                      onClick={() => handleSelectArtifact(artifact.id)}
                       initial={reducedMotion ? { opacity: 0 } : { opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{
@@ -665,7 +687,7 @@ export const ScreenExhibition: React.FC = () => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.35, ease: 'easeOut' }}
-              onClick={returnToExhibition}
+              onClick={() => navigation.closeArtifact()}
               className="fixed inset-0 bg-obsidian/85 backdrop-blur-xl"
             />
 
@@ -676,7 +698,7 @@ export const ScreenExhibition: React.FC = () => {
               className="relative z-10 min-h-screen"
             >
               <Suspense fallback={null}>
-                <ScreenArtifactDetails onClose={returnToExhibition} />
+                <ScreenArtifactDetails onClose={() => navigation.closeArtifact()} />
               </Suspense>
             </motion.div>
           </div>

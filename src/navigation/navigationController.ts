@@ -15,19 +15,45 @@ export interface ParsedNavState {
   exhibitionView: 'collection' | 'map';
 }
 
+export interface NavHistoryState extends ParsedNavState {
+  _orbitalDepth: number;
+  _afterlightDepth?: number;
+  _source?: 'story' | 'destinations' | 'exhibition' | 'artifact' | 'story_chapter' | 'legacy' | 'app';
+  _arrivalChapter?: string;
+  _arrivalScrollTop?: number;
+}
+
 class NavigationController {
   private isHandlingPopstate = false;
   private historyStackDepth = 0;
   private isInitialized = false;
+  private loadingTimeout: NodeJS.Timeout | null = null;
+
+  // Session-aware navigation source trackers
+  private arrivalVisitedInSession = false;
+  private exhibitionVisitedInSession = false;
+  private artifactOpenedInSession = false;
+  private documentaryOpenedInSession = false;
+
+  // Preserved position states
+  private lastArrivalChapter = 'scene-prologue';
+  private lastArrivalScrollTop = 0;
+  private exhibitionScrollPositions: Record<string, number> = { moon: 0, mars: 0 };
 
   constructor() {
     if (typeof window !== 'undefined') {
-      // Track session history depth
       const initialDepth =
         window.history.state?._orbitalDepth ??
         window.history.state?._afterlightDepth ??
         0;
       this.historyStackDepth = initialDepth;
+
+      if (window.history.state?._arrivalChapter) {
+        this.lastArrivalChapter = window.history.state._arrivalChapter;
+      }
+      if (window.history.state?._arrivalScrollTop) {
+        this.lastArrivalScrollTop = window.history.state._arrivalScrollTop;
+      }
     }
   }
 
@@ -44,6 +70,28 @@ class NavigationController {
     // Initial sync from current URL
     const initialNav = this.parseUrl(window.location.search);
 
+    const initialDepth =
+      window.history.state?._orbitalDepth ??
+      window.history.state?._afterlightDepth ??
+      0;
+    this.historyStackDepth = initialDepth;
+
+    if (initialNav.state === 'ARRIVAL') {
+      this.arrivalVisitedInSession = true;
+      if (window.history.state?._arrivalChapter) {
+        this.lastArrivalChapter = window.history.state._arrivalChapter;
+      }
+      if (window.history.state?._arrivalScrollTop) {
+        this.lastArrivalScrollTop = window.history.state._arrivalScrollTop;
+      }
+    } else if (initialNav.state === 'DESTINATION_SELECT') {
+      this.arrivalVisitedInSession = true;
+    } else if (initialNav.state === 'EXHIBITION') {
+      this.exhibitionVisitedInSession = true;
+    } else if (initialNav.state === 'ARTIFACT_DETAILS') {
+      this.exhibitionVisitedInSession = true;
+    }
+
     // Replace current history entry with initial metadata
     const initialUrl = this.buildUrl(initialNav);
     window.history.replaceState(
@@ -51,6 +99,9 @@ class NavigationController {
         ...initialNav,
         _orbitalDepth: this.historyStackDepth,
         _afterlightDepth: this.historyStackDepth,
+        _source: this.stateToSource(initialNav.state),
+        _arrivalChapter: this.lastArrivalChapter,
+        _arrivalScrollTop: this.lastArrivalScrollTop,
       },
       '',
       initialUrl
@@ -70,11 +121,17 @@ class NavigationController {
    * Handle browser Back/Forward (popstate)
    */
   private handlePopstate = (event: PopStateEvent) => {
+    // 1. Cancel any active loading transition immediately
+    if (this.loadingTimeout) {
+      clearTimeout(this.loadingTimeout);
+      this.loadingTimeout = null;
+    }
+
     this.isHandlingPopstate = true;
     try {
       const nextNav = this.parseUrl(window.location.search, event.state);
 
-      // Track depth to know if we can goBack() safely
+      // 2. Track depth to know if we can goBack() safely
       const prevDepth = this.historyStackDepth;
       let newDepth = prevDepth;
       if (event.state?._orbitalDepth !== undefined) {
@@ -86,7 +143,26 @@ class NavigationController {
       }
       this.historyStackDepth = newDepth;
 
-      // Play intentional distinct sound based on Back vs Forward
+      // 3. Update session-aware tracking
+      if (nextNav.state === 'ARRIVAL') {
+        this.arrivalVisitedInSession = true;
+        if (event.state?._arrivalChapter) {
+          this.lastArrivalChapter = event.state._arrivalChapter;
+        }
+        if (event.state?._arrivalScrollTop !== undefined) {
+          this.lastArrivalScrollTop = event.state._arrivalScrollTop;
+        }
+      } else if (nextNav.state === 'DESTINATION_SELECT') {
+        this.arrivalVisitedInSession = true;
+      } else if (nextNav.state === 'EXHIBITION') {
+        this.exhibitionVisitedInSession = true;
+        this.artifactOpenedInSession = false;
+        this.documentaryOpenedInSession = false;
+      } else if (nextNav.state === 'ARTIFACT_DETAILS') {
+        this.documentaryOpenedInSession = false;
+      }
+
+      // 4. Play intentional distinct audio cues based on Back vs Forward
       if (newDepth < prevDepth) {
         soundManager.playNavBrowserBack();
       } else if (newDepth > prevDepth) {
@@ -97,7 +173,7 @@ class NavigationController {
 
       guideVoiceEngine.stop(false);
 
-      // Update Zustand store
+      // 5. Atomically update Zustand store without triggering secondary pushState effects
       useExperienceStore.setState({
         state: nextNav.state,
         currentDestination: nextNav.destination,
@@ -107,7 +183,7 @@ class NavigationController {
         selectedComponentId: null,
       });
 
-      // Update ambient sound matching destination
+      // 6. Synchronize ambient audio matching destination
       const dest = DESTINATIONS[nextNav.destination];
       if (nextNav.state === 'EXHIBITION' || nextNav.state === 'ARTIFACT_DETAILS') {
         if (dest) soundManager.playAmbience(dest.ambientAudioType);
@@ -120,6 +196,28 @@ class NavigationController {
   };
 
   /**
+   * Helper to map an ExperienceState to a source tag
+   */
+  private stateToSource(state: ExperienceState): NavHistoryState['_source'] {
+    switch (state) {
+      case 'ARRIVAL':
+        return 'story';
+      case 'DESTINATION_SELECT':
+        return 'destinations';
+      case 'EXHIBITION':
+        return 'exhibition';
+      case 'ARTIFACT_DETAILS':
+        return 'artifact';
+      case 'STORY_CHAPTER':
+        return 'story_chapter';
+      case 'LEGACY':
+        return 'legacy';
+      default:
+        return 'app';
+    }
+  }
+
+  /**
    * Parses and sanitizes URL search parameters into a valid navigation state
    */
   public parseUrl(search: string, historyState?: any): ParsedNavState {
@@ -129,7 +227,6 @@ class NavigationController {
     let rawDest = params.get('dest') || historyState?.destination || 'moon';
     let destination: ActiveDestination = 'moon';
     if (rawDest === 'mars') destination = 'mars';
-    // If deep_space or unknown, defaults to 'moon'
 
     // 2. State sanitization
     let rawState = params.get('state') || historyState?.state;
@@ -148,11 +245,9 @@ class NavigationController {
     } else if (params.get('module') === 'planetary3d') {
       state = 'PLANETARY_ARCHAEOLOGY';
     } else {
-      // If ?artifact= is present without explicit state parameter, default to ARTIFACT_DETAILS
       if (params.has('artifact')) {
         state = 'ARTIFACT_DETAILS';
       } else if (params.has('dest')) {
-        // If ?dest= is present without state, default to EXHIBITION
         state = 'EXHIBITION';
       }
     }
@@ -166,10 +261,8 @@ class NavigationController {
     let artifactId = params.get('artifact') || historyState?.artifactId || null;
     if (state === 'ARTIFACT_DETAILS' || state === 'STORY_CHAPTER' || state === 'LEGACY') {
       if (!artifactId || !ARTIFACTS[artifactId]) {
-        // Fallback to default artifact for destination
         artifactId = destination === 'mars' ? 'opportunity' : 'apollo11_eagle';
       } else {
-        // If artifact belongs to another destination, synchronize destination
         const artifactData = ARTIFACTS[artifactId];
         if (artifactData && (artifactData.destination === 'moon' || artifactData.destination === 'mars')) {
           destination = artifactData.destination;
@@ -203,16 +296,18 @@ class NavigationController {
     const params = new URLSearchParams();
 
     if (nav.state === 'ARRIVAL') {
-      // Clean root URL for arrival
       return window.location.pathname;
     }
 
     if (nav.state === 'DESTINATION_SELECT') {
       params.set('state', 'destinations');
+      if (nav.destination === 'mars') {
+        params.set('dest', 'mars');
+      }
       return `${window.location.pathname}?${params.toString()}`;
     }
 
-    // All destination-scoped states
+    // Destination-scoped states
     params.set('dest', nav.destination);
 
     if (nav.state === 'EXHIBITION') {
@@ -246,34 +341,35 @@ class NavigationController {
   /**
    * Commit a navigation step to browser history
    */
-  private commit(nav: ParsedNavState, replace = false) {
+  private commit(
+    nav: ParsedNavState,
+    replace = false,
+    extraMeta: Record<string, any> = {}
+  ) {
     if (this.isHandlingPopstate || typeof window === 'undefined') return;
 
     const targetUrl = this.buildUrl(nav);
     const currentSearch = window.location.search;
     const currentUrl = currentSearch ? `${window.location.pathname}${currentSearch}` : window.location.pathname;
+    const source = extraMeta._source || this.stateToSource(nav.state);
+
+    const historyPayload: NavHistoryState = {
+      ...nav,
+      _orbitalDepth: this.historyStackDepth,
+      _afterlightDepth: this.historyStackDepth,
+      _source: source,
+      _arrivalChapter: this.lastArrivalChapter,
+      _arrivalScrollTop: this.lastArrivalScrollTop,
+      ...extraMeta,
+    };
 
     if (replace || targetUrl === currentUrl) {
-      window.history.replaceState(
-        {
-          ...nav,
-          _orbitalDepth: this.historyStackDepth,
-          _afterlightDepth: this.historyStackDepth,
-        },
-        '',
-        targetUrl
-      );
+      window.history.replaceState(historyPayload, '', targetUrl);
     } else {
       this.historyStackDepth += 1;
-      window.history.pushState(
-        {
-          ...nav,
-          _orbitalDepth: this.historyStackDepth,
-          _afterlightDepth: this.historyStackDepth,
-        },
-        '',
-        targetUrl
-      );
+      historyPayload._orbitalDepth = this.historyStackDepth;
+      historyPayload._afterlightDepth = this.historyStackDepth;
+      window.history.pushState(historyPayload, '', targetUrl);
     }
   }
 
@@ -282,12 +378,63 @@ class NavigationController {
   // =========================================================================
 
   /**
+   * Save arrival chapter progress and scroll position
+   */
+  public syncArrivalChapter(chapterId: string, scrollTop?: number) {
+    this.lastArrivalChapter = chapterId;
+    if (scrollTop !== undefined && scrollTop >= 0) {
+      this.lastArrivalScrollTop = scrollTop;
+    }
+    if (typeof window !== 'undefined' && !this.isHandlingPopstate) {
+      const currentState = window.history.state || {};
+      window.history.replaceState(
+        {
+          ...currentState,
+          _arrivalChapter: chapterId,
+          _arrivalScrollTop: this.lastArrivalScrollTop,
+        },
+        '',
+        window.location.href
+      );
+    }
+  }
+
+  public getLastArrivalChapter(): string {
+    return this.lastArrivalChapter;
+  }
+
+  public getLastArrivalScrollTop(): number {
+    return this.lastArrivalScrollTop;
+  }
+
+  /**
+   * Save and retrieve exhibition scroll positions
+   */
+  public saveExhibitionScroll(dest: string, scrollTop: number) {
+    this.exhibitionScrollPositions[dest] = Math.max(0, scrollTop);
+  }
+
+  public getExhibitionScroll(dest: string): number {
+    return this.exhibitionScrollPositions[dest] || 0;
+  }
+
+  /**
    * Navigate to Arrival Screen
    */
-  public toArrival() {
+  public toArrival(targetChapter?: string) {
+    if (this.loadingTimeout) {
+      clearTimeout(this.loadingTimeout);
+      this.loadingTimeout = null;
+    }
     guideVoiceEngine.stop(false);
     soundManager.stopAmbience();
     soundManager.playNavReturnToExhibition();
+
+    this.arrivalVisitedInSession = true;
+    if (targetChapter) {
+      this.lastArrivalChapter = targetChapter;
+    }
+
     const nav: ParsedNavState = {
       state: 'ARRIVAL',
       destination: 'moon',
@@ -295,7 +442,14 @@ class NavigationController {
       storyChapterIndex: 0,
       exhibitionView: 'collection',
     };
-    this.commit(nav);
+
+    const isAlreadyArrival = useExperienceStore.getState().state === 'ARRIVAL';
+    this.commit(nav, isAlreadyArrival, {
+      _source: 'story',
+      _arrivalChapter: this.lastArrivalChapter,
+      _arrivalScrollTop: this.lastArrivalScrollTop,
+    });
+
     useExperienceStore.setState({
       state: 'ARRIVAL',
       selectedArtifactId: null,
@@ -304,9 +458,32 @@ class NavigationController {
   }
 
   /**
+   * Return to story without creating duplicate history entries
+   */
+  public returnToStory() {
+    if (this.loadingTimeout) {
+      clearTimeout(this.loadingTimeout);
+      this.loadingTimeout = null;
+    }
+
+    // If the user arrived from story in this session and history depth exists:
+    if (this.arrivalVisitedInSession && this.historyStackDepth > 0) {
+      window.history.back();
+      return;
+    }
+
+    // Direct entry fallback: transition to story with preserved destination chapter
+    this.toArrival(this.lastArrivalChapter || 'scene-destinations');
+  }
+
+  /**
    * Navigate to 3D Destination Selection Screen
    */
-  public toDestinations() {
+  public toDestinations(replace = false) {
+    if (this.loadingTimeout) {
+      clearTimeout(this.loadingTimeout);
+      this.loadingTimeout = null;
+    }
     const prevState = useExperienceStore.getState().state;
     guideVoiceEngine.stop(false);
     if (prevState === 'ARRIVAL') {
@@ -315,14 +492,19 @@ class NavigationController {
       soundManager.playNavReturnToExhibition();
     }
     soundManager.stopAmbience();
+
+    const currentDest = useExperienceStore.getState().currentDestination === 'mars' ? 'mars' : 'moon';
+
     const nav: ParsedNavState = {
       state: 'DESTINATION_SELECT',
-      destination: useExperienceStore.getState().currentDestination === 'mars' ? 'mars' : 'moon',
+      destination: currentDest,
       artifactId: null,
       storyChapterIndex: 0,
       exhibitionView: 'collection',
     };
-    this.commit(nav);
+
+    this.commit(nav, replace, { _source: 'destinations' });
+
     useExperienceStore.setState({
       state: 'DESTINATION_SELECT',
       selectedArtifactId: null,
@@ -332,9 +514,31 @@ class NavigationController {
   }
 
   /**
+   * Synchronize 3D globe destination preview without pushing history entries
+   */
+  public syncDestinationSelect(destId: ActiveDestination) {
+    const validDest: ActiveDestination = destId === 'mars' ? 'mars' : 'moon';
+    const nav: ParsedNavState = {
+      state: 'DESTINATION_SELECT',
+      destination: validDest,
+      artifactId: null,
+      storyChapterIndex: 0,
+      exhibitionView: 'collection',
+    };
+    // Always use replaceState so globe rotation does not pollute browser Back history
+    this.commit(nav, true, { _source: 'destinations' });
+    useExperienceStore.setState({ currentDestination: validDest });
+  }
+
+  /**
    * Navigate to a Destination with smooth loading descent
    */
   public toDestination(destId: ActiveDestination) {
+    if (this.loadingTimeout) {
+      clearTimeout(this.loadingTimeout);
+      this.loadingTimeout = null;
+    }
+
     guideVoiceEngine.stop(false);
     const validDest: ActiveDestination = destId === 'mars' ? 'mars' : 'moon';
     soundManager.playNavLoadingStart();
@@ -342,6 +546,11 @@ class NavigationController {
     const dest = DESTINATIONS[validDest];
     if (dest) {
       soundManager.playAmbience(dest.ambientAudioType);
+    }
+
+    // Save arrival state before entering loading
+    if (useExperienceStore.getState().state === 'ARRIVAL') {
+      this.syncArrivalChapter('scene-destinations', this.lastArrivalScrollTop);
     }
 
     // 1. Enter loading state
@@ -364,10 +573,12 @@ class NavigationController {
       storyChapterIndex: 0,
       exhibitionView: 'collection',
     };
-    this.commit(nav);
+    this.exhibitionVisitedInSession = true;
+    this.commit(nav, false, { _source: 'exhibition' });
 
     // 2. Transition cleanly into Exhibition
-    setTimeout(() => {
+    this.loadingTimeout = setTimeout(() => {
+      this.loadingTimeout = null;
       if (useExperienceStore.getState().state === 'ENVIRONMENT_LOADING') {
         soundManager.playNavLoadingComplete();
         useExperienceStore.setState({ state: 'EXHIBITION' });
@@ -378,7 +589,12 @@ class NavigationController {
   /**
    * Navigate to Exhibition (with view mode preservation)
    */
-  public toExhibition(destId?: ActiveDestination, viewMode?: 'collection' | 'map') {
+  public toExhibition(destId?: ActiveDestination, viewMode?: 'collection' | 'map', replace = false) {
+    if (this.loadingTimeout) {
+      clearTimeout(this.loadingTimeout);
+      this.loadingTimeout = null;
+    }
+
     const prevState = useExperienceStore.getState().state;
     guideVoiceEngine.stop(false);
     if (prevState === 'ARTIFACT_DETAILS' || prevState === 'STORY_CHAPTER' || prevState === 'LEGACY') {
@@ -405,7 +621,8 @@ class NavigationController {
       storyChapterIndex: 0,
       exhibitionView: targetMode,
     };
-    this.commit(nav);
+    this.exhibitionVisitedInSession = true;
+    this.commit(nav, replace, { _source: 'exhibition' });
 
     useExperienceStore.setState({
       state: 'EXHIBITION',
@@ -437,14 +654,19 @@ class NavigationController {
       exhibitionView: viewMode,
     };
     // Replace URL state so Back button returns to the previous screen rather than toggling view modes
-    this.commit(nav, true);
+    this.commit(nav, true, { _source: 'exhibition' });
     useExperienceStore.setState({ exhibitionView: viewMode });
   }
 
   /**
    * Navigate to Artifact Details
    */
-  public toArtifact(artifactId: string) {
+  public toArtifact(artifactId: string, replace = false) {
+    if (this.loadingTimeout) {
+      clearTimeout(this.loadingTimeout);
+      this.loadingTimeout = null;
+    }
+
     const artifact = ARTIFACTS[artifactId];
     if (!artifact) return;
 
@@ -454,6 +676,11 @@ class NavigationController {
     const discovered = new Set(useExperienceStore.getState().discoveredArtifacts);
     discovered.add(artifactId);
 
+    const isAlreadyArtifact = useExperienceStore.getState().state === 'ARTIFACT_DETAILS';
+    const shouldReplace = replace || isAlreadyArtifact;
+
+    this.artifactOpenedInSession = true;
+
     const nav: ParsedNavState = {
       state: 'ARTIFACT_DETAILS',
       destination,
@@ -461,7 +688,7 @@ class NavigationController {
       storyChapterIndex: 0,
       exhibitionView: useExperienceStore.getState().exhibitionView || 'collection',
     };
-    this.commit(nav);
+    this.commit(nav, shouldReplace, { _source: 'artifact' });
 
     useExperienceStore.setState({
       state: 'ARTIFACT_DETAILS',
@@ -473,9 +700,36 @@ class NavigationController {
   }
 
   /**
+   * Close Artifact Details cleanly without creating duplicate history entries
+   */
+  public closeArtifact() {
+    if (this.loadingTimeout) {
+      clearTimeout(this.loadingTimeout);
+      this.loadingTimeout = null;
+    }
+
+    // If the artifact was opened during this session with prior history:
+    if (this.artifactOpenedInSession && this.historyStackDepth > 0) {
+      this.artifactOpenedInSession = false;
+      window.history.back();
+      return;
+    }
+
+    // Direct entry fallback: replace URL with exhibition so depth isn't corrupted
+    const store = useExperienceStore.getState();
+    const dest = store.currentDestination === 'mars' ? 'mars' : 'moon';
+    this.toExhibition(dest, store.exhibitionView || 'collection', true);
+  }
+
+  /**
    * Navigate to Documentary Story Chapters
    */
   public toStory(artifactId?: string, chapterIndex = 0) {
+    if (this.loadingTimeout) {
+      clearTimeout(this.loadingTimeout);
+      this.loadingTimeout = null;
+    }
+
     const store = useExperienceStore.getState();
     const targetArtifactId = artifactId || store.selectedArtifactId || 'apollo11_eagle';
     const artifact = ARTIFACTS[targetArtifactId];
@@ -484,6 +738,8 @@ class NavigationController {
     soundManager.playNavDocumentaryOpen();
     const destination: ActiveDestination = artifact.destination === 'mars' ? 'mars' : 'moon';
 
+    this.documentaryOpenedInSession = true;
+
     const nav: ParsedNavState = {
       state: 'STORY_CHAPTER',
       destination,
@@ -491,7 +747,7 @@ class NavigationController {
       storyChapterIndex: chapterIndex,
       exhibitionView: store.exhibitionView || 'collection',
     };
-    this.commit(nav);
+    this.commit(nav, false, { _source: 'story_chapter' });
 
     useExperienceStore.setState({
       state: 'STORY_CHAPTER',
@@ -502,7 +758,30 @@ class NavigationController {
   }
 
   /**
-   * Update active story chapter
+   * Return from Documentary to Artifact Details
+   */
+  public closeStoryToArtifact() {
+    if (this.documentaryOpenedInSession && this.historyStackDepth > 0) {
+      this.documentaryOpenedInSession = false;
+      window.history.back();
+      return;
+    }
+    const store = useExperienceStore.getState();
+    const artifactId = store.selectedArtifactId || 'apollo11_eagle';
+    this.toArtifact(artifactId, true);
+  }
+
+  /**
+   * Close documentary or legacy directly to Exhibition
+   */
+  public closeToExhibition(destId?: DestinationId | ActiveDestination) {
+    const store = useExperienceStore.getState();
+    const targetDest: ActiveDestination = destId === 'mars' ? 'mars' : destId === 'moon' ? 'moon' : (store.currentDestination === 'mars' ? 'mars' : 'moon');
+    this.toExhibition(targetDest, 'collection', true);
+  }
+
+  /**
+   * Update active story chapter (always replaceState)
    */
   public setStoryChapter(chapterIndex: number) {
     const store = useExperienceStore.getState();
@@ -520,7 +799,7 @@ class NavigationController {
       exhibitionView: store.exhibitionView || 'collection',
     };
     // Use replaceState so next/prev doesn't pollute back button with 10 chapter entries
-    this.commit(nav, true);
+    this.commit(nav, true, { _source: 'story_chapter' });
     useExperienceStore.setState({ activeStoryChapterIndex: chapterIndex });
   }
 
@@ -548,6 +827,11 @@ class NavigationController {
    * Navigate to Legacy conclusion screen
    */
   public toLegacy(artifactId?: string) {
+    if (this.loadingTimeout) {
+      clearTimeout(this.loadingTimeout);
+      this.loadingTimeout = null;
+    }
+
     const store = useExperienceStore.getState();
     const targetArtifactId = artifactId || store.selectedArtifactId || 'apollo11_eagle';
     const artifact = ARTIFACTS[targetArtifactId];
@@ -563,7 +847,7 @@ class NavigationController {
       storyChapterIndex: 0,
       exhibitionView: store.exhibitionView || 'collection',
     };
-    this.commit(nav);
+    this.commit(nav, false, { _source: 'legacy' });
 
     useExperienceStore.setState({
       state: 'LEGACY',
@@ -588,20 +872,32 @@ class NavigationController {
     const current = store.state;
 
     if (current === 'LEGACY') {
-      this.toStory(store.selectedArtifactId || undefined, 0);
+      this.closeStoryToArtifact();
     } else if (current === 'STORY_CHAPTER') {
-      if (store.selectedArtifactId) {
-        this.toArtifact(store.selectedArtifactId);
-      } else {
-        this.toExhibition();
-      }
+      this.closeStoryToArtifact();
     } else if (current === 'ARTIFACT_DETAILS') {
-      this.toExhibition();
+      this.closeArtifact();
     } else if (current === 'EXHIBITION') {
-      this.toDestinations();
+      this.returnToStory();
     } else if (current === 'DESTINATION_SELECT') {
-      this.toArrival();
-    } 
+      this.toArrival('scene-destinations');
+    }
+  }
+
+  /**
+   * Diagnostic summary for regression testing and telemetry
+   */
+  public getDiagnostics() {
+    return {
+      historyStackDepth: this.historyStackDepth,
+      isHandlingPopstate: this.isHandlingPopstate,
+      lastArrivalChapter: this.lastArrivalChapter,
+      lastArrivalScrollTop: this.lastArrivalScrollTop,
+      artifactOpenedInSession: this.artifactOpenedInSession,
+      documentaryOpenedInSession: this.documentaryOpenedInSession,
+      arrivalVisitedInSession: this.arrivalVisitedInSession,
+      exhibitionVisitedInSession: this.exhibitionVisitedInSession,
+    };
   }
 }
 

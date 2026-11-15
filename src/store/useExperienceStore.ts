@@ -54,6 +54,7 @@ interface ExperienceStore {
   enterLegacy: () => void;
   returnToArtifactDetails: () => void;
   returnToExhibition: () => void;
+  returnToStory: () => void;
   returnToExploration: () => void;
   returnToDestinations: () => void;
   enterPlanetaryArchaeology: () => void;
@@ -137,7 +138,7 @@ export const useExperienceStore = create<ExperienceStore>((set, get) => ({
   },
 
   previewDestination: (destId) => {
-    const validDest: DestinationId = destId === 'mars' ? 'mars' : 'moon';
+    const validDest: ActiveDestination = destId === 'mars' ? 'mars' : 'moon';
     if (get().currentDestination === validDest) return;
     if (validDest === 'mars') {
       soundManager.playNavMarsSelected();
@@ -145,6 +146,7 @@ export const useExperienceStore = create<ExperienceStore>((set, get) => ({
       soundManager.playNavMoonSelected();
     }
     set({ currentDestination: validDest });
+    navigation.syncDestinationSelect(validDest);
   },
 
   selectDestination: (destId) => {
@@ -198,19 +200,15 @@ export const useExperienceStore = create<ExperienceStore>((set, get) => ({
   },
 
   returnToArtifactDetails: () => {
-    const artifactId = get().selectedArtifactId;
-    if (artifactId) {
-      navigation.toArtifact(artifactId);
-    } else {
-      navigation.toExhibition();
-    }
+    navigation.closeStoryToArtifact();
   },
 
   returnToExhibition: () => {
-    navigation.toExhibition(
-      get().currentDestination === 'mars' ? 'mars' : 'moon',
-      get().exhibitionView
-    );
+    navigation.closeArtifact();
+  },
+
+  returnToStory: () => {
+    navigation.returnToStory();
   },
 
   returnToExploration: () => {
