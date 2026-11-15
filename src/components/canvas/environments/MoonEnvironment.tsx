@@ -283,13 +283,13 @@ export const MoonEnvironment: React.FC = () => {
       <hemisphereLight args={['#0B0E14', '#5A564F', 0.28]} />
 
       {/* Subtle cool Earthshine fill from Earth suspended above horizon */}
-      <directionalLight position={[22, 16, -38]} intensity={0.22} color="#6E94BD" />
+      <directionalLight position={[18, 14, -40]} intensity={0.22} color="#6E94BD" />
 
       {/* 2. DEEP BLACK VACUUM SKY WITH SPARSE RESTRAINED STARS (NO ATMOSPHERIC HAZE) */}
       <LunarSkyStars />
 
       {/* 3. ANIMATED 3D EARTH SUSPENDED ABOVE THE LUNAR HORIZON (PRESERVED EXACTLY) */}
-      <EarthGlobe position={[22, 16, -38]} radius={4.8} sunDirection={[-42, 14, 38]} />
+      <EarthGlobe position={[18, 14, -40]} radius={5.2} sunDirection={[-42, 14, 38]} />
 
       {/* 4. GEOLOGICAL NASA LROC/LOLA LUNAR TERRAIN WITH MULTI-SCALE REGOLITH */}
       <mesh geometry={terrainData.geometry} material={terrainMaterial} receiveShadow />
@@ -305,7 +305,8 @@ export const MoonEnvironment: React.FC = () => {
       ))}
 
       {/* 6. ARTIFACT: OFFICIAL NASA APOLLO 11 LUNAR MODULE (EAGLE) */}
-      <ApolloEagleModel position={[0, 0, 0]} rotation={[0, 0.45, 0]} scale={1.25} />
+      {/* Positioned right-of-center to frame Earth and balance left editorial typography */}
+      <ApolloEagleModel position={[2.6, 0, -1.0]} rotation={[0, 0.55, 0]} scale={1.3} />
     </group>
   );
 };

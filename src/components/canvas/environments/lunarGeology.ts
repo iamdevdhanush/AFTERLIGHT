@@ -506,11 +506,11 @@ export function buildLunarTerrainData(
     let scaleBase = 0.18;
 
     if (i < 22) {
-      // Foreground small pebbles & fist-sized angular regolith rocks (outside direct LM pad)
+      // Natural midground regolith rocks framing craters (outside camera view corridor)
       const side = i % 2 === 0 ? 1 : -1;
-      bx = side * (2.6 + rand() * 9.5) - (side < 0 ? 1.5 : 0);
-      bz = 4.2 + rand() * 9.8;
-      scaleBase = 0.06 + rand() * 0.13;
+      bx = side * (7.5 + rand() * 12.0);
+      bz = -2.0 + rand() * 8.0;
+      scaleBase = 0.08 + rand() * 0.16;
     } else if (i < 58) {
       // Midground angular breccias clustered around crater rims & landing plain
       const crater = LUNAR_CRATERS[(i - 22) % 7];
@@ -518,7 +518,7 @@ export function buildLunarTerrainData(
       const dist = crater.radius * (1.02 + rand() * 0.55);
       bx = crater.cx + Math.cos(angle) * dist;
       bz = crater.cz + Math.sin(angle) * dist;
-      scaleBase = 0.12 + rand() * 0.28;
+      scaleBase = 0.14 + rand() * 0.28;
     } else {
       // Distant crater-ejecta boulders
       const crater = LUNAR_CRATERS[4 + ((i - 58) % 4)];
@@ -529,10 +529,10 @@ export function buildLunarTerrainData(
       scaleBase = 0.35 + rand() * 0.55;
     }
 
-    // Keep Tranquility Base landing pad & camera foreground corridor clean
+    // Keep camera foreground and Apollo Eagle landing corridor completely clean
     const distOrigin = Math.sqrt(bx * bx + bz * bz);
-    if (distOrigin < 5.6) continue;
-    if (bz > 2.5 && Math.abs(bx + 1.2) < 2.8) continue;
+    if (distOrigin < 7.2) continue;
+    if (bz > 0 && Math.abs(bx) < 7.5) continue;
 
     const scaleX = scaleBase * (0.85 + rand() * 0.5);
     const scaleY = scaleBase * (0.48 + rand() * 0.36); // Realistic wider-than-tall breccia

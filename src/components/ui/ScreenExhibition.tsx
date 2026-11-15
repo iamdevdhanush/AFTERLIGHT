@@ -118,19 +118,8 @@ export const ScreenExhibition: React.FC = () => {
       ? 'Discover the mobile geological laboratories that braved dust storms and traversed craters across the Red Planet.'
       : 'Explore the rovers, landers, and scientific hardware preserved in the undisturbed lunar vacuum.';
 
-  // Asymmetric 12-column spans matching editorial rhythm
-  const getAsymmetricLayout = (index: number) => {
-    const pattern = index % 4;
-    if (pattern === 0) return 'lg:col-span-7';
-    if (pattern === 1) return 'lg:col-span-5 lg:mt-16';
-    if (pattern === 2) return 'lg:col-span-5';
-    return 'lg:col-span-7 lg:mt-14';
-  };
-
-  const getAspectClass = (index: number) => {
-    const pattern = index % 4;
-    return pattern === 0 || pattern === 3 ? 'aspect-[16/10]' : 'aspect-[4/3]';
-  };
+  // Unified museum archive plate aspect ratio
+  const PLATE_ASPECT = 'aspect-[16/10]';
 
   // Distinct featured artifact (when viewing destination collection without complex filters)
   const isStandardView = !searchQuery.trim() && selectedCategory === 'all' && selectedStatus === 'all';
@@ -512,13 +501,13 @@ export const ScreenExhibition: React.FC = () => {
               </motion.div>
             )}
 
-            {/* 5. Asymmetric Editorial Exhibit Gallery Grid */}
+            {/* 5. Unified Museum Exhibit Gallery Grid (Balanced 2-Column Desktop Rhythm) */}
             <section
               aria-label="Artifact Collection"
-              className="grid grid-cols-1 lg:grid-cols-12 gap-y-16 lg:gap-x-12 items-start pt-4"
+              className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-10 items-stretch pt-6"
             >
               {supportingExhibits.length === 0 ? (
-                <div className="col-span-12 py-16 text-center space-y-3 border border-meteorite/40 bg-surface/30">
+                <div className="col-span-full py-16 text-center space-y-3 border border-meteorite/40 bg-surface/30">
                   <Compass className="w-8 h-8 text-stone-muted mx-auto" />
                   <p className="font-serif text-2xl text-bone">No matching artifacts found.</p>
                   <p className="font-sans text-xs text-stone-secondary font-light max-w-sm mx-auto">
@@ -548,57 +537,66 @@ export const ScreenExhibition: React.FC = () => {
                         delay: reducedMotion ? 0 : index * 0.06,
                         ease: [0.16, 1, 0.3, 1],
                       }}
-                      className={`cursor-pointer group ${getAsymmetricLayout(index)} focus:outline-none`}
+                      className="cursor-pointer group flex flex-col justify-between focus:outline-none border border-meteorite/70 bg-surface-raised/40 hover:bg-surface-raised hover:border-signal transition-all duration-300 rounded-sm overflow-hidden p-6 space-y-6 shadow-xl"
                     >
-                      {/* Photograph Plate */}
-                      <div
-                        className={`relative w-full ${getAspectClass(index)} overflow-hidden bg-surface border border-meteorite/70 group-hover:border-signal transition-colors duration-400 shadow-xl`}
-                      >
-                        <motion.img
-                          layoutId={`exhibit-image-${artifact.id}`}
-                          src={artifact.heroImage}
-                          alt={`${artifact.name} — ${artifact.mission}`}
-                          className="w-full h-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-[1.03] brightness-95 group-hover:brightness-100"
-                          loading={index < 2 ? 'eager' : 'lazy'}
-                        />
-                        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-obsidian/75 via-transparent to-transparent" />
+                      <div className="space-y-5">
+                        {/* Photograph Plate - Standardized 16:10 Museum Aspect */}
+                        <div
+                          className={`relative w-full ${PLATE_ASPECT} overflow-hidden bg-surface border border-meteorite/60 group-hover:border-signal/80 transition-colors duration-400 rounded-sm`}
+                        >
+                          <motion.img
+                            layoutId={`exhibit-image-${artifact.id}`}
+                            src={artifact.heroImage}
+                            alt={`${artifact.name} — ${artifact.mission}`}
+                            className="w-full h-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-[1.03] brightness-95 group-hover:brightness-100"
+                            loading={index < 2 ? 'eager' : 'lazy'}
+                          />
+                          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-obsidian/75 via-transparent to-transparent" />
 
-                        {/* Plate Index Badge */}
-                        <span className="pointer-events-none absolute top-4 left-4 font-mono text-[10px] tracking-[0.2em] text-bone bg-obsidian/85 px-2.5 py-1 border border-meteorite/70">
-                          0{index + (featuredArtifact ? 2 : 1)}
-                        </span>
-
-                        {/* Category Pill */}
-                        <span className="pointer-events-none absolute bottom-4 left-4 font-mono text-[9px] tracking-[0.16em] uppercase text-stone-secondary bg-surface/90 px-2 py-0.5 border border-meteorite/50">
-                          {artifact.category}
-                        </span>
-                      </div>
-
-                      {/* Exhibit Caption Strip */}
-                      <div className="pt-5 space-y-2.5 border-b border-meteorite pb-6 group-hover:border-stone-secondary transition-colors duration-300">
-                        <div className="flex items-center justify-between font-mono text-[11px] tracking-[0.18em] uppercase">
-                          <span style={{ color: itemTheme.accent }} className="font-semibold">
-                            {artifact.mission}
+                          {/* Plate Index Badge */}
+                          <span className="pointer-events-none absolute top-3.5 left-3.5 font-mono text-[10px] tracking-[0.2em] text-bone bg-obsidian/85 px-2.5 py-1 border border-meteorite/70 rounded-sm">
+                            PLATE // 0{index + (featuredArtifact ? 2 : 1)}
                           </span>
-                          <span className="text-stone-muted">{artifact.year}</span>
+
+                          {/* Category Pill */}
+                          <span className="pointer-events-none absolute bottom-3.5 left-3.5 font-mono text-[9px] tracking-[0.16em] uppercase text-stone-secondary bg-surface/90 px-2 py-0.5 border border-meteorite/50 rounded-sm">
+                            {artifact.category}
+                          </span>
                         </div>
 
-                        <motion.h2
-                          layoutId={`exhibit-title-${artifact.id}`}
-                          className="font-serif text-2xl sm:text-3xl text-bone tracking-tight transition-colors duration-300 group-hover:text-signal"
-                        >
-                          {artifact.name}
-                        </motion.h2>
+                        {/* Exhibit Caption Strip */}
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between font-mono text-[11px] tracking-[0.18em] uppercase">
+                            <span style={{ color: itemTheme.accent }} className="font-semibold">
+                              {artifact.mission}
+                            </span>
+                            <span className="text-stone-muted">{artifact.year}</span>
+                          </div>
 
-                        <p className="font-sans text-xs sm:text-sm text-stone-secondary leading-relaxed font-light max-w-xl">
-                          {artifact.shortDescription}
-                        </p>
+                          <motion.h2
+                            layoutId={`exhibit-title-${artifact.id}`}
+                            className="font-serif text-2xl sm:text-3xl text-bone tracking-tight transition-colors duration-300 group-hover:text-signal"
+                          >
+                            {artifact.name}
+                          </motion.h2>
+
+                          <p className="font-sans text-xs sm:text-sm text-stone-secondary leading-relaxed font-light line-clamp-3">
+                            {artifact.shortDescription}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Footer Metadata & Examine Action */}
+                      <div className="pt-4 border-t border-meteorite/50 flex items-center justify-between font-mono text-[11px] tracking-[0.16em] uppercase">
+                        <span className="text-stone-muted truncate max-w-[180px]">
+                          {artifact.statusLabel}
+                        </span>
 
                         <div
-                          className="pt-2 inline-flex items-center space-x-2.5 font-mono text-[11px] tracking-[0.2em] uppercase transition-colors"
+                          className="inline-flex items-center space-x-2 font-mono text-[11px] tracking-[0.18em] uppercase transition-colors font-semibold"
                           style={{ color: itemTheme.accent }}
                         >
-                          <span>EXAMINE ARTIFACT</span>
+                          <span>EXAMINE</span>
                           <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1.5 transition-transform duration-200" />
                         </div>
                       </div>
