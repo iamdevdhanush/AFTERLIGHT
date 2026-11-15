@@ -6,11 +6,11 @@
     ],
     "label": "Remote Sensing Mast & Mastcam-Z / SuperCam",
     "subassembly": "Remote Sensing",
-    "hotspotAnchor": [0.08, 0.5, 0.3],
-    "explodeVector": [0, 0.8, 0.2],
+    "hotspotAnchor": [0.12, 1.35, 0.28],
+    "explodeVector": [0, 0.9, 0.2],
     "cameraTarget": {
-      "position": [0.5, 0.8, 2.2],
-      "lookAt": [0.05, 0.45, 0.28]
+      "position": [0.6, 1.6, 1.8],
+      "lookAt": [0.1, 1.3, 0.28]
     },
     "specs": {
       "mast_height": "2.0 m (6.6 ft) eye height above ground",
@@ -37,11 +37,11 @@
     ],
     "label": "2.1m Robotic Arm, Coring Drill & Science Turret",
     "subassembly": "Sample Collection & In Situ Science",
-    "hotspotAnchor": [0.4, 0.5, 1.1],
+    "hotspotAnchor": [0.42, 1.35, 1.15],
     "explodeVector": [0.6, 0.3, 0.6],
     "cameraTarget": {
-      "position": [1.8, 0.7, 2.2],
-      "lookAt": [0.4, 0.45, 1.0]
+      "position": [1.8, 1.5, 2.0],
+      "lookAt": [0.4, 1.3, 1.1]
     },
     "specs": {
       "arm_reach": "2.1 m (7.0 ft) with 5 degrees of freedom",
@@ -67,11 +67,11 @@
     ],
     "label": "Adaptive Caching Assembly (Internal Robotics)",
     "subassembly": "Sample Storage",
-    "hotspotAnchor": [-0.02, 0.2, 0.8],
+    "hotspotAnchor": [-0.02, 1.1, 0.75],
     "explodeVector": [0, -0.6, 0.5],
     "cameraTarget": {
-      "position": [-0.8, 0.5, 2.0],
-      "lookAt": [-0.02, 0.15, 0.75]
+      "position": [-0.9, 1.3, 1.8],
+      "lookAt": [-0.02, 1.05, 0.7]
     },
     "specs": {
       "sample_capacity": "43 hermetically sealable titanium sample tubes",
@@ -95,11 +95,11 @@
     ],
     "label": "MMRTG Nuclear Generator & RIMFAX Subsurface Radar",
     "subassembly": "Power & Geophysics",
-    "hotspotAnchor": [0, 0.25, -1.2],
+    "hotspotAnchor": [0.0, 1.18, -1.22],
     "explodeVector": [0, 0.4, -0.8],
     "cameraTarget": {
-      "position": [1.4, 0.6, -2.4],
-      "lookAt": [0, 0.2, -1.1]
+      "position": [1.4, 1.5, -2.4],
+      "lookAt": [0, 1.15, -1.1]
     },
     "specs": {
       "power_source": "Multi-Mission Radioisotope Thermoelectric Generator (MMRTG)",
@@ -125,11 +125,11 @@
     ],
     "label": "Rocker-Bogie Suspension & 6 Machined Titanium Wheels",
     "subassembly": "Mobility Chassis",
-    "hotspotAnchor": [0.9, -0.65, 0],
-    "explodeVector": [0.6, -0.6, 0],
+    "hotspotAnchor": [0.85, 0.28, 0.0],
+    "explodeVector": [0.6, -0.5, 0],
     "cameraTarget": {
-      "position": [2.4, -0.3, 1.8],
-      "lookAt": [0.8, -0.5, 0]
+      "position": [2.4, 0.6, 1.6],
+      "lookAt": [0.8, 0.3, 0]
     },
     "specs": {
       "wheel_diameter": "52.5 cm (20.7 in) aircraft-grade aluminum rims",
@@ -155,11 +155,11 @@
     ],
     "label": "High-Gain X-Band Dish & UHF Relay Antenna",
     "subassembly": "Telecommunications",
-    "hotspotAnchor": [0.4, 0.4, -0.4],
+    "hotspotAnchor": [0.42, 1.38, -0.39],
     "explodeVector": [0.5, 0.6, -0.3],
     "cameraTarget": {
-      "position": [1.4, 0.8, -0.8],
-      "lookAt": [0.38, 0.35, -0.38]
+      "position": [1.4, 1.7, -0.8],
+      "lookAt": [0.4, 1.35, -0.38]
     },
     "specs": {
       "dish_diameter": "30 cm (12 in) steerable parabolic dish",

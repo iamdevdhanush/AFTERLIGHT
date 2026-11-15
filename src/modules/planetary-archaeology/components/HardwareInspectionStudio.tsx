@@ -482,7 +482,17 @@ const AuthenticNasaModelRenderer: React.FC<{
         return;
       }
 
-      // Check if hit object has partId directly or in parents
+      // If parts use region bounds (e.g. single-mesh models like Opportunity), prioritize region hit test
+      const hasRegions = parts.some((p) => p.regionBounds);
+      if (hasRegions) {
+        const regionPart = hitTestRegion(hit, parts);
+        if (regionPart) {
+          onHoverPart(regionPart.id, e.clientX, e.clientY);
+          return;
+        }
+      }
+
+      // Check if hit object has partId directly or in parents (multi-mesh BVH raycast)
       let obj: THREE.Object3D | null = hit.object;
       while (obj) {
         if (obj.userData.partId) {
@@ -492,13 +502,7 @@ const AuthenticNasaModelRenderer: React.FC<{
         obj = obj.parent;
       }
 
-      // Fallback: region bounding box test for single-mesh objects
-      const regionPart = hitTestRegion(hit, parts);
-      if (regionPart) {
-        onHoverPart(regionPart.id, e.clientX, e.clientY);
-      } else {
-        onHoverPart(null);
-      }
+      onHoverPart(null);
     },
     [onHoverPart, parts]
   );
@@ -508,6 +512,17 @@ const AuthenticNasaModelRenderer: React.FC<{
       e.stopPropagation();
       const hit = e.intersections?.[0];
       if (!hit) return;
+
+      // Prioritize region test for single-mesh models
+      const hasRegions = parts.some((p) => p.regionBounds);
+      if (hasRegions) {
+        const part = hitTestRegion(hit, parts);
+        if (part) {
+          onSelectPart(part.id);
+          flyTo(part.cameraTarget.position, part.cameraTarget.lookAt);
+          return;
+        }
+      }
 
       let obj: THREE.Object3D | null = hit.object;
       while (obj) {
@@ -522,13 +537,6 @@ const AuthenticNasaModelRenderer: React.FC<{
         }
         obj = obj.parent;
       }
-
-      // Fallback region test
-      const part = hitTestRegion(hit, parts);
-      if (part) {
-        onSelectPart(part.id);
-        flyTo(part.cameraTarget.position, part.cameraTarget.lookAt);
-      }
     },
     [onSelectPart, parts, flyTo]
   );
@@ -542,20 +550,30 @@ const AuthenticNasaModelRenderer: React.FC<{
         onClick={handleClick}
       />
 
-      {/* Hotspot pin markers anchored to real spacecraft locations */}
-      {parts.map((part, i) => (
-        <HotspotMarker
-          key={part.id}
-          anchor={part.hotspotAnchor}
-          label={part.label}
-          index={i}
-          isSelected={selectedPartId === part.id}
-          onClick={() => {
-            onSelectPart(part.id);
-            flyTo(part.cameraTarget.position, part.cameraTarget.lookAt);
-          }}
-        />
-      ))}
+      {/* Hotspot pin markers anchored to real spacecraft locations (glides along explodeVector when exploded) */}
+      {parts.map((part, i) => {
+        const animatedAnchor: [number, number, number] = exploded
+          ? [
+              part.hotspotAnchor[0] + part.explodeVector[0],
+              part.hotspotAnchor[1] + part.explodeVector[1],
+              part.hotspotAnchor[2] + part.explodeVector[2],
+            ]
+          : part.hotspotAnchor;
+
+        return (
+          <HotspotMarker
+            key={part.id}
+            anchor={animatedAnchor}
+            label={part.label}
+            index={i}
+            isSelected={selectedPartId === part.id}
+            onClick={() => {
+              onSelectPart(part.id);
+              flyTo(part.cameraTarget.position, part.cameraTarget.lookAt);
+            }}
+          />
+        );
+      })}
     </group>
   );
 };
@@ -616,6 +634,15 @@ const StudioSceneCanvas: React.FC<{
     },
     [camera, controlsRef]
   );
+
+  // Synchronize camera fly-to when a part is selected from the right drawer or keyboard navigation
+  useEffect(() => {
+    if (!selectedPartId) return;
+    const part = parts.find((p) => p.id === selectedPartId);
+    if (part) {
+      flyTo(part.cameraTarget.position, part.cameraTarget.lookAt);
+    }
+  }, [selectedPartId, parts, flyTo]);
 
   return (
     <>
